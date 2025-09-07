@@ -1,0 +1,13 @@
+Week 1:
+Luke-to-do
+ - generate final full MVP (for AI use)
+ - repo setup
+ - AWS setup
+ - domain 
+
+Anand-to-do
+ - figure out tech stack
+   - front + backend + DB (with AWS in mind)
+   - generate repo structure
+     - (client/ … server/ … )
+     - local setup (mpn install … )
