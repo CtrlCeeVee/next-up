@@ -1,0 +1,45 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp/
+.pnp.js
+
+# Build artifacts
+build/
+dist/
+public/build/ # If your build output goes into a public/build directory
+out/
+
+# IDE specific files
+.vscode/
+.idea/
+*.iml
+.DS_Store # macOS specific
+Thumbs.db # Windows specific
+
+# Environment variables and secrets
+.env
+.env.*.local
+*.pem
+*.key
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+temp/
+
+# Dependency caches
+.parcel-cache/
+.cache/
+
+# Test coverage reports
+coverage/
+.nyc_output/
+
+# Editor specific settings (e.g., Vim swap files)
+*~
+.#*
