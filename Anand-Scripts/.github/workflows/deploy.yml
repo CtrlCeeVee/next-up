@@ -1,0 +1,144 @@
+name: Deploy to AWS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: nextup-server
+  ECS_SERVICE: nextup-api-service
+  ECS_CLUSTER: nextup-cluster
+  S3_BUCKET_NAME: nextup-web-app
+  CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }}
+
+jobs:
+  deploy-client:
+    name: Deploy Client to S3/CloudFront
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: client/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./client
+      run: npm ci
+    
+    - name: Build client for production
+      working-directory: ./client
+      env:
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        VITE_PUSHER_KEY: ${{ secrets.VITE_PUSHER_KEY }}
+        VITE_PUSHER_CLUSTER: ${{ secrets.VITE_PUSHER_CLUSTER }}
+        VITE_ENVIRONMENT: ${{ github.event.inputs.environment || 'staging' }}
+      run: npm run build
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Deploy to S3
+      working-directory: ./client
+      run: |
+        aws s3 sync dist/ s3://${{ env.S3_BUCKET_NAME }}-${{ github.event.inputs.environment || 'staging' }} \
+          --delete \
+          --cache-control "public, max-age=31536000" \
+          --exclude "index.html" \
+          --exclude "*.json"
+        
+        aws s3 cp dist/index.html s3://${{ env.S3_BUCKET_NAME }}-${{ github.event.inputs.environment || 'staging' }}/index.html \
+          --cache-control "no-cache, no-store, must-revalidate"
+        
+        aws s3 cp dist/ s3://${{ env.S3_BUCKET_NAME }}-${{ github.event.inputs.environment || 'staging' }}/ \
+          --recursive \
+          --exclude "*" \
+          --include "*.json" \
+          --cache-control "no-cache, no-store, must-revalidate"
+    
+    - name: Invalidate CloudFront
+      run: |
+        aws cloudfront create-invalidation \
+          --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
+          --paths "/*"
+
+  deploy-server:
+    name: Deploy Server to ECS
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+    
+    - name: Build, tag, and push server image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        cd server
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+    
+    - name: Run database migrations
+      run: |
+        cd server
+        npm ci
+        DATABASE_URL=${{ secrets.DATABASE_URL }} npx prisma migrate deploy
+    
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: infrastructure/aws/task-definition-${{ github.event.inputs.environment || 'staging' }}.json
+        container-name: nextup-api
+        image: ${{ steps.build-image.outputs.image }}
+    
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ env.ECS_SERVICE }}-${{ github.event.inputs.environment || 'staging' }}
+        cluster: ${{ env.ECS_CLUSTER }}-${{ github.event.inputs.environment || 'staging' }}
+        wait-for-service-stability: true
+    
+    - name: Notify deployment status
+      if: always()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        text: 'Deployment to ${{ github.event.inputs.environment || "staging" }} ${{ job.status }}'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      continue-on-error: true
