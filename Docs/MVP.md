@@ -108,3 +108,11 @@
 
   1. Player marks attendance → system evaluates available matches & courts → assigns match → players complete match → upload scores → update stats → get new match → repeat till league night finished → end + get summary.
   2. Admin overrides intervene in real time as needed.
+
+---
+
+## Technical Implementation
+
+For technical details, development setup, and architecture information, see:
+- **[Technical Overview](Technical_Overview.md)** - Complete technical documentation
+- **[Project README](../README.md)** - Quick start guide
