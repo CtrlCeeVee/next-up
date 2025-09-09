@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+// Import routes
+const leagueRoutes = require('./src/routes/leagues');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -26,41 +29,10 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Mock leagues endpoint (temporary - will connect to Supabase later)
-app.get('/api/leagues', (req, res) => {
-  const mockLeagues = [
-    {
-      id: 1,
-      name: "Northcliff Eagles",
-      location: "Northcliff Sports Club",
-      nextGame: "Today, 6:00 PM",
-      playersTonight: 12,
-      isActive: true
-    },
-    {
-      id: 2,
-      name: "Sandton Smashers", 
-      location: "Sandton Recreation Center",
-      nextGame: "Tomorrow, 7:00 PM",
-      playersTonight: 8,
-      isActive: true
-    },
-    {
-      id: 3,
-      name: "Rosebank Rackets",
-      location: "Rosebank Club",
-      nextGame: "Wednesday, 6:30 PM", 
-      playersTonight: 0,
-      isActive: false
-    }
-  ];
-  
-  res.json(mockLeagues);
-});
+// API Routes
+app.use('/api/leagues', leagueRoutes);
 
 // Start server
 app.listen(PORT, () => {
   console.log(`🏓 Next-Up API Server running on port ${PORT}`);
-  console.log(`📍 Health check: http://localhost:${PORT}/health`);
-  console.log(`🏆 Leagues API: http://localhost:${PORT}/api/leagues`);
 });
