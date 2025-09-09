@@ -118,10 +118,6 @@ function LeagueList() {
                     <span className="w-4 text-gray-400">👥</span>
                     <span className="ml-2">{league.totalPlayers} members</span>
                   </div>
-                  <div className="flex items-center">
-                    <span className="w-4 text-gray-400">⭐</span>
-                    <span className="ml-2">{league.skillLevel} level</span>
-                  </div>
                 </div>
               </div>
               

@@ -4,14 +4,15 @@ import { leaguesAPI } from '../services/api'
 export interface League {
   id: number
   name: string
+  description: string
   location: string
+  address: string
   leagueDays: string[]
   startTime: string
-  skillLevel: string
   totalPlayers: number
-  address: string
-  description: string
   isActive: boolean
+  // Deprecated - keeping for backward compatibility, can be removed later
+  skillLevel?: string
 }
 
 export function useLeagues() {

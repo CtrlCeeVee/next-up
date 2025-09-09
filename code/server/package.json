@@ -8,10 +8,16 @@
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["pickleball", "league", "api", "express"],
+  "keywords": [
+    "pickleball",
+    "league",
+    "api",
+    "express"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0"

@@ -10,8 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.46.2",
     "@heroicons/react": "^2.2.0",
-    "@supabase/supabase-js": "^2.57.2",
+    "@supabase/supabase-js": "^2.57.4",
     "lucide-react": "^0.542.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

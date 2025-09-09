@@ -1,27 +1,49 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLeague } from '../hooks/useLeagues'
+import { useState, useEffect } from 'react'
+
+interface TopPlayer {
+  id: string
+  name: string
+  avgScore: number
+  gamesPlayed: number
+  position: number
+}
 
 function LeaguePage() {
   const { leagueId } = useParams<{ leagueId: string }>();
   const navigate = useNavigate();
   const { league, loading, error } = useLeague(parseInt(leagueId || '0'));
+  const [topPlayers, setTopPlayers] = useState<TopPlayer[]>([]);
+  const [statsLoading, setStatsLoading] = useState(true);
 
-  // Mock league stats and data - this would come from API
+  // Fetch top players when league loads
+  useEffect(() => {
+    const fetchTopPlayers = async () => {
+      if (leagueId) {
+        try {
+          const response = await fetch(`http://localhost:3001/api/leagues/${leagueId}/top-players`);
+          const data = await response.json();
+          if (data.success) {
+            setTopPlayers(data.data);
+          }
+        } catch (err) {
+          console.error('Failed to fetch top players:', err);
+        }
+        setStatsLoading(false);
+      }
+    };
+
+    fetchTopPlayers();
+  }, [leagueId]);
+
+  // League stats derived from real data
   const leagueStats = {
     totalMembers: league?.totalPlayers || 0,
-    gamesThisMonth: 24,
-    averageAttendance: 28,
-    totalGamesPlayed: 156,
-    topScorers: [
-      { id: 1, name: 'Sarah Mitchell', avgScore: 18.5, gamesPlayed: 12 },
-      { id: 2, name: 'Marcus Chen', avgScore: 17.8, gamesPlayed: 15 },
-      { id: 3, name: 'Emily Rodriguez', avgScore: 17.2, gamesPlayed: 11 }
-    ],
-    recentActivity: [
-      'Last game: Wednesday, Sept 6 - 32 players',
-      'Top scorer this week: Sarah Mitchell (19 pts avg)',
-      'Next scheduled: Monday, Sept 11'
-    ]
+    gamesThisMonth: 24, // This would come from a games table later
+    averageAttendance: Math.round((league?.totalPlayers || 0) * 0.7), // Estimate 70% attendance
+    totalGamesPlayed: 156, // This would come from a games table later
+    topScorers: topPlayers.slice(0, 3) // Use real top players data
   };
 
   // Generate league night cards based on league days
@@ -167,10 +189,6 @@ function LeaguePage() {
                   </span>
                 </div>
                 <div>
-                  <span className="font-medium text-gray-900">Skill Level:</span>
-                  <span className="ml-2 text-gray-600">{league.skillLevel}</span>
-                </div>
-                <div>
                   <span className="font-medium text-gray-900">Location:</span>
                   <span className="ml-2 text-gray-600">{league.address}</span>
                 </div>
@@ -258,43 +276,57 @@ function LeaguePage() {
         {/* Top Scorers Podium */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h3 className="text-xl font-semibold text-gray-900 mb-6">🏆 Top Average Scorers</h3>
-          <div className="flex justify-center items-end space-x-4">
-            {/* 2nd Place */}
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-2">
-                <span className="text-2xl">🥈</span>
-              </div>
-              <div className="bg-gray-100 px-4 py-6 rounded-lg min-h-[100px] flex flex-col justify-end">
-                <div className="font-semibold text-gray-900">{leagueStats.topScorers[1].name}</div>
-                <div className="text-lg font-bold text-gray-700">{leagueStats.topScorers[1].avgScore}</div>
-                <div className="text-xs text-gray-500">{leagueStats.topScorers[1].gamesPlayed} games</div>
-              </div>
-            </div>
+          {leagueStats.topScorers.length > 0 ? (
+            <div className="flex justify-center items-end space-x-4">
+              {/* 2nd Place */}
+              {leagueStats.topScorers[1] && (
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-2">
+                    <span className="text-2xl">🥈</span>
+                  </div>
+                  <div className="bg-gray-100 px-4 py-6 rounded-lg min-h-[100px] flex flex-col justify-end">
+                    <div className="font-semibold text-gray-900">{leagueStats.topScorers[1].name}</div>
+                    <div className="text-lg font-bold text-gray-700">{leagueStats.topScorers[1].avgScore}</div>
+                    <div className="text-xs text-gray-500">{leagueStats.topScorers[1].gamesPlayed} games</div>
+                  </div>
+                </div>
+              )}
 
-            {/* 1st Place */}
-            <div className="text-center">
-              <div className="w-20 h-20 bg-yellow-200 rounded-full flex items-center justify-center mb-2">
-                <span className="text-3xl">🥇</span>
-              </div>
-              <div className="bg-yellow-50 border-2 border-yellow-200 px-4 py-8 rounded-lg min-h-[120px] flex flex-col justify-end">
-                <div className="font-bold text-gray-900">{leagueStats.topScorers[0].name}</div>
-                <div className="text-xl font-bold text-yellow-600">{leagueStats.topScorers[0].avgScore}</div>
-                <div className="text-xs text-gray-500">{leagueStats.topScorers[0].gamesPlayed} games</div>
-              </div>
-            </div>
+              {/* 1st Place */}
+              {leagueStats.topScorers[0] && (
+                <div className="text-center">
+                  <div className="w-20 h-20 bg-yellow-200 rounded-full flex items-center justify-center mb-2">
+                    <span className="text-3xl">🥇</span>
+                  </div>
+                  <div className="bg-yellow-50 border-2 border-yellow-200 px-4 py-8 rounded-lg min-h-[120px] flex flex-col justify-end">
+                    <div className="font-bold text-gray-900">{leagueStats.topScorers[0].name}</div>
+                    <div className="text-xl font-bold text-yellow-600">{leagueStats.topScorers[0].avgScore}</div>
+                    <div className="text-xs text-gray-500">{leagueStats.topScorers[0].gamesPlayed} games</div>
+                  </div>
+                </div>
+              )}
 
-            {/* 3rd Place */}
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-200 rounded-full flex items-center justify-center mb-2">
-                <span className="text-2xl">🥉</span>
-              </div>
-              <div className="bg-orange-50 px-4 py-6 rounded-lg min-h-[100px] flex flex-col justify-end">
-                <div className="font-semibold text-gray-900">{leagueStats.topScorers[2].name}</div>
-                <div className="text-lg font-bold text-orange-600">{leagueStats.topScorers[2].avgScore}</div>
-                <div className="text-xs text-gray-500">{leagueStats.topScorers[2].gamesPlayed} games</div>
-              </div>
+              {/* 3rd Place */}
+              {leagueStats.topScorers[2] && (
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-orange-200 rounded-full flex items-center justify-center mb-2">
+                    <span className="text-2xl">🥉</span>
+                  </div>
+                  <div className="bg-orange-50 px-4 py-6 rounded-lg min-h-[100px] flex flex-col justify-end">
+                    <div className="font-semibold text-gray-900">{leagueStats.topScorers[2].name}</div>
+                    <div className="text-lg font-bold text-orange-600">{leagueStats.topScorers[2].avgScore}</div>
+                    <div className="text-xs text-gray-500">{leagueStats.topScorers[2].gamesPlayed} games</div>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <div className="text-4xl mb-2">🏆</div>
+              <p>No player statistics available yet</p>
+              <p className="text-sm">Start playing games to see the leaderboard!</p>
+            </div>
+          )}
         </div>
 
         {/* League Nights */}
