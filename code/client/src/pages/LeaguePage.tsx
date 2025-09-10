@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLeague } from '../hooks/useLeagues'
+import { useAuth } from '../hooks/useAuth'
 import { useState, useEffect } from 'react'
 
 interface TopPlayer {
@@ -14,8 +15,24 @@ function LeaguePage() {
   const { leagueId } = useParams<{ leagueId: string }>();
   const navigate = useNavigate();
   const { league, loading, error } = useLeague(parseInt(leagueId || '0'));
+  const { user, loading: authLoading, signOut } = useAuth();
   const [topPlayers, setTopPlayers] = useState<TopPlayer[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
+
+  // Redirect to auth if user is not authenticated (only after auth loading is complete)
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/auth');
+    }
+  }, [user, authLoading, navigate]);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
 
   // Fetch top players when league loads
   useEffect(() => {
@@ -115,6 +132,18 @@ function LeaguePage() {
 
   const leagueNights = getLeagueNights();
 
+  // Show loading while auth is being checked
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -163,9 +192,14 @@ function LeaguePage() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Hello, Player</span>
-              <button className="text-sm text-gray-500 hover:text-gray-700">
-                Profile
+              <span className="text-sm text-gray-600">
+                Hello, {user?.user_metadata?.full_name || user?.email || 'Player'}
+              </span>
+              <button 
+                onClick={handleSignOut}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Sign Out
               </button>
             </div>
           </div>

@@ -1,12 +1,27 @@
 import { useLeagues } from '../hooks/useLeagues'
+import { useAuth } from '../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
 
 function LeagueList() {
   const { leagues, loading, error } = useLeagues();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const handleViewLeague = (leagueId: number) => {
+    // Check if user is authenticated before allowing league access
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
     navigate(`/league/${leagueId}`);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   if (loading) {
@@ -50,10 +65,26 @@ function LeagueList() {
               <span className="text-lg">🏓</span>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Hello, Player</span>
-              <button className="text-sm text-gray-500 hover:text-gray-700">
-                Profile
-              </button>
+              {user ? (
+                <>
+                  <span className="text-sm text-gray-600">
+                    Hello, {user?.user_metadata?.full_name || user?.email || 'Player'}
+                  </span>
+                  <button 
+                    onClick={handleSignOut}
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <button 
+                  onClick={() => navigate('/auth')}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                >
+                  Sign In
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -63,10 +94,10 @@ function LeagueList() {
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Browse Leagues
+            Discover Pickleball Leagues
           </h2>
           <p className="text-gray-600">
-            Discover pickleball leagues in your area and find the perfect fit for your skill level
+            Browse leagues in your area and find the perfect fit for your skill level. {!user && 'Sign in to join a league!'}
           </p>
         </div>
 
@@ -131,7 +162,7 @@ function LeagueList() {
                   }`}
                   disabled={!league.isActive}
                 >
-                  {league.isActive ? 'View League' : 'Currently Inactive'}
+                  {league.isActive ? (user ? 'View League' : 'Join League') : 'Currently Inactive'}
                 </button>
               </div>
             </div>
