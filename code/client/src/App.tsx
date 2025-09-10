@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
+import { ThemeProvider } from './contexts/ThemeContext'
 import LeagueList from './pages/LeagueList.tsx'
 import LeaguePage from './pages/LeaguePage.tsx'
 import { AuthPage } from './pages/AuthPage'
@@ -9,22 +10,24 @@ function App() {
   const { isAuthenticated } = useAuth()
 
   return (
-    <Router>
-      <Routes>
-        <Route 
-          path="/auth" 
-          element={isAuthenticated ? <Navigate to="/" replace /> : <AuthPage />} 
-        />
-        <Route 
-          path="/" 
-          element={<LeagueList />} 
-        />
-        <Route 
-          path="/league/:leagueId" 
-          element={<LeaguePage />} 
-        />
-      </Routes>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <Routes>
+          <Route 
+            path="/auth" 
+            element={isAuthenticated ? <Navigate to="/" replace /> : <AuthPage />} 
+          />
+          <Route 
+            path="/" 
+            element={<LeagueList />} 
+          />
+          <Route 
+            path="/league/:leagueId" 
+            element={<LeaguePage />} 
+          />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   )
 }
 

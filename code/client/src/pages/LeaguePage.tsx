@@ -1,20 +1,107 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLeague } from '../hooks/useLeagues'
 import { useAuth } from '../hooks/useAuth'
+import { useTheme } from '../contexts/ThemeContext'
 import { useMembership, useLeagueMembers } from '../hooks/useMembership'
 import { useState, useEffect } from 'react'
+import { 
+  ArrowLeft, 
+  Moon, 
+  Sun, 
+  Users, 
+  Calendar, 
+  MapPin, 
+  Trophy, 
+  Target, 
+  TrendingUp, 
+  Clock, 
+  Star,
+  Medal,
+  Activity,
+  BarChart3,
+  Crown,
+  Zap,
+  ArrowRight,
+  Play,
+  UserCheck,
+  ChevronRight,
+  Sparkles,
+  ChevronLeft
+} from 'lucide-react'
+
+// ===================================
+// TYPE DEFINITIONS 
+// TODO: Move these to a shared types file when implementing real API
+// ===================================
+
+interface LeagueStats {
+  totalMembers: number
+  gamesThisMonth: number
+  averageAttendance: number
+  totalGamesPlayed: number
+  activeToday: number
+  completionRate: number
+}
 
 interface TopPlayer {
   id: string
   name: string
+  email: string
   avgScore: number
   gamesPlayed: number
+  winRate: number
   position: number
+  profilePicture?: string
+  isCurrentUser?: boolean
+}
+
+interface RecentGame {
+  id: string
+  date: string
+  time: string
+  team1: { player1: string, player2: string, score: number }
+  team2: { player1: string, player2: string, score: number }
+  court: number
+  status: 'completed' | 'in_progress' | 'scheduled'
+  duration?: number
+}
+
+interface LeagueNight {
+  id: string
+  day: string
+  time: string
+  nextDate: string
+  lastAttendance: number
+  avgAttendance: number
+  upcomingGames: number
+  status: 'upcoming' | 'today' | 'cancelled'
+  lastWinners: string[]
+  courtsAvailable: number
+}
+
+interface Member {
+  id: string
+  name: string
+  email: string
+  skillLevel: 'Beginner' | 'Intermediate' | 'Advanced'
+  role: 'player' | 'admin'
+  joinedAt: string
+  gamesPlayed: number
+  avgScore: number
+  winRate: number
+  isActive: boolean
+  lastSeen?: string
 }
 
 function LeaguePage() {
   const { leagueId } = useParams<{ leagueId: string }>();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
+  
+  // ===================================
+  // HOOKS - These will fetch real data via API
+  // TODO: Update these hooks to use real backend endpoints
+  // ===================================
   const { league, loading, error } = useLeague(parseInt(leagueId || '0'));
   const { user, loading: authLoading, signOut } = useAuth();
   const { isMember, loading: membershipLoading, joining, joinLeague } = useMembership(
@@ -22,16 +109,267 @@ function LeaguePage() {
     user?.id || null
   );
   const { members, loading: membersLoading } = useLeagueMembers(parseInt(leagueId || '0'));
-  const [topPlayers, setTopPlayers] = useState<TopPlayer[]>([]);
-  const [statsLoading, setStatsLoading] = useState(true);
 
-  // Redirect to auth if user is not authenticated (only after auth loading is complete)
+  // ===================================
+  // STATE - Will be populated from API calls
+  // TODO: Replace with real API data fetching
+  // ===================================
+  const [topPlayers, setTopPlayers] = useState<TopPlayer[]>([]);
+  const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
+  const [leagueNights, setLeagueNights] = useState<LeagueNight[]>([]);
+  const [leagueStats, setLeagueStats] = useState<LeagueStats>({
+    totalMembers: 0,
+    gamesThisMonth: 0,
+    averageAttendance: 0,
+    totalGamesPlayed: 0,
+    activeToday: 0,
+    completionRate: 0
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [currentStatIndex, setCurrentStatIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+
+  // ===================================
+  // AUTHENTICATION REDIRECT
+  // TODO: This logic will remain the same
+  // ===================================
   useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
     }
   }, [user, authLoading, navigate]);
 
+  // ===================================
+  // API DATA FETCHING
+  // TODO: Replace with real API endpoints when backend is implemented
+  // Current: Using dummy data for demonstration
+  // Future: Will call actual REST/GraphQL endpoints
+  // ===================================
+  
+  useEffect(() => {
+    const fetchLeagueData = async () => {
+      if (!leagueId || !league) return;
+
+      try {
+        // TODO: Replace with real API calls
+        // Example endpoints that will be implemented:
+        // - GET /api/leagues/{id}/stats
+        // - GET /api/leagues/{id}/top-players
+        // - GET /api/leagues/{id}/recent-games
+        // - GET /api/leagues/{id}/schedule
+        // - GET /api/leagues/{id}/analytics
+
+        // DUMMY DATA - Remove when real API is ready
+        const mockTopPlayers: TopPlayer[] = [
+          {
+            id: '1',
+            name: 'Luke Renton',
+            email: 'luke@example.com',
+            avgScore: 18.5,
+            gamesPlayed: 42,
+            winRate: 78.5,
+            position: 1,
+            isCurrentUser: user?.email === 'luke@example.com'
+          },
+          {
+            id: '2', 
+            name: 'Sarah Mitchell',
+            email: 'sarah@example.com',
+            avgScore: 17.8,
+            gamesPlayed: 38,
+            winRate: 72.1,
+            position: 2
+          },
+          {
+            id: '3',
+            name: 'James Wilson',
+            email: 'james@example.com', 
+            avgScore: 17.2,
+            gamesPlayed: 35,
+            winRate: 68.9,
+            position: 3
+          },
+          {
+            id: '4',
+            name: 'Emma Rodriguez',
+            email: 'emma@example.com',
+            avgScore: 16.9,
+            gamesPlayed: 41,
+            winRate: 65.2,
+            position: 4
+          },
+          {
+            id: '5',
+            name: 'Michael Chen',
+            email: 'michael@example.com',
+            avgScore: 16.4,
+            gamesPlayed: 33,
+            winRate: 63.8,
+            position: 5
+          }
+        ];
+
+        const mockRecentGames: RecentGame[] = [
+          {
+            id: '1',
+            date: '2024-01-15',
+            time: '18:30',
+            team1: { player1: 'Luke Renton', player2: 'Sarah Mitchell', score: 21 },
+            team2: { player1: 'James Wilson', player2: 'Emma Rodriguez', score: 19 },
+            court: 1,
+            status: 'completed',
+            duration: 35
+          },
+          {
+            id: '2', 
+            date: '2024-01-15',
+            time: '19:15',
+            team1: { player1: 'Michael Chen', player2: 'Lisa Parker', score: 21 },
+            team2: { player1: 'David Johnson', player2: 'Anna Lee', score: 16 },
+            court: 2,
+            status: 'completed',
+            duration: 28
+          },
+          {
+            id: '3',
+            date: '2024-01-17',
+            time: '18:30', 
+            team1: { player1: 'Sarah Mitchell', player2: 'James Wilson', score: 0 },
+            team2: { player1: 'Emma Rodriguez', player2: 'Michael Chen', score: 0 },
+            court: 1,
+            status: 'scheduled'
+          }
+        ];
+
+        const mockLeagueNights: LeagueNight[] = league.leagueDays.map((day, index) => ({
+          id: `night-${index}`,
+          day,
+          time: league.startTime,
+          nextDate: getNextDateForDay(day),
+          lastAttendance: Math.floor(Math.random() * 15) + 20,
+          avgAttendance: Math.floor(Math.random() * 10) + 25,
+          upcomingGames: Math.floor(Math.random() * 8) + 4,
+          status: day === getTodayDay() ? 'today' : 'upcoming' as any,
+          lastWinners: ['Team Rodriguez/Chen', 'Team Mitchell/Wilson'],
+          courtsAvailable: 4
+        }));
+
+        const mockStats: LeagueStats = {
+          totalMembers: members.length,
+          gamesThisMonth: 47,
+          averageAttendance: Math.round(members.length * 0.75),
+          totalGamesPlayed: 284,
+          activeToday: Math.floor(members.length * 0.4),
+          completionRate: 94.2
+        };
+
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        setTopPlayers(mockTopPlayers);
+        setRecentGames(mockRecentGames);
+        setLeagueNights(mockLeagueNights);
+        setLeagueStats(mockStats);
+
+      } catch (error) {
+        console.error('Failed to fetch league data:', error);
+        // TODO: Implement proper error handling with user feedback
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    fetchLeagueData();
+  }, [leagueId, league, members.length, user?.email]);
+
+  // ===================================
+  // STATS CAROUSEL AUTO-CYCLING
+  // TODO: This will work with real API data
+  // ===================================
+  
+  const statsArray = [
+    {
+      icon: <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />,
+      bgGradient: "from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50",
+      value: leagueStats.totalMembers,
+      label: "Total Members",
+      trend: <TrendingUp className="h-4 w-4 text-green-500" />
+    },
+    {
+      icon: <Activity className="h-6 w-6 text-green-600 dark:text-green-400" />,
+      bgGradient: "from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50",
+      value: leagueStats.gamesThisMonth,
+      label: "Games This Month",
+      trend: <TrendingUp className="h-4 w-4 text-green-500" />
+    },
+    {
+      icon: <BarChart3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />,
+      bgGradient: "from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50",
+      value: leagueStats.averageAttendance,
+      label: "Avg Attendance",
+      trend: <TrendingUp className="h-4 w-4 text-green-500" />
+    },
+    {
+      icon: <Trophy className="h-6 w-6 text-orange-600 dark:text-orange-400" />,
+      bgGradient: "from-orange-100 to-red-100 dark:from-orange-900/50 dark:to-red-900/50",
+      value: leagueStats.totalGamesPlayed,
+      label: "Total Games",
+      trend: <TrendingUp className="h-4 w-4 text-green-500" />
+    },
+    {
+      icon: <Zap className="h-6 w-6 text-teal-600 dark:text-teal-400" />,
+      bgGradient: "from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50",
+      value: leagueStats.activeToday,
+      label: "Active Today",
+      trend: <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+    },
+    {
+      icon: <Target className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />,
+      bgGradient: "from-yellow-100 to-amber-100 dark:from-yellow-900/50 dark:to-amber-900/50",
+      value: `${leagueStats.completionRate}%`,
+      label: "Completion Rate",
+      trend: <TrendingUp className="h-4 w-4 text-green-500" />
+    }
+  ];
+
+  // Auto-cycle through stats
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+    
+    const interval = setInterval(() => {
+      setCurrentStatIndex((prev) => (prev + 1) % statsArray.length);
+    }, 3000); // Change every 3 seconds
+    
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, statsArray.length]);
+
+  const handlePrevStat = () => {
+    setIsAutoPlaying(false);
+    setCurrentStatIndex((prev) => (prev - 1 + statsArray.length) % statsArray.length);
+    // Resume auto-play after 10 seconds
+    setTimeout(() => setIsAutoPlaying(true), 10000);
+  };
+
+  const handleNextStat = () => {
+    setIsAutoPlaying(false);
+    setCurrentStatIndex((prev) => (prev + 1) % statsArray.length);
+    // Resume auto-play after 10 seconds
+    setTimeout(() => setIsAutoPlaying(true), 10000);
+  };
+
+  const handleSwipe = (direction: 'left' | 'right') => {
+    if (direction === 'left') {
+      handleNextStat();
+    } else {
+      handlePrevStat();
+    }
+  };
+
+  // ===================================
+  // UTILITY FUNCTIONS
+  // TODO: Move to utils file
+  // ===================================
+  
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -40,111 +378,38 @@ function LeaguePage() {
     }
   };
 
-  // Fetch top players when league loads
-  useEffect(() => {
-    const fetchTopPlayers = async () => {
-      if (leagueId) {
-        try {
-          const response = await fetch(`http://localhost:3001/api/leagues/${leagueId}/top-players`);
-          const data = await response.json();
-          if (data.success) {
-            setTopPlayers(data.data);
-          }
-        } catch (err) {
-          console.error('Failed to fetch top players:', err);
-        }
-        setStatsLoading(false);
-      }
+  const getNextDateForDay = (day: string): string => {
+    // TODO: Implement proper date calculation
+    const dates: { [key: string]: string } = {
+      'Monday': 'Jan 20, 2025',
+      'Tuesday': 'Jan 21, 2025', 
+      'Wednesday': 'Jan 22, 2025',
+      'Thursday': 'Jan 23, 2025',
+      'Friday': 'Jan 24, 2025',
+      'Saturday': 'Jan 25, 2025',
+      'Sunday': 'Jan 26, 2025'
     };
-
-    fetchTopPlayers();
-  }, [leagueId]);
-
-  // League stats derived from real data
-  const leagueStats = {
-    totalMembers: members.length, // Use real membership count
-    gamesThisMonth: 24, // This would come from a games table later
-    averageAttendance: Math.round(members.length * 0.7), // Estimate 70% attendance
-    totalGamesPlayed: 156, // This would come from a games table later
-    topScorers: topPlayers.slice(0, 3) // Use real top players data
+    return dates[day] || 'TBD';
   };
 
-  // Generate league night cards based on league days
-  const getLeagueNights = () => {
-    if (!league) return [];
-    
-    return league.leagueDays.map((day, index) => {
-      // Mock data for each league night
-      const mockData = {
-        Monday: { 
-          nextDate: 'Sept 11, 2025', 
-          lastAttendance: 28, 
-          avgAttendance: 26,
-          status: 'upcoming',
-          lastWinner: 'Team Rodriguez/Chen'
-        },
-        Tuesday: { 
-          nextDate: 'Sept 12, 2025', 
-          lastAttendance: 24, 
-          avgAttendance: 25,
-          status: 'upcoming',
-          lastWinner: 'Team Wilson/Davis'
-        },
-        Wednesday: { 
-          nextDate: 'Sept 13, 2025', 
-          lastAttendance: 32, 
-          avgAttendance: 29,
-          status: 'upcoming',
-          lastWinner: 'Team Mitchell/Lee'
-        },
-        Thursday: { 
-          nextDate: 'Sept 14, 2025', 
-          lastAttendance: 22, 
-          avgAttendance: 24,
-          status: 'upcoming',
-          lastWinner: 'Team Garcia/Smith'
-        },
-        Friday: { 
-          nextDate: 'Sept 15, 2025', 
-          lastAttendance: 18, 
-          avgAttendance: 20,
-          status: 'upcoming',
-          lastWinner: 'Team Brown/Taylor'
-        },
-        Saturday: { 
-          nextDate: 'Sept 16, 2025', 
-          lastAttendance: 35, 
-          avgAttendance: 33,
-          status: 'upcoming',
-          lastWinner: 'Team Adams/White'
-        },
-        Sunday: { 
-          nextDate: 'Sept 17, 2025', 
-          lastAttendance: 20, 
-          avgAttendance: 22,
-          status: 'upcoming',
-          lastWinner: 'Team Johnson/Miller'
-        }
-      };
-
-      return {
-        id: index + 1,
-        day: day,
-        time: league.startTime,
-        ...mockData[day as keyof typeof mockData]
-      };
-    });
+  const getTodayDay = (): string => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[new Date().getDay()];
   };
 
-  const leagueNights = getLeagueNights();
+  // ===================================
+  // LOADING STATES
+  // ===================================
 
-  // Show loading while auth is being checked
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking authentication...</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-200 dark:border-green-700 mx-auto mb-6"></div>
+            <div className="absolute inset-0 animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-green-600 dark:border-t-green-400 mx-auto"></div>
+          </div>
+          <p className="text-gray-600 dark:text-gray-300 font-medium">Checking authentication...</p>
         </div>
       </div>
     );
@@ -152,10 +417,13 @@ function LeaguePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading league details...</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-200 dark:border-green-700 mx-auto mb-6"></div>
+            <div className="absolute inset-0 animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-green-600 dark:border-t-green-400 mx-auto"></div>
+          </div>
+          <p className="text-gray-600 dark:text-gray-300 font-medium">Loading league details...</p>
         </div>
       </div>
     );
@@ -163,16 +431,17 @@ function LeaguePage() {
 
   if (error || !league) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center bg-white p-8 rounded-lg shadow-md">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">League Not Found</h2>
-          <p className="text-gray-600 mb-4">The league you're looking for doesn't exist</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-rose-50 dark:from-slate-900 dark:via-red-900 dark:to-rose-900 flex items-center justify-center">
+        <div className="text-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/50">
+          <div className="text-red-500 dark:text-red-400 text-6xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">League Not Found</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">The league you're looking for doesn't exist or you don't have access to it</p>
           <button 
             onClick={() => navigate('/')} 
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2 mx-auto"
           >
-            Back to Leagues
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Leagues</span>
           </button>
         </div>
       </div>
@@ -180,94 +449,158 @@ function LeaguePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900 transition-all duration-500">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-10 left-10 w-72 h-72 bg-green-300/10 dark:bg-green-500/5 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute top-32 right-10 w-96 h-96 bg-emerald-300/10 dark:bg-emerald-500/5 rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
+        <div className="absolute bottom-10 left-1/3 w-80 h-80 bg-teal-300/10 dark:bg-teal-500/5 rounded-full blur-3xl animate-float" style={{animationDelay: '4s'}}></div>
+      </div>
+
+      {/* Enhanced Header */}
+      <header className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg shadow-lg border-b border-white/20 dark:border-slate-700/50">
+        <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               <button 
                 onClick={() => navigate('/')}
-                className="text-green-600 hover:text-green-700 p-2 rounded-lg hover:bg-green-50"
+                className="flex items-center space-x-2 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 p-3 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300 group"
               >
-                ← Back
+                <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform duration-300" />
+                <span className="font-medium">Back to Leagues</span>
               </button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">{league.name}</h1>
-                <p className="text-gray-600">{league.location}</p>
+              
+              <div className="border-l border-gray-300 dark:border-gray-600 pl-6">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+                  {league.name}
+                </h1>
+                <div className="flex items-center space-x-4 mt-1">
+                  <div className="flex items-center text-gray-600 dark:text-gray-300">
+                    <MapPin className="h-4 w-4 mr-1" />
+                    <span className="text-sm">{league.location}</span>
+                  </div>
+                  <div className="flex items-center text-gray-600 dark:text-gray-300">
+                    <Calendar className="h-4 w-4 mr-1" />
+                    <span className="text-sm">{league.leagueDays.join(', ')}</span>
+                  </div>
+                </div>
               </div>
             </div>
+            
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                Hello, {user?.user_metadata?.full_name || user?.email || 'Player'}
-              </span>
-              <button 
-                onClick={handleSignOut}
-                className="text-sm text-gray-500 hover:text-gray-700"
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full bg-gray-100/80 dark:bg-slate-800/80 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-300 group"
               >
-                Sign Out
+                {theme === 'light' ? (
+                  <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:rotate-12 transition-transform duration-300" />
+                ) : (
+                  <Sun className="h-5 w-5 text-yellow-500 group-hover:rotate-12 transition-transform duration-300" />
+                )}
               </button>
+
+              {user && (
+                <>
+                  <div className="hidden sm:block text-sm text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-slate-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
+                    <span className="text-green-600 dark:text-green-400 font-medium">Hello,</span> {user?.user_metadata?.full_name || user?.email || 'Player'}
+                  </div>
+                  <button 
+                    onClick={handleSignOut}
+                    className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="relative max-w-7xl mx-auto px-4 py-8 space-y-8">
         
-        {/* League Info Banner */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <div className="grid md:grid-cols-3 gap-6">
+        {/* League Overview Hero Section */}
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+          <div className="grid md:grid-cols-3 gap-8">
             <div className="md:col-span-2">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3">About This League</h2>
-              <p className="text-gray-600 mb-4">{league.description}</p>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-900">Schedule:</span>
-                  <span className="ml-2 text-gray-600">
-                    {league.leagueDays.join(', ')} at {league.startTime}
-                  </span>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="p-3 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-2xl">
+                  <Trophy className="h-8 w-8 text-green-600 dark:text-green-400" />
                 </div>
                 <div>
-                  <span className="font-medium text-gray-900">Location:</span>
-                  <span className="ml-2 text-gray-600">{league.address}</span>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">About This League</h2>
                 </div>
-                <div>
-                  <span className="font-medium text-gray-900">Total Members:</span>
-                  <span className="ml-2 text-gray-600">{members.length} players</span>
+              </div>
+              
+              <p className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+                {league.description}
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex items-center space-x-3 p-3 bg-gray-50/50 dark:bg-slate-700/50 rounded-xl">
+                  <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  <div>
+                    <span className="font-medium text-gray-900 dark:text-white">Schedule</span>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {league.leagueDays.join(', ')} at {league.startTime}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-3 p-3 bg-gray-50/50 dark:bg-slate-700/50 rounded-xl">
+                  <MapPin className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  <div>
+                    <span className="font-medium text-gray-900 dark:text-white">Venue</span>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{league.address}</p>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="flex flex-col items-center justify-center space-y-4">
+            
+            {/* Membership Status & Action */}
+            <div className="flex flex-col items-center justify-center space-y-6">
               <div className="text-center">
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-3">
-                  <span className="text-2xl">🏓</span>
+                <div className="w-24 h-24 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-full flex items-center justify-center mb-4 mx-auto shadow-lg">
+                  <span className="text-3xl">🥎</span>
                 </div>
-                <div className="text-sm font-medium text-gray-900">League Status</div>
-                <div className="text-green-600 font-semibold">Active</div>
+                <div className="space-y-2">
+                  <div className="text-lg font-bold text-gray-900 dark:text-white">League Status</div>
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-3 h-3 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-green-600 dark:text-green-400 font-semibold">Active & Thriving</span>
+                  </div>
+                </div>
               </div>
               
-              {/* Join League Button */}
+              {/* Join League Action */}
               {!membershipLoading && (
-                <div className="w-full">
+                <div className="w-full max-w-xs">
                   {isMember ? (
-                    <div className="text-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="text-green-600 font-medium">✓ You're a member!</div>
-                      <div className="text-xs text-green-500 mt-1">Ready to play</div>
+                    <div className="text-center p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border-2 border-green-200 dark:border-green-700 rounded-2xl">
+                      <div className="flex items-center justify-center space-x-2 mb-2">
+                        <UserCheck className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        <span className="text-green-600 dark:text-green-400 font-bold">You're a Member!</span>
+                      </div>
+                      <div className="text-xs text-green-500 dark:text-green-400">Ready to dominate the courts</div>
                     </div>
                   ) : (
                     <button
                       onClick={joinLeague}
                       disabled={joining}
-                      className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-green-400 disabled:to-emerald-400 text-white font-semibold py-4 px-6 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
                     >
                       {joining ? (
-                        <span className="flex items-center justify-center">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Joining...
-                        </span>
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          <span>Joining...</span>
+                        </>
                       ) : (
-                        'Join League'
+                        <>
+                          <Play className="h-5 w-5" />
+                          <span>Join League</span>
+                        </>
                       )}
                     </button>
                   )}
@@ -275,206 +608,404 @@ function LeaguePage() {
               )}
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Stats Dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Total Members */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <span className="text-blue-600 text-xl">👥</span>
-                </div>
+        {/* League Statistics - Responsive Design */}
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 rounded-2xl">
+                <BarChart3 className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
               </div>
-              <div className="ml-4">
-                <div className="text-2xl font-bold text-gray-900">{leagueStats.totalMembers}</div>
-                <div className="text-sm text-gray-600">Total Members</div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">League Statistics</h3>
+                <p className="text-gray-600 dark:text-gray-300">Key performance metrics</p>
               </div>
             </div>
-          </div>
-
-          {/* Games This Month */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <span className="text-green-600 text-xl">🎾</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <div className="text-2xl font-bold text-gray-900">{leagueStats.gamesThisMonth}</div>
-                <div className="text-sm text-gray-600">Games This Month</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Average Attendance */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <span className="text-purple-600 text-xl">📊</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <div className="text-2xl font-bold text-gray-900">{leagueStats.averageAttendance}</div>
-                <div className="text-sm text-gray-600">Avg Attendance</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Total Games */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <span className="text-orange-600 text-xl">🏆</span>
-                </div>
-              </div>
-              <div className="ml-4">
-                <div className="text-2xl font-bold text-gray-900">{leagueStats.totalGamesPlayed}</div>
-                <div className="text-sm text-gray-600">Total Games</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Top Scorers Podium */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">🏆 Top Average Scorers</h3>
-          {leagueStats.topScorers.length > 0 ? (
-            <div className="flex justify-center items-end space-x-4">
-              {/* 2nd Place */}
-              {leagueStats.topScorers[1] && (
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-2">
-                    <span className="text-2xl">🥈</span>
-                  </div>
-                  <div className="bg-gray-100 px-4 py-6 rounded-lg min-h-[100px] flex flex-col justify-end">
-                    <div className="font-semibold text-gray-900">{leagueStats.topScorers[1].name}</div>
-                    <div className="text-lg font-bold text-gray-700">{leagueStats.topScorers[1].avgScore}</div>
-                    <div className="text-xs text-gray-500">{leagueStats.topScorers[1].gamesPlayed} games</div>
-                  </div>
-                </div>
-              )}
-
-              {/* 1st Place */}
-              {leagueStats.topScorers[0] && (
-                <div className="text-center">
-                  <div className="w-20 h-20 bg-yellow-200 rounded-full flex items-center justify-center mb-2">
-                    <span className="text-3xl">🥇</span>
-                  </div>
-                  <div className="bg-yellow-50 border-2 border-yellow-200 px-4 py-8 rounded-lg min-h-[120px] flex flex-col justify-end">
-                    <div className="font-bold text-gray-900">{leagueStats.topScorers[0].name}</div>
-                    <div className="text-xl font-bold text-yellow-600">{leagueStats.topScorers[0].avgScore}</div>
-                    <div className="text-xs text-gray-500">{leagueStats.topScorers[0].gamesPlayed} games</div>
-                  </div>
-                </div>
-              )}
-
-              {/* 3rd Place */}
-              {leagueStats.topScorers[2] && (
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-orange-200 rounded-full flex items-center justify-center mb-2">
-                    <span className="text-2xl">🥉</span>
-                  </div>
-                  <div className="bg-orange-50 px-4 py-6 rounded-lg min-h-[100px] flex flex-col justify-end">
-                    <div className="font-semibold text-gray-900">{leagueStats.topScorers[2].name}</div>
-                    <div className="text-lg font-bold text-orange-600">{leagueStats.topScorers[2].avgScore}</div>
-                    <div className="text-xs text-gray-500">{leagueStats.topScorers[2].gamesPlayed} games</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <div className="text-4xl mb-2">🏆</div>
-              <p>No player statistics available yet</p>
-              <p className="text-sm">Start playing games to see the leaderboard!</p>
-            </div>
-          )}
-        </div>
-
-        {/* League Nights */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">League Nights</h3>
-          <div className="space-y-4">
-            {leagueNights.map((night) => (
-              <div 
-                key={night.id}
-                className="border border-gray-200 rounded-lg p-4 hover:border-green-300 hover:shadow-md transition-all duration-200 cursor-pointer group"
+            
+            {/* Navigation Controls - Only visible on mobile */}
+            <div className="flex items-center space-x-2 lg:hidden">
+              <button
+                onClick={handlePrevStat}
+                className="p-2 rounded-full bg-gray-100/80 dark:bg-slate-700/80 hover:bg-gray-200 dark:hover:bg-slate-600 transition-all duration-300 group"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
-                      <span className="text-green-600 font-semibold">{night.day.slice(0, 3)}</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{night.day} Night League</h4>
-                      <p className="text-sm text-gray-600">Next: {night.nextDate} at {night.time}</p>
-                    </div>
+                <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:-translate-x-0.5 transition-transform duration-300" />
+              </button>
+              <button
+                onClick={handleNextStat}
+                className="p-2 rounded-full bg-gray-100/80 dark:bg-slate-700/80 hover:bg-gray-200 dark:hover:bg-slate-600 transition-all duration-300 group"
+              >
+                <ChevronRight className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:translate-x-0.5 transition-transform duration-300" />
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop Grid Layout - Hidden on mobile */}
+          <div className="hidden lg:grid lg:grid-cols-3 gap-6">
+            {statsArray.map((stat, index) => (
+              <div key={index} className="bg-gray-50/50 dark:bg-slate-700/50 rounded-2xl p-6 border border-gray-200/50 dark:border-slate-600/50 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 bg-gradient-to-br ${stat.bgGradient} rounded-xl`}>
+                    {stat.icon}
                   </div>
-                  
-                  <div className="flex items-center space-x-6 text-sm">
-                    <div className="text-center">
-                      <div className="font-semibold text-gray-900">{night.lastAttendance}</div>
-                      <div className="text-gray-500">Last Session</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-semibold text-gray-900">{night.avgAttendance}</div>
-                      <div className="text-gray-500">Avg Players</div>
-                    </div>
-                    <div className="text-center min-w-[120px]">
-                      <div className="font-medium text-gray-900">Last Winners:</div>
-                      <div className="text-green-600 text-xs">{night.lastWinner}</div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`w-3 h-3 rounded-full ${
-                        night.status === 'upcoming' ? 'bg-green-500' : 'bg-gray-400'
-                      }`}></span>
-                      <span className="text-green-600 group-hover:text-green-700 font-medium">
-                        View Night →
-                      </span>
-                    </div>
-                  </div>
+                  {stat.trend}
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stat.value}</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">{stat.label}</div>
                 </div>
               </div>
             ))}
           </div>
+
+          {/* Mobile Carousel Layout - Hidden on desktop */}
+          <div className="lg:hidden">
+            <div className="relative overflow-hidden rounded-2xl">
+              <div 
+                className="flex transition-transform duration-500 ease-in-out"
+                style={{ transform: `translateX(-${currentStatIndex * 100}%)` }}
+                onTouchStart={(e) => {
+                  const touch = e.touches[0];
+                  const startX = touch.clientX;
+                  
+                  const handleTouchEnd = (endEvent: TouchEvent) => {
+                    const endX = endEvent.changedTouches[0].clientX;
+                    const diff = startX - endX;
+                    
+                    if (Math.abs(diff) > 50) { // Minimum swipe distance
+                      handleSwipe(diff > 0 ? 'left' : 'right');
+                    }
+                    
+                    document.removeEventListener('touchend', handleTouchEnd);
+                  };
+                  
+                  document.addEventListener('touchend', handleTouchEnd);
+                }}
+              >
+                {statsArray.map((stat, index) => (
+                  <div 
+                    key={index}
+                    className="w-full flex-shrink-0 p-2"
+                  >
+                    <div className="bg-gray-50/50 dark:bg-slate-700/50 rounded-2xl p-6 border border-gray-200/50 dark:border-slate-600/50">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className={`p-3 bg-gradient-to-br ${stat.bgGradient} rounded-xl`}>
+                          {stat.icon}
+                        </div>
+                        {stat.trend}
+                      </div>
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stat.value}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">{stat.label}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Indicators - Only on mobile */}
+            <div className="flex justify-center space-x-2 mt-4">
+              {statsArray.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setIsAutoPlaying(false);
+                    setCurrentStatIndex(index);
+                    setTimeout(() => setIsAutoPlaying(true), 10000);
+                  }}
+                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                    index === currentStatIndex 
+                      ? 'bg-green-600 dark:bg-green-400 w-6' 
+                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Auto-play indicator - Only on mobile */}
+            <div className="flex items-center justify-center mt-3">
+              <div className={`flex items-center space-x-2 text-xs ${
+                isAutoPlaying ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'
+              }`}>
+                <div className={`w-1.5 h-1.5 rounded-full ${
+                  isAutoPlaying ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+                }`}></div>
+                <span>{isAutoPlaying ? 'Auto-cycling' : 'Manual'}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Top Players Leaderboard */}
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-gradient-to-br from-yellow-100 to-amber-100 dark:from-yellow-900/50 dark:to-amber-900/50 rounded-2xl">
+                <Crown className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Top Players</h3>
+                <p className="text-gray-600 dark:text-gray-300">League champions leading the pack</p>
+              </div>
+            </div>
+            <button className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium flex items-center space-x-1">
+              <span>View All</span>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          {topPlayers.length > 0 ? (
+            <div className="space-y-4">
+              {/* Top 3 Podium */}
+              <div className="flex justify-center items-end mb-8">
+                <div className="flex items-end space-x-6">
+                {/* 2nd Place */}
+                {topPlayers[1] && (
+                  <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mb-3 shadow-lg">
+                      <Medal className="h-8 w-8 text-gray-600 dark:text-gray-300" />
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 px-4 py-6 rounded-2xl min-h-[120px] flex flex-col justify-center shadow-lg border w-36 text-center">
+                      <div className="font-bold text-gray-900 dark:text-white text-sm">{topPlayers[1].name}</div>
+                      <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">{topPlayers[1].avgScore}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{topPlayers[1].gamesPlayed} games</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{topPlayers[1].winRate}% win rate</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 1st Place */}
+                {topPlayers[0] && (
+                  <div className="flex flex-col items-center">
+                    <div className="w-20 h-20 bg-gradient-to-br from-yellow-300 to-amber-400 rounded-full flex items-center justify-center mb-3 shadow-xl">
+                      <Crown className="h-10 w-10 text-yellow-700" />
+                    </div>
+                    <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border-2 border-yellow-300 dark:border-yellow-600 px-6 py-8 rounded-2xl min-h-[140px] flex flex-col justify-center shadow-xl w-36 text-center">
+                      <div className="font-bold text-gray-900 dark:text-white">{topPlayers[0].name}</div>
+                      {topPlayers[0].isCurrentUser && (
+                        <div className="text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-1 rounded-full mb-1">You!</div>
+                      )}
+                      <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{topPlayers[0].avgScore}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{topPlayers[0].gamesPlayed} games</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{topPlayers[0].winRate}% win rate</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3rd Place */}
+                {topPlayers[2] && (
+                  <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-200 to-red-300 dark:from-orange-800 dark:to-red-700 rounded-full flex items-center justify-center mb-3 shadow-lg">
+                      <Medal className="h-8 w-8 text-orange-700 dark:text-orange-300" />
+                    </div>
+                    <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/30 dark:to-red-900/30 px-4 py-6 rounded-2xl min-h-[120px] flex flex-col justify-center shadow-lg border border-orange-200 dark:border-orange-700 w-36 text-center">
+                      <div className="font-bold text-gray-900 dark:text-white text-sm">{topPlayers[2].name}</div>
+                      <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{topPlayers[2].avgScore}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{topPlayers[2].gamesPlayed} games</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">{topPlayers[2].winRate}% win rate</div>
+                    </div>
+                  </div>
+                )}
+                </div>
+              </div>
+
+              {/* Rest of Top Players */}
+              {topPlayers.slice(3).map((player, index) => (
+                <div key={player.id} className="flex items-center justify-between p-4 bg-gray-50/50 dark:bg-slate-700/50 rounded-xl hover:bg-gray-100/50 dark:hover:bg-slate-600/50 transition-colors duration-200">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-full flex items-center justify-center font-bold text-gray-600 dark:text-gray-300">
+                      {index + 4}
+                    </div>
+                    <div>
+                      <div className="font-semibold text-gray-900 dark:text-white">{player.name}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{player.gamesPlayed} games • {player.winRate}% win rate</div>
+                    </div>
+                  </div>
+                  <div className="text-xl font-bold text-gray-900 dark:text-white">{player.avgScore}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Trophy className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 text-lg">No player statistics available yet</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">Start playing games to see the leaderboard!</p>
+            </div>
+          )}
+        </section>
+
+        {/* Recent Games & League Nights - Two Column Layout */}
+        <div className="grid lg:grid-cols-2 gap-8">
+          
+          {/* Recent Games */}
+          <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-2xl">
+                  <Activity className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Recent Games</h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Latest match results</p>
+                </div>
+              </div>
+              <button className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium">
+                View All
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {recentGames.map((game) => (
+                <div key={game.id} className="p-4 bg-gray-50/50 dark:bg-slate-700/50 rounded-xl border border-gray-200/50 dark:border-slate-600/50">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{game.date}</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">•</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">{game.time}</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">•</span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">Court {game.court}</span>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      game.status === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                      game.status === 'in_progress' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
+                      'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                    }`}>
+                      {game.status === 'completed' ? 'Completed' : 
+                       game.status === 'in_progress' ? 'In Progress' : 'Scheduled'}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4 items-center">
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">{game.team1.player1}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">{game.team1.player2}</div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-gray-900 dark:text-white">
+                        {game.team1.score} - {game.team2.score}
+                      </div>
+                      {game.duration && (
+                        <div className="text-xs text-gray-500 dark:text-gray-400">{game.duration} min</div>
+                      )}
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">{game.team2.player1}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">{game.team2.player2}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* League Nights Schedule */}
+          <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+            <div className="flex items-center space-x-3 mb-6">
+              <div className="p-3 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 rounded-2xl">
+                <Calendar className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">League Nights</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Upcoming sessions</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {leagueNights.map((night) => (
+                <div 
+                  key={night.id}
+                  className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer group ${
+                    night.status === 'today' 
+                      ? 'bg-green-50/80 dark:bg-green-900/20 border-green-200 dark:border-green-700' 
+                      : 'bg-gray-50/50 dark:bg-slate-700/50 border-gray-200/50 dark:border-slate-600/50 hover:border-green-300 dark:hover:border-green-600'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm transition-colors ${
+                        night.status === 'today' 
+                          ? 'bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300' 
+                          : 'bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-300 group-hover:bg-green-200 dark:group-hover:bg-green-800'
+                      }`}>
+                        {night.day.slice(0, 3)}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-900 dark:text-white">{night.day} League</h4>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          {night.status === 'today' ? 'Today' : night.nextDate} at {night.time}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-4 text-sm">
+                      <div className="text-center">
+                        <div className="font-semibold text-gray-900 dark:text-white">{night.avgAttendance}</div>
+                        <div className="text-gray-500 dark:text-gray-400">Avg Players</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-semibold text-gray-900 dark:text-white">{night.upcomingGames}</div>
+                        <div className="text-gray-500 dark:text-gray-400">Games</div>
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-green-600 dark:text-green-400 group-hover:translate-x-1 transition-transform duration-200" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
 
         {/* League Members */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">League Members ({members.length})</h3>
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center space-x-3">
+              <div className="p-3 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-2xl">
+                <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">League Members</h3>
+                <p className="text-gray-600 dark:text-gray-300">{members.length} active players in this league</p>
+              </div>
+            </div>
+            <button className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium flex items-center space-x-1">
+              <span>Manage Members</span>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+
           {members.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {members.map((member) => (
-                <div key={member.id} className="border border-gray-200 rounded-lg p-4 hover:border-green-300 transition-colors">
+                <div key={member.id} className="p-4 bg-gray-50/50 dark:bg-slate-700/50 rounded-xl border border-gray-200/50 dark:border-slate-600/50 hover:border-green-300 dark:hover:border-green-600 transition-all duration-200 group">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
-                      <span className="text-white font-semibold text-sm">
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                      <span className="text-white font-bold text-sm">
                         {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
                       </span>
                     </div>
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">{member.name}</div>
-                      <div className="text-xs text-gray-500 flex items-center space-x-2">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          member.skillLevel === 'Beginner' ? 'bg-blue-100 text-blue-600' :
-                          member.skillLevel === 'Intermediate' ? 'bg-yellow-100 text-yellow-600' :
-                          'bg-red-100 text-red-600'
+                      <div className="font-semibold text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                        {member.name}
+                      </div>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          member.skillLevel === 'Beginner' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' :
+                          member.skillLevel === 'Intermediate' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
+                          'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
                         }`}>
                           {member.skillLevel}
                         </span>
                         {member.role === 'admin' && (
-                          <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded-full text-xs">
+                          <span className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full text-xs font-medium">
                             Admin
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-400 mt-1">
-                        Joined {new Date(member.joinedAt).toLocaleDateString()}
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Member since {new Date(member.joinedAt).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
@@ -482,13 +1013,13 @@ function LeaguePage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-500">
-              <div className="text-4xl mb-2">👥</div>
-              <p>No members yet</p>
-              <p className="text-sm">Be the first to join this league!</p>
+            <div className="text-center py-12">
+              <Users className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 text-lg">No members yet</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">Be the first to join this amazing league!</p>
             </div>
           )}
-        </div>
+        </section>
 
       </main>
     </div>

@@ -1,10 +1,13 @@
 import { useLeagues } from '../hooks/useLeagues'
 import { useAuth } from '../hooks/useAuth'
+import { useTheme } from '../contexts/ThemeContext'
 import { useNavigate } from 'react-router-dom'
+import { Moon, Sun, Sparkles, Zap, Trophy, Users, MapPin, Calendar, Star, ArrowRight, Play } from 'lucide-react'
 
 function LeagueList() {
   const { leagues, loading, error } = useLeagues();
   const { user, signOut } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleViewLeague = (leagueId: number) => {
@@ -26,10 +29,18 @@ function LeagueList() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading leagues...</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-green-200 dark:border-green-700 mx-auto mb-6"></div>
+            <div className="absolute inset-0 animate-spin rounded-full h-16 w-16 border-4 border-transparent border-t-green-600 dark:border-t-green-400 mx-auto"></div>
+          </div>
+          <p className="text-gray-600 dark:text-gray-300 font-medium">Loading leagues...</p>
+          <div className="flex justify-center mt-4 space-x-1">
+            <div className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+            <div className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+            <div className="w-2 h-2 bg-green-600 dark:bg-green-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+          </div>
         </div>
       </div>
     );
@@ -37,17 +48,20 @@ function LeagueList() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center bg-white p-8 rounded-lg shadow-md">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Connection Error</h2>
-          <p className="text-gray-600 mb-4">Failed to connect to the server</p>
-          <p className="text-sm text-red-600">{error}</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-rose-50 dark:from-slate-900 dark:via-red-900 dark:to-rose-900 flex items-center justify-center">
+        <div className="text-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/50">
+          <div className="text-red-500 dark:text-red-400 text-6xl mb-4 animate-bounce">⚠️</div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Connection Error</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">Failed to connect to the server</p>
+          <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg"
+            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
           >
-            Retry
+            <div className="flex items-center space-x-2">
+              <span>Retry</span>
+              <ArrowRight className="h-4 w-4" />
+            </div>
           </button>
         </div>
       </div>
@@ -55,24 +69,45 @@ function LeagueList() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900 transition-all duration-500">
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-10 left-10 w-72 h-72 bg-green-300/10 dark:bg-green-500/5 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute top-32 right-10 w-96 h-96 bg-emerald-300/10 dark:bg-emerald-500/5 rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
+        <div className="absolute bottom-10 left-1/3 w-80 h-80 bg-teal-300/10 dark:bg-teal-500/5 rounded-full blur-3xl animate-float" style={{animationDelay: '4s'}}></div>
+      </div>
+
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <header className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg shadow-lg border-b border-white/20 dark:border-slate-700/50">
+        <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <h1 className="text-2xl font-bold text-green-600">Next-Up</h1>
-              <span className="text-lg">🏓</span>
+            <div className="flex items-center space-x-4">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+                Next-Up
+              </h1>
+              <span className="text-2xl animate-bounce">🥎</span>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full bg-gray-100/80 dark:bg-slate-800/80 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-300 group"
+              >
+                {theme === 'light' ? (
+                  <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:rotate-12 transition-transform duration-300" />
+                ) : (
+                  <Sun className="h-5 w-5 text-yellow-500 group-hover:rotate-12 transition-transform duration-300" />
+                )}
+              </button>
+              
               {user ? (
                 <>
-                  <span className="text-sm text-gray-600">
-                    Hello, {user?.user_metadata?.full_name || user?.email || 'Player'}
-                  </span>
+                  <div className="hidden sm:block text-sm text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-slate-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
+                    <span className="text-green-600 dark:text-green-400 font-medium">Hello,</span> {user?.user_metadata?.full_name || user?.email || 'Player'}
+                  </div>
                   <button 
                     onClick={handleSignOut}
-                    className="text-sm text-gray-500 hover:text-gray-700"
+                    className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
                   >
                     Sign Out
                   </button>
@@ -80,9 +115,10 @@ function LeagueList() {
               ) : (
                 <button 
                   onClick={() => navigate('/auth')}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2"
                 >
-                  Sign In
+                  <span>Sign In</span>
+                  <ArrowRight className="h-4 w-4" />
                 </button>
               )}
             </div>
@@ -90,117 +126,221 @@ function LeagueList() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Discover Pickleball Leagues
+      {/* Hero Section */}
+      <main className="relative">
+        <div className="max-w-7xl mx-auto px-4 py-16">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center space-x-2 bg-green-100/80 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-4 py-2 rounded-full text-sm font-medium mb-6 backdrop-blur-sm">
+              <Zap className="h-4 w-4" />
+              <span>South Africa's Premier Pickleball Platform</span>
+            </div>
+            <h1 className="text-5xl md:text-7xl font-bold mb-6">
+              <span className="bg-gradient-to-r from-slate-900 via-green-600 to-emerald-600 dark:from-white dark:via-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+                Discover Amazing
+              </span>
+              <br />
+              <span className="bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+                Pickleball Leagues
+              </span>
+            </h1>
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">
+              Join dynamic leagues, track your progress, and become part of South Africa's fastest-growing pickleball community. 
+              <span className="font-semibold text-green-600 dark:text-green-400">
+                {!user && 'Sign in to unlock your potential!'}
+              </span>
+            </p>
+            
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+              {!user && (
+                <button 
+                  onClick={() => navigate('/auth')}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center space-x-3"
+                >
+                  <Play className="h-5 w-5" />
+                  <span>Get Started Now</span>
+                </button>
+              )}
+              <button className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-gray-900 dark:text-white px-8 py-4 rounded-2xl font-semibold text-lg border border-gray-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3">
+                <Trophy className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <span>View Leaderboards</span>
+              </button>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">500+</div>
+                <div className="text-gray-600 dark:text-gray-300">Active Players</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">25+</div>
+                <div className="text-gray-600 dark:text-gray-300">Leagues</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">10K+</div>
+                <div className="text-gray-600 dark:text-gray-300">Matches Played</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Leagues Section */}
+      <section className="relative max-w-7xl mx-auto px-4 pb-16">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Active <span className="text-green-600 dark:text-green-400">Leagues</span>
           </h2>
-          <p className="text-gray-600">
-            Browse leagues in your area and find the perfect fit for your skill level. {!user && 'Sign in to join a league!'}
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            Browse leagues in your area and find the perfect fit for your skill level
           </p>
         </div>
 
         {/* League Cards */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
           {leagues.map((league, index) => (
             <div 
               key={league.id}
-              className={`group relative rounded-2xl p-6 transition-all duration-500 ${
+              className={`group relative overflow-hidden rounded-3xl transition-all duration-500 transform hover:scale-105 ${
                 league.isActive 
-                  ? 'bg-white border border-green-200 hover:border-green-300 hover:shadow-lg animate-pulse-glow' 
-                  : 'bg-white/80 border border-slate-200 opacity-75 hover:opacity-90'
+                  ? 'bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border border-green-200/50 dark:border-green-700/50 hover:border-green-300 dark:hover:border-green-600 shadow-xl hover:shadow-2xl hover:shadow-green-500/10 dark:hover:shadow-green-400/10' 
+                  : 'bg-white/60 dark:bg-slate-800/60 backdrop-blur-lg border border-slate-200/50 dark:border-slate-700/50 opacity-75 hover:opacity-90'
               }`}
               style={{ animationDelay: `${index * 100}ms` }}
             >
+              {/* Background Gradient */}
+              <div className={`absolute inset-0 opacity-5 ${
+                league.isActive 
+                  ? 'bg-gradient-to-br from-green-400 to-emerald-600' 
+                  : 'bg-gradient-to-br from-gray-400 to-slate-600'
+              }`}></div>
+              
               {/* Active indicator */}
               {league.isActive && (
-                <div className="absolute top-4 right-4 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              )}
-              
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    {league.name}
-                  </h3>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    league.isActive 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {league.isActive ? 'Active' : 'Inactive'}
+                <div className="absolute top-6 right-6 flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-500 dark:bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-100/80 dark:bg-green-900/30 px-2 py-1 rounded-full backdrop-blur-sm">
+                    LIVE
                   </span>
                 </div>
-                
-                <p className="text-gray-600 text-sm mb-3">
-                  {league.description}
-                </p>
-                
-                <div className="space-y-2 text-sm text-gray-600">
-                  <div className="flex items-center">
-                    <span className="w-4 text-gray-400">📍</span>
-                    <span className="ml-2">{league.location}</span>
+              )}
+              
+              <div className="relative p-8">
+                <div className="mb-6">
+                  <div className="mb-3">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+                      {league.name}
+                    </h3>
                   </div>
-                  <div className="flex items-center">
-                    <span className="w-4 text-gray-400">📅</span>
-                    <span className="ml-2">{league.leagueDays.join(', ')} at {league.startTime}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="w-4 text-gray-400">👥</span>
-                    <span className="ml-2">{league.totalPlayers} members</span>
+                  
+                  <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 leading-relaxed">
+                    {league.description}
+                  </p>
+                  
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center text-gray-600 dark:text-gray-300">
+                      <MapPin className="h-4 w-4 text-green-500 dark:text-green-400 mr-3" />
+                      <span>{league.location}</span>
+                    </div>
+                    <div className="flex items-center text-gray-600 dark:text-gray-300">
+                      <Calendar className="h-4 w-4 text-green-500 dark:text-green-400 mr-3" />
+                      <span>{league.leagueDays.join(', ')} at {league.startTime}</span>
+                    </div>
+                    <div className="flex items-center text-gray-600 dark:text-gray-300">
+                      <Users className="h-4 w-4 text-green-500 dark:text-green-400 mr-3" />
+                      <span>{league.totalPlayers} active members</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="pt-4 border-t border-gray-100">
-                <button 
-                  onClick={() => handleViewLeague(league.id)}
-                  className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-                    league.isActive
-                      ? 'bg-green-600 hover:bg-green-700 text-white'
-                      : 'bg-gray-200 text-gray-500 cursor-not-allowed'
-                  }`}
-                  disabled={!league.isActive}
-                >
-                  {league.isActive ? (user ? 'View League' : 'Join League') : 'Currently Inactive'}
-                </button>
+                
+                <div className="pt-6 border-t border-gray-200/50 dark:border-slate-600/50">
+                  <button 
+                    onClick={() => handleViewLeague(league.id)}
+                    className={`w-full py-3 px-6 rounded-2xl font-semibold transition-all duration-300 flex items-center justify-center space-x-2 ${
+                      league.isActive
+                        ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white transform hover:scale-105 shadow-lg hover:shadow-xl'
+                        : 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                    }`}
+                    disabled={!league.isActive}
+                  >
+                    <span>{league.isActive ? (user ? 'View League' : 'Join League') : 'Currently Inactive'}</span>
+                    {league.isActive && <ArrowRight className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-12 bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="flex items-center space-x-3 p-4 text-left hover:bg-gray-50 rounded-lg transition-colors">
-              <span className="text-2xl">📊</span>
+      </section>
+
+      {/* Quick Actions */}
+      <section className="relative max-w-7xl mx-auto px-4 pb-16">
+        <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Quick Actions
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300">Everything you need to manage your pickleball journey</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <button className="group flex flex-col items-center space-y-4 p-6 text-center hover:bg-green-50/50 dark:hover:bg-green-900/20 rounded-2xl transition-all duration-300 transform hover:scale-105 border border-transparent hover:border-green-200 dark:hover:border-green-700/50">
+              <div className="p-4 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                <Trophy className="h-8 w-8 text-green-600 dark:text-green-400" />
+              </div>
               <div>
-                <div className="font-medium text-gray-900">View Stats</div>
-                <div className="text-sm text-gray-500">See your performance</div>
+                <div className="font-semibold text-gray-900 dark:text-white mb-1">View Stats</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Track your performance and progress</div>
               </div>
             </button>
             
-            <button className="flex items-center space-x-3 p-4 text-left hover:bg-gray-50 rounded-lg transition-colors">
-              <span className="text-2xl">👤</span>
+            <button className="group flex flex-col items-center space-y-4 p-6 text-center hover:bg-blue-50/50 dark:hover:bg-blue-900/20 rounded-2xl transition-all duration-300 transform hover:scale-105 border border-transparent hover:border-blue-200 dark:hover:border-blue-700/50">
+              <div className="p-4 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              </div>
               <div>
-                <div className="font-medium text-gray-900">Edit Profile</div>
-                <div className="text-sm text-gray-500">Update your info</div>
+                <div className="font-semibold text-gray-900 dark:text-white mb-1">Edit Profile</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">Update your information and preferences</div>
               </div>
             </button>
             
-            <button className="flex items-center space-x-3 p-4 text-left hover:bg-gray-50 rounded-lg transition-colors">
-              <span className="text-2xl">🏆</span>
+            <button className="group flex flex-col items-center space-y-4 p-6 text-center hover:bg-purple-50/50 dark:hover:bg-purple-900/20 rounded-2xl transition-all duration-300 transform hover:scale-105 border border-transparent hover:border-purple-200 dark:hover:border-purple-700/50">
+              <div className="p-4 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 rounded-2xl group-hover:scale-110 transition-transform duration-300">
+                <Star className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+              </div>
               <div>
-                <div className="font-medium text-gray-900">Leaderboard</div>
-                <div className="text-sm text-gray-500">See top players</div>
+                <div className="font-semibold text-gray-900 dark:text-white mb-1">Leaderboard</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">See top players and rankings</div>
               </div>
             </button>
           </div>
         </div>
-      </main>
+      </section>
+
+      {/* Footer */}
+      <footer className="relative border-t border-white/20 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 backdrop-blur-lg">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <h3 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+                Next-Up
+              </h3>
+              <span className="text-xl">🥎</span>
+            </div>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              Revolutionizing pickleball leagues across South Africa
+            </p>
+            <div className="flex justify-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
+              <a href="#" className="hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200">About</a>
+              <a href="#" className="hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200">Contact</a>
+              <a href="#" className="hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200">Privacy</a>
+              <a href="#" className="hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200">Terms</a>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
