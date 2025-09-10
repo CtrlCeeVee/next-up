@@ -1,6 +1,9 @@
 // Base API utilities
 // Common functions and configuration for all API calls
 
+// For Vercel deployment, this will be the domain where your app is deployed
+// In development: http://localhost:3001
+// In production: https://your-app-name.vercel.app
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Generic API request handler
@@ -12,6 +15,7 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
       'Content-Type': 'application/json',
       ...options.headers,
     },
+    credentials: 'include', // Important for Supabase auth cookies
     ...options,
   };
 

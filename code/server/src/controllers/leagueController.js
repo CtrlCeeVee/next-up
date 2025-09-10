@@ -162,8 +162,180 @@ const getLeagueTopPlayers = async (req, res) => {
   }
 };
 
+// Check if user is a member of a league
+const checkMembership = async (req, res) => {
+  try {
+    const { id } = req.params; // league id
+    const { user_id } = req.query; // user id from query params
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    const { data: membership, error } = await supabase
+      .from('league_memberships')
+      .select('*')
+      .eq('league_id', id)
+      .eq('user_id', user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        isMember: !!membership,
+        membership: membership || null
+      }
+    });
+
+  } catch (error) {
+    console.error('Error checking membership:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check membership'
+    });
+  }
+};
+
+// Join a league
+const joinLeague = async (req, res) => {
+  try {
+    const { id } = req.params; // league id
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    // Check if user is already a member
+    const { data: existingMembership } = await supabase
+      .from('league_memberships')
+      .select('*')
+      .eq('league_id', id)
+      .eq('user_id', user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (existingMembership) {
+      return res.status(400).json({
+        success: false,
+        error: 'User is already a member of this league'
+      });
+    }
+
+    // Create membership
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .insert({
+        league_id: id,
+        user_id: user_id,
+        role: 'player',
+        is_active: true
+      })
+      .select()
+      .single();
+
+    if (membershipError) {
+      throw membershipError;
+    }
+
+    // Create initial player stats
+    const { data: playerStats, error: statsError } = await supabase
+      .from('player_stats')
+      .insert({
+        user_id: user_id,
+        league_id: id,
+        games_played: 0,
+        games_won: 0,
+        games_lost: 0,
+        total_points: 0,
+        average_points: 0.0
+      })
+      .select()
+      .single();
+
+    if (statsError) {
+      throw statsError;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        membership,
+        playerStats
+      }
+    });
+
+  } catch (error) {
+    console.error('Error joining league:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to join league'
+    });
+  }
+};
+
+// Get league members
+const getLeagueMembers = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data: members, error } = await supabase
+      .from('league_memberships')
+      .select(`
+        *,
+        profiles (
+          full_name,
+          email,
+          skill_level
+        )
+      `)
+      .eq('league_id', id)
+      .eq('is_active', true)
+      .order('joined_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    const formattedMembers = members.map(member => ({
+      id: member.user_id,
+      name: member.profiles.full_name,
+      email: member.profiles.email,
+      skillLevel: member.profiles.skill_level,
+      role: member.role,
+      joinedAt: member.joined_at
+    }));
+
+    res.json({
+      success: true,
+      data: formattedMembers
+    });
+
+  } catch (error) {
+    console.error('Error fetching league members:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch league members'
+    });
+  }
+};
+
 module.exports = {
   getAllLeagues,
   getLeagueById,
-  getLeagueTopPlayers
+  getLeagueTopPlayers,
+  checkMembership,
+  joinLeague,
+  getLeagueMembers
 };

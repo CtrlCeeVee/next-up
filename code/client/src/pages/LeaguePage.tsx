@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLeague } from '../hooks/useLeagues'
 import { useAuth } from '../hooks/useAuth'
+import { useMembership, useLeagueMembers } from '../hooks/useMembership'
 import { useState, useEffect } from 'react'
 
 interface TopPlayer {
@@ -16,6 +17,11 @@ function LeaguePage() {
   const navigate = useNavigate();
   const { league, loading, error } = useLeague(parseInt(leagueId || '0'));
   const { user, loading: authLoading, signOut } = useAuth();
+  const { isMember, loading: membershipLoading, joining, joinLeague } = useMembership(
+    parseInt(leagueId || '0'), 
+    user?.id || null
+  );
+  const { members, loading: membersLoading } = useLeagueMembers(parseInt(leagueId || '0'));
   const [topPlayers, setTopPlayers] = useState<TopPlayer[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
 
@@ -56,9 +62,9 @@ function LeaguePage() {
 
   // League stats derived from real data
   const leagueStats = {
-    totalMembers: league?.totalPlayers || 0,
+    totalMembers: members.length, // Use real membership count
     gamesThisMonth: 24, // This would come from a games table later
-    averageAttendance: Math.round((league?.totalPlayers || 0) * 0.7), // Estimate 70% attendance
+    averageAttendance: Math.round(members.length * 0.7), // Estimate 70% attendance
     totalGamesPlayed: 156, // This would come from a games table later
     topScorers: topPlayers.slice(0, 3) // Use real top players data
   };
@@ -228,11 +234,11 @@ function LeaguePage() {
                 </div>
                 <div>
                   <span className="font-medium text-gray-900">Total Members:</span>
-                  <span className="ml-2 text-gray-600">{league.totalPlayers} players</span>
+                  <span className="ml-2 text-gray-600">{members.length} players</span>
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center space-y-4">
               <div className="text-center">
                 <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-3">
                   <span className="text-2xl">🏓</span>
@@ -240,6 +246,33 @@ function LeaguePage() {
                 <div className="text-sm font-medium text-gray-900">League Status</div>
                 <div className="text-green-600 font-semibold">Active</div>
               </div>
+              
+              {/* Join League Button */}
+              {!membershipLoading && (
+                <div className="w-full">
+                  {isMember ? (
+                    <div className="text-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="text-green-600 font-medium">✓ You're a member!</div>
+                      <div className="text-xs text-green-500 mt-1">Ready to play</div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={joinLeague}
+                      disabled={joining}
+                      className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+                    >
+                      {joining ? (
+                        <span className="flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Joining...
+                        </span>
+                      ) : (
+                        'Join League'
+                      )}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -364,7 +397,7 @@ function LeaguePage() {
         </div>
 
         {/* League Nights */}
-        <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <h3 className="text-xl font-semibold text-gray-900 mb-6">League Nights</h3>
           <div className="space-y-4">
             {leagueNights.map((night) => (
@@ -409,6 +442,52 @@ function LeaguePage() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* League Members */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-xl font-semibold text-gray-900 mb-6">League Members ({members.length})</h3>
+          {members.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {members.map((member) => (
+                <div key={member.id} className="border border-gray-200 rounded-lg p-4 hover:border-green-300 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                      <span className="text-white font-semibold text-sm">
+                        {member.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">{member.name}</div>
+                      <div className="text-xs text-gray-500 flex items-center space-x-2">
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          member.skillLevel === 'Beginner' ? 'bg-blue-100 text-blue-600' :
+                          member.skillLevel === 'Intermediate' ? 'bg-yellow-100 text-yellow-600' :
+                          'bg-red-100 text-red-600'
+                        }`}>
+                          {member.skillLevel}
+                        </span>
+                        {member.role === 'admin' && (
+                          <span className="px-2 py-1 bg-purple-100 text-purple-600 rounded-full text-xs">
+                            Admin
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        Joined {new Date(member.joinedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <div className="text-4xl mb-2">👥</div>
+              <p>No members yet</p>
+              <p className="text-sm">Be the first to join this league!</p>
+            </div>
+          )}
         </div>
 
       </main>
