@@ -229,8 +229,8 @@ const checkInPlayer = async (req, res) => {
 
     const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
 
-    // Check if user is already checked in
-    const { data: existingCheckin, error: existingError } = await supabase
+    // Check if user is already checked in (active)
+    const { data: activeCheckin, error: activeError } = await supabase
       .from('league_night_checkins')
       .select('*')
       .eq('league_night_instance_id', instance.id)
@@ -238,25 +238,52 @@ const checkInPlayer = async (req, res) => {
       .eq('is_active', true)
       .single();
 
-    if (!existingError && existingCheckin) {
+    if (!activeError && activeCheckin) {
       return res.status(400).json({
         success: false,
         error: 'User is already checked in'
       });
     }
 
-    // Create check-in
-    const { data: checkin, error: checkinError } = await supabase
+    // Check if user has an inactive checkin that we can reactivate
+    const { data: inactiveCheckin, error: inactiveError } = await supabase
       .from('league_night_checkins')
-      .insert({
-        league_night_instance_id: instance.id,
-        user_id: user_id,
-        is_active: true
-      })
-      .select()
+      .select('*')
+      .eq('league_night_instance_id', instance.id)
+      .eq('user_id', user_id)
+      .eq('is_active', false)
       .single();
 
-    if (checkinError) throw checkinError;
+    let checkin;
+    if (!inactiveError && inactiveCheckin) {
+      // Reactivate existing checkin
+      const { data: reactivatedCheckin, error: reactivateError } = await supabase
+        .from('league_night_checkins')
+        .update({ 
+          is_active: true,
+          checked_in_at: new Date().toISOString()
+        })
+        .eq('id', inactiveCheckin.id)
+        .select()
+        .single();
+
+      if (reactivateError) throw reactivateError;
+      checkin = reactivatedCheckin;
+    } else {
+      // Create new check-in
+      const { data: newCheckin, error: checkinError } = await supabase
+        .from('league_night_checkins')
+        .insert({
+          league_night_instance_id: instance.id,
+          user_id: user_id,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (checkinError) throw checkinError;
+      checkin = newCheckin;
+    }
 
     res.json({
       success: true,
@@ -331,22 +358,15 @@ const createPartnershipRequest = async (req, res) => {
       });
     }
 
-    // Check if there's already a pending request between these players
-    const { data: existingRequests, error: requestError } = await supabase
+    // Clean up any existing requests between these players (regardless of status)
+    // This prevents unique constraint violations from old requests
+    const { error: cleanupError } = await supabase
       .from('partnership_requests')
-      .select('*')
+      .delete()
       .eq('league_night_instance_id', instance.id)
-      .or(`and(requester_id.eq.${requester_id},requested_id.eq.${requested_id}),and(requester_id.eq.${requested_id},requested_id.eq.${requester_id})`)
-      .eq('status', 'pending');
+      .or(`and(requester_id.eq.${requester_id},requested_id.eq.${requested_id}),and(requester_id.eq.${requested_id},requested_id.eq.${requester_id})`);
 
-    if (requestError) throw requestError;
-
-    if (existingRequests.length > 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'There is already a pending partnership request between these players'
-      });
-    }
+    if (cleanupError) throw cleanupError;
 
     // Create partnership request
     const { data: request, error: insertError } = await supabase
@@ -613,10 +633,10 @@ const uncheckPlayer = async (req, res) => {
 
     if (partnershipError) throw partnershipError;
 
-    // Reject any pending partnership requests involving this user
+    // Delete any pending partnership requests involving this user
     const { error: requestError } = await supabase
       .from('partnership_requests')
-      .update({ status: 'rejected' })
+      .delete()
       .eq('league_night_instance_id', instance.id)
       .or(`requester_id.eq.${user_id},requested_id.eq.${user_id}`)
       .eq('status', 'pending');
@@ -673,6 +693,16 @@ const removePartnership = async (req, res) => {
       .eq('is_active', true);
 
     if (partnershipError) throw partnershipError;
+
+    // Clean up any partnership requests involving this user for this league night
+    // This allows them to create new requests after removing a partnership
+    const { error: requestCleanupError } = await supabase
+      .from('partnership_requests')
+      .delete()
+      .eq('league_night_instance_id', instance.id)
+      .or(`requester_id.eq.${user_id},requested_id.eq.${user_id}`);
+
+    if (requestCleanupError) throw requestCleanupError;
 
     res.json({
       success: true,
