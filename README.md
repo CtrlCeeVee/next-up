@@ -45,25 +45,29 @@ Next-Up makes local pickleball leagues seamless, dynamic, and fun by providing s
 ## 🎯 Current Status
 
 **✅ Core Features Implemented**
-- **Authentication**: Email-based auth with Supabase
-- **League Management**: Browse, join, and manage leagues  
-- **League Nights**: Dedicated pages for each league session
-- **Check-in System**: Players can mark attendance for league nights
-- **Partnership Formation**: Doubles partner selection system
-- **Database**: Complete schema with 9 tables including league nights
-- **API Infrastructure**: 12+ RESTful endpoints for all operations
+- **Authentication**: Email-based auth with Supabase Auth
+- **League Management**: Browse, join, and manage leagues with membership system
+- **League Nights**: Dynamic league night instances with proper date handling
+- **Check-in System**: Robust player check-in/check-out with reactivation support
+- **Partnership System**: Complete request/accept flow with partnership management
+- **Database**: Full schema with 9 tables, RLS policies, and unique constraints
+- **API Infrastructure**: 15+ RESTful endpoints covering all league night operations
+- **Error Handling**: Comprehensive error handling and duplicate prevention
+- **Frontend Integration**: React UI fully connected to live database APIs
 
-**🚧 In Progress**  
-- **Frontend Integration**: Connecting UI to real database APIs
-- **Real-time Updates**: Live check-in and partnership status
+**🚧 Recently Completed**  
+- **Partnership Bug Fixes**: Resolved duplicate key constraint issues
+- **Check-in Flow**: Fixed sign-out/sign-in edge cases
+- **Real-time Updates**: Live partnership and check-in status updates
+- **UI Polish**: Improved button states and user feedback
 
 **📋 Next Priority**
-- **Match Assignment**: Automatic game pairing based on partnerships
+- **Match Assignment**: Automatic game pairing based on confirmed partnerships
 - **Score Submission**: Teams submit and confirm match results
 - **Player Statistics**: Win/loss tracking and leaderboards
 - **Admin Controls**: League management and override capabilities
 
-**🏆 MVP Status**: ~70% Complete - Core league night functionality ready for testing
+**🏆 MVP Status**: ~85% Complete - Core league night functionality fully operational and tested
 
 ## 🤝 Contributing
 

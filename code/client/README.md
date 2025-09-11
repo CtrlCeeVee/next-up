@@ -1,69 +1,83 @@
-# React + TypeScript + Vite
+# 🏓 Next-Up Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**React + TypeScript frontend for the Next-Up pickleball league management system.**
 
-Currently, two official plugins are available:
+Built with Vite for lightning-fast development and optimized production builds.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Quick Start
 
-## Expanding the ESLint configuration
+```bash
+# Install dependencies
+npm install
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+# Start development server
+npm run dev
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+# Build for production
+npm run build
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Preview production build
+npm run preview
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🛠 Tech Stack
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **React 18** - Latest React with concurrent features
+- **TypeScript** - Full type safety and IntelliSense
+- **Vite** - Fast build tool with HMR
+- **Tailwind CSS** - Utility-first CSS framework
+- **React Router** - Client-side routing
+- **Supabase** - Authentication and database client
+- **Lucide React** - Beautiful icon library
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## 📁 Project Structure
+
 ```
+src/
+├── components/        # Reusable UI components
+│   ├── auth/         # Authentication forms
+│   └── ...           # Other component categories
+├── contexts/         # React Context providers
+├── hooks/           # Custom React hooks
+├── pages/           # Page components
+├── services/        # API services and Supabase client
+├── App.tsx          # Main application component
+└── main.tsx         # Application entry point
+```
+
+## 🔧 Key Features
+
+- **Responsive Design** - Mobile-first approach with Tailwind CSS
+- **Type Safety** - Full TypeScript integration
+- **Real-time Updates** - Live data with Supabase subscriptions
+- **Modern React** - Hooks, Context API, and functional components
+- **Fast Development** - Vite HMR for instant feedback
+- **Production Ready** - Optimized builds with code splitting
+
+## 🌐 Environment Setup
+
+ Create `.env.local` with:
+
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_API_URL=http://localhost:3001
+```
+
+## 📝 Development Guidelines
+
+- Use TypeScript interfaces for all props and data structures
+- Follow React best practices with hooks and functional components
+- Use Tailwind CSS for styling with consistent design patterns
+- Implement proper error boundaries and loading states
+- Write descriptive commit messages and component documentation
+
+## 🔗 Related
+
+- **Backend**: `../server/` - Express.js API server
+- **Database**: Supabase PostgreSQL with Row Level Security
+- **Documentation**: `../../Docs/` - Project specifications and guides
+
+---
+
+*Built with ❤️ for South African pickleball communities*

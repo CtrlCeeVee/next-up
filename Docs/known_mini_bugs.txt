@@ -1,0 +1,2 @@
+1. You can play in a league you havent registered for
+2. If you send a request to someone who accepts someone elses request their request will just be stuck there forever.
