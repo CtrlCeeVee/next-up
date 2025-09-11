@@ -163,19 +163,30 @@ JWT_SECRET=your_jwt_secret_here
 
 ## API Endpoints
 
-### Current Endpoints
+### Core League Endpoints (Implemented)
 - `GET /` - Server information
 - `GET /health` - Health check
-- `GET /api/leagues` - Get all leagues (mock data)
+- `GET /api/leagues` - Get all leagues with member counts and schedule
+- `GET /api/leagues/:id` - Get specific league details
+- `GET /api/leagues/:id/top-players` - Get top players for a league
+- `GET /api/leagues/:id/membership` - Check if user is a member
+- `POST /api/leagues/:id/join` - Join a league
+- `GET /api/leagues/:id/members` - Get league members
+
+### League Night Endpoints (Implemented)
+- `GET /api/leagues/:leagueId/nights/:nightId` - Get league night details
+- `GET /api/leagues/:leagueId/nights/:nightId/checkins` - Get checked-in players
+- `POST /api/leagues/:leagueId/nights/:nightId/checkin` - Check in player
+- `POST /api/leagues/:leagueId/nights/:nightId/partnership` - Create partnership
 
 ### Planned Endpoints
 - `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `GET /api/leagues/:id` - Get specific league
-- `POST /api/leagues/:id/checkin` - Check into league
+- `POST /api/auth/register` - User registration  
 - `GET /api/leagues/:id/matches` - Get league matches
 - `POST /api/matches/:id/score` - Submit match score
 - `GET /api/users/:id/stats` - Get user statistics
+- `POST /api/leagues/:leagueId/nights/:nightId/partnership-request` - Send partnership request
+- `POST /api/leagues/:leagueId/nights/:nightId/partnership-accept` - Accept partnership request
 
 ---
 

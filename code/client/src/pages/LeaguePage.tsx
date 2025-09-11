@@ -129,6 +129,11 @@ function LeaguePage() {
   const [currentStatIndex, setCurrentStatIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
+  // Handle league night navigation
+  const handleLeagueNightClick = (nightId: string) => {
+    navigate(`/league/${leagueId}/night/${nightId}`);
+  };
+
   // ===================================
   // AUTHENTICATION REDIRECT
   // TODO: This logic will remain the same
@@ -249,7 +254,8 @@ function LeaguePage() {
           lastAttendance: Math.floor(Math.random() * 15) + 20,
           avgAttendance: Math.floor(Math.random() * 10) + 25,
           upcomingGames: Math.floor(Math.random() * 8) + 4,
-          status: day === getTodayDay() ? 'today' : 'upcoming' as any,
+          // For testing purposes, make the first league night "today" so we can test check-in
+          status: index === 0 ? 'today' : (day === getTodayDay() ? 'today' : 'upcoming') as any,
           lastWinners: ['Team Rodriguez/Chen', 'Team Mitchell/Wilson'],
           courtsAvailable: 4
         }));
@@ -378,23 +384,35 @@ function LeaguePage() {
     }
   };
 
-  const getNextDateForDay = (day: string): string => {
-    // TODO: Implement proper date calculation
-    const dates: { [key: string]: string } = {
-      'Monday': 'Jan 20, 2025',
-      'Tuesday': 'Jan 21, 2025', 
-      'Wednesday': 'Jan 22, 2025',
-      'Thursday': 'Jan 23, 2025',
-      'Friday': 'Jan 24, 2025',
-      'Saturday': 'Jan 25, 2025',
-      'Sunday': 'Jan 26, 2025'
-    };
-    return dates[day] || 'TBD';
+  const getNextDateForDay = (dayName: string): string => {
+    const today = new Date();
+    // Convert to SAST (UTC+2)
+    const sastOffset = 2 * 60; // SAST is UTC+2
+    const utc = today.getTime() + (today.getTimezoneOffset() * 60000);
+    const sastTime = new Date(utc + (sastOffset * 60000));
+    
+    const targetDay = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].indexOf(dayName);
+    const todayDay = sastTime.getDay();
+    let daysUntilTarget = targetDay - todayDay;
+    
+    if (daysUntilTarget <= 0) {
+      daysUntilTarget += 7;
+    }
+    
+    const targetDate = new Date(sastTime);
+    targetDate.setDate(sastTime.getDate() + daysUntilTarget);
+    
+    return targetDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   const getTodayDay = (): string => {
+    const today = new Date();
+    // Convert to SAST (UTC+2)
+    const sastOffset = 2 * 60; // SAST is UTC+2
+    const utc = today.getTime() + (today.getTimezoneOffset() * 60000);
+    const sastTime = new Date(utc + (sastOffset * 60000));
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return days[new Date().getDay()];
+    return days[sastTime.getDay()];
   };
 
   // ===================================
@@ -917,15 +935,16 @@ function LeaguePage() {
               {leagueNights.map((night) => (
                 <div 
                   key={night.id}
-                  className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer group ${
+                  onClick={() => handleLeagueNightClick(night.id)}
+                  className={`p-6 rounded-2xl border-2 transition-all duration-200 cursor-pointer group hover:scale-[1.02] hover:shadow-xl ${
                     night.status === 'today' 
-                      ? 'bg-green-50/80 dark:bg-green-900/20 border-green-200 dark:border-green-700' 
+                      ? 'bg-green-50/80 dark:bg-green-900/20 border-green-200 dark:border-green-700 shadow-green-100 dark:shadow-green-900/20' 
                       : 'bg-gray-50/50 dark:bg-slate-700/50 border-gray-200/50 dark:border-slate-600/50 hover:border-green-300 dark:hover:border-green-600'
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm transition-colors ${
+                    <div className="flex items-center space-x-6">
+                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-lg transition-colors ${
                         night.status === 'today' 
                           ? 'bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300' 
                           : 'bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-300 group-hover:bg-green-200 dark:group-hover:bg-green-800'
@@ -933,23 +952,23 @@ function LeaguePage() {
                         {night.day.slice(0, 3)}
                       </div>
                       <div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">{night.day} League</h4>
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                        <h4 className="text-lg font-bold text-gray-900 dark:text-white">{night.day} League</h4>
+                        <p className="text-base text-gray-600 dark:text-gray-300">
                           {night.status === 'today' ? 'Today' : night.nextDate} at {night.time}
                         </p>
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-6">
                       <div className="text-center">
-                        <div className="font-semibold text-gray-900 dark:text-white">{night.avgAttendance}</div>
-                        <div className="text-gray-500 dark:text-gray-400">Avg Players</div>
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">{night.avgAttendance}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Avg Players</div>
                       </div>
                       <div className="text-center">
-                        <div className="font-semibold text-gray-900 dark:text-white">{night.upcomingGames}</div>
-                        <div className="text-gray-500 dark:text-gray-400">Games</div>
+                        <div className="text-xl font-bold text-gray-900 dark:text-white">{night.upcomingGames}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">Games</div>
                       </div>
-                      <ArrowRight className="h-4 w-4 text-green-600 dark:text-green-400 group-hover:translate-x-1 transition-transform duration-200" />
+                      <ArrowRight className="h-6 w-6 text-green-600 dark:text-green-400 group-hover:translate-x-2 transition-transform duration-200" />
                     </div>
                   </div>
                 </div>

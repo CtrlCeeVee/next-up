@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth'
 import { ThemeProvider } from './contexts/ThemeContext'
 import LeagueList from './pages/LeagueList.tsx'
 import LeaguePage from './pages/LeaguePage.tsx'
+import LeagueNightPage from './pages/LeagueNightPage.tsx'
 import { AuthPage } from './pages/AuthPage'
 import './App.css'
 
@@ -24,6 +25,10 @@ function App() {
           <Route 
             path="/league/:leagueId" 
             element={<LeaguePage />} 
+          />
+          <Route 
+            path="/league/:leagueId/night/:nightId" 
+            element={<LeagueNightPage />} 
           />
         </Routes>
       </Router>

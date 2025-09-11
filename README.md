@@ -44,21 +44,26 @@ Next-Up makes local pickleball leagues seamless, dynamic, and fun by providing s
 
 ## 🎯 Current Status
 
-**✅ MVP Foundation**
-- League selection landing page
-- Basic Express API server
-- Mock data and endpoints
-- Development setup scripts
+**✅ Core Features Implemented**
+- **Authentication**: Email-based auth with Supabase
+- **League Management**: Browse, join, and manage leagues  
+- **League Nights**: Dedicated pages for each league session
+- **Check-in System**: Players can mark attendance for league nights
+- **Partnership Formation**: Doubles partner selection system
+- **Database**: Complete schema with 9 tables including league nights
+- **API Infrastructure**: 12+ RESTful endpoints for all operations
 
-**🚧 In Progress**
-- Supabase integration
-- User authentication
-- League night check-in flow
+**🚧 In Progress**  
+- **Frontend Integration**: Connecting UI to real database APIs
+- **Real-time Updates**: Live check-in and partnership status
 
-**📋 Next Up**
-- Player matching algorithm
-- Real-time scoring
-- Statistics tracking
+**📋 Next Priority**
+- **Match Assignment**: Automatic game pairing based on partnerships
+- **Score Submission**: Teams submit and confirm match results
+- **Player Statistics**: Win/loss tracking and leaderboards
+- **Admin Controls**: League management and override capabilities
+
+**🏆 MVP Status**: ~70% Complete - Core league night functionality ready for testing
 
 ## 🤝 Contributing
 
