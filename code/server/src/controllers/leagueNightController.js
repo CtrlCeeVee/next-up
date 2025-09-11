@@ -275,20 +275,20 @@ const checkInPlayer = async (req, res) => {
   }
 };
 
-// POST /api/leagues/:leagueId/nights/:nightId/partnership
-const createPartnership = async (req, res) => {
+// POST /api/leagues/:leagueId/nights/:nightId/partnership-request
+const createPartnershipRequest = async (req, res) => {
   try {
     const { leagueId, nightId } = req.params;
-    const { player1_id, player2_id } = req.body;
+    const { requester_id, requested_id } = req.body;
 
-    if (!player1_id || !player2_id) {
+    if (!requester_id || !requested_id) {
       return res.status(400).json({
         success: false,
-        error: 'Both player IDs are required'
+        error: 'Both requester and requested player IDs are required'
       });
     }
 
-    if (player1_id === player2_id) {
+    if (requester_id === requested_id) {
       return res.status(400).json({
         success: false,
         error: 'Cannot partner with yourself'
@@ -302,7 +302,7 @@ const createPartnership = async (req, res) => {
       .from('league_night_checkins')
       .select('user_id')
       .eq('league_night_instance_id', instance.id)
-      .in('user_id', [player1_id, player2_id])
+      .in('user_id', [requester_id, requested_id])
       .eq('is_active', true);
 
     if (checkinsError) throw checkinsError;
@@ -314,12 +314,12 @@ const createPartnership = async (req, res) => {
       });
     }
 
-    // Check if either player already has a partnership
+    // Check if either player already has a confirmed partnership
     const { data: existingPartnerships, error: existingError } = await supabase
       .from('confirmed_partnerships')
       .select('*')
       .eq('league_night_instance_id', instance.id)
-      .or(`player1_id.eq.${player1_id},player2_id.eq.${player1_id},player1_id.eq.${player2_id},player2_id.eq.${player2_id}`)
+      .or(`player1_id.eq.${requester_id},player2_id.eq.${requester_id},player1_id.eq.${requested_id},player2_id.eq.${requested_id}`)
       .eq('is_active', true);
 
     if (existingError) throw existingError;
@@ -327,17 +327,120 @@ const createPartnership = async (req, res) => {
     if (existingPartnerships.length > 0) {
       return res.status(400).json({
         success: false,
-        error: 'One or both players already have a partnership'
+        error: 'One or both players already have a confirmed partnership'
       });
     }
 
-    // Create partnership
+    // Check if there's already a pending request between these players
+    const { data: existingRequests, error: requestError } = await supabase
+      .from('partnership_requests')
+      .select('*')
+      .eq('league_night_instance_id', instance.id)
+      .or(`and(requester_id.eq.${requester_id},requested_id.eq.${requested_id}),and(requester_id.eq.${requested_id},requested_id.eq.${requester_id})`)
+      .eq('status', 'pending');
+
+    if (requestError) throw requestError;
+
+    if (existingRequests.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'There is already a pending partnership request between these players'
+      });
+    }
+
+    // Create partnership request
+    const { data: request, error: insertError } = await supabase
+      .from('partnership_requests')
+      .insert({
+        league_night_instance_id: instance.id,
+        requester_id: requester_id,
+        requested_id: requested_id,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+
+    res.json({
+      success: true,
+      data: {
+        request,
+        message: 'Partnership request sent successfully'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error creating partnership request:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create partnership request'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/partnership-accept
+const acceptPartnershipRequest = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { request_id, user_id } = req.body;
+
+    if (!request_id || !user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Request ID and user ID are required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Get the partnership request
+    const { data: request, error: requestError } = await supabase
+      .from('partnership_requests')
+      .select('*')
+      .eq('id', request_id)
+      .eq('league_night_instance_id', instance.id)
+      .eq('requested_id', user_id)
+      .eq('status', 'pending')
+      .single();
+
+    if (requestError || !request) {
+      return res.status(404).json({
+        success: false,
+        error: 'Partnership request not found or not authorized'
+      });
+    }
+
+    // Check if either player already has a confirmed partnership
+    const { data: existingPartnerships, error: existingError } = await supabase
+      .from('confirmed_partnerships')
+      .select('*')
+      .eq('league_night_instance_id', instance.id)
+      .or(`player1_id.eq.${request.requester_id},player2_id.eq.${request.requester_id},player1_id.eq.${request.requested_id},player2_id.eq.${request.requested_id}`)
+      .eq('is_active', true);
+
+    if (existingError) throw existingError;
+
+    if (existingPartnerships.length > 0) {
+      // Update request status to rejected since someone already has a partnership
+      await supabase
+        .from('partnership_requests')
+        .update({ status: 'rejected' })
+        .eq('id', request_id);
+
+      return res.status(400).json({
+        success: false,
+        error: 'One or both players already have a confirmed partnership'
+      });
+    }
+
+    // Create confirmed partnership
     const { data: partnership, error: partnershipError } = await supabase
       .from('confirmed_partnerships')
       .insert({
         league_night_instance_id: instance.id,
-        player1_id: player1_id,
-        player2_id: player2_id,
+        player1_id: request.requester_id,
+        player2_id: request.requested_id,
         is_active: true
       })
       .select()
@@ -345,19 +448,244 @@ const createPartnership = async (req, res) => {
 
     if (partnershipError) throw partnershipError;
 
+    // Update request status to accepted
+    await supabase
+      .from('partnership_requests')
+      .update({ status: 'accepted' })
+      .eq('id', request_id);
+
+    // Reject any other pending requests involving these players
+    await supabase
+      .from('partnership_requests')
+      .update({ status: 'rejected' })
+      .eq('league_night_instance_id', instance.id)
+      .or(`requester_id.eq.${request.requester_id},requested_id.eq.${request.requester_id},requester_id.eq.${request.requested_id},requested_id.eq.${request.requested_id}`)
+      .eq('status', 'pending')
+      .neq('id', request_id);
+
     res.json({
       success: true,
       data: {
         partnership,
-        message: 'Partnership created successfully'
+        message: 'Partnership request accepted successfully'
       }
     });
 
   } catch (error) {
-    console.error('Error creating partnership:', error);
+    console.error('Error accepting partnership request:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to create partnership'
+      error: 'Failed to accept partnership request'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/partnership-reject
+const rejectPartnershipRequest = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { request_id, user_id } = req.body;
+
+    if (!request_id || !user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Request ID and user ID are required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Get the partnership request
+    const { data: request, error: requestError } = await supabase
+      .from('partnership_requests')
+      .select('*')
+      .eq('id', request_id)
+      .eq('league_night_instance_id', instance.id)
+      .eq('requested_id', user_id)
+      .eq('status', 'pending')
+      .single();
+
+    if (requestError || !request) {
+      return res.status(404).json({
+        success: false,
+        error: 'Partnership request not found or not authorized'
+      });
+    }
+
+    // Update request status to rejected
+    const { error: updateError } = await supabase
+      .from('partnership_requests')
+      .update({ status: 'rejected' })
+      .eq('id', request_id);
+
+    if (updateError) throw updateError;
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Partnership request rejected successfully'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error rejecting partnership request:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to reject partnership request'
+    });
+  }
+};
+
+// GET /api/leagues/:leagueId/nights/:nightId/partnership-requests
+const getPartnershipRequests = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { user_id } = req.query;
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Get partnership requests for this user
+    const { data: requests, error } = await supabase
+      .from('partnership_requests')
+      .select(`
+        *,
+        requester:profiles!partnership_requests_requester_id_fkey (
+          id,
+          full_name,
+          skill_level
+        ),
+        requested:profiles!partnership_requests_requested_id_fkey (
+          id,
+          full_name,
+          skill_level
+        )
+      `)
+      .eq('league_night_instance_id', instance.id)
+      .or(`requester_id.eq.${user_id},requested_id.eq.${user_id}`)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data: requests || []
+    });
+
+  } catch (error) {
+    console.error('Error fetching partnership requests:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch partnership requests'
+    });
+  }
+};
+
+// DELETE /api/leagues/:leagueId/nights/:nightId/checkin
+const uncheckPlayer = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // First, remove any confirmed partnerships involving this user
+    const { error: partnershipError } = await supabase
+      .from('confirmed_partnerships')
+      .update({ is_active: false })
+      .eq('league_night_instance_id', instance.id)
+      .or(`player1_id.eq.${user_id},player2_id.eq.${user_id}`)
+      .eq('is_active', true);
+
+    if (partnershipError) throw partnershipError;
+
+    // Reject any pending partnership requests involving this user
+    const { error: requestError } = await supabase
+      .from('partnership_requests')
+      .update({ status: 'rejected' })
+      .eq('league_night_instance_id', instance.id)
+      .or(`requester_id.eq.${user_id},requested_id.eq.${user_id}`)
+      .eq('status', 'pending');
+
+    if (requestError) throw requestError;
+
+    // Remove the check-in
+    const { error: checkinError } = await supabase
+      .from('league_night_checkins')
+      .update({ is_active: false })
+      .eq('league_night_instance_id', instance.id)
+      .eq('user_id', user_id)
+      .eq('is_active', true);
+
+    if (checkinError) throw checkinError;
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Successfully unchecked player and removed partnerships'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error unchecking player:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to uncheck player'
+    });
+  }
+};
+
+// DELETE /api/leagues/:leagueId/nights/:nightId/partnership
+const removePartnership = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Remove confirmed partnership involving this user
+    const { error: partnershipError } = await supabase
+      .from('confirmed_partnerships')
+      .update({ is_active: false })
+      .eq('league_night_instance_id', instance.id)
+      .or(`player1_id.eq.${user_id},player2_id.eq.${user_id}`)
+      .eq('is_active', true);
+
+    if (partnershipError) throw partnershipError;
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Partnership removed successfully'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error removing partnership:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to remove partnership'
     });
   }
 };
@@ -366,5 +694,10 @@ module.exports = {
   getLeagueNight,
   getCheckedInPlayers,
   checkInPlayer,
-  createPartnership
+  createPartnershipRequest,
+  acceptPartnershipRequest,
+  rejectPartnershipRequest,
+  getPartnershipRequests,
+  uncheckPlayer,
+  removePartnership
 };

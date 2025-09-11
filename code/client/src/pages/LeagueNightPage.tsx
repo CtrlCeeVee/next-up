@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useLeague } from '../hooks/useLeagues'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../contexts/ThemeContext'
-import { leagueNightService, type CheckedInPlayer } from '../services/api/leagueNights'
+import { leagueNightService, type CheckedInPlayer, type PartnershipRequest } from '../services/api/leagueNights'
 import { useState, useEffect } from 'react'
 import { 
   ArrowLeft, 
@@ -18,7 +18,11 @@ import {
   AlertCircle,
   UserCheck,
   UserPlus,
-  Heart
+  Heart,
+  UserMinus,
+  X,
+  Check,
+  Send
 } from 'lucide-react'
 
 interface LeagueNight {
@@ -48,9 +52,16 @@ const LeagueNightPage = () => {
   // Check-in related state
   const [isCheckedIn, setIsCheckedIn] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
+  const [unchecking, setUnchecking] = useState(false);
   const [checkedInPlayers, setCheckedInPlayers] = useState<CheckedInPlayer[]>([]);
+  
+  // Partnership related state
   const [selectedPartner, setSelectedPartner] = useState<string | null>(null);
-  const [selectingPartner, setSelectingPartner] = useState(false);
+  const [partnershipRequests, setPartnershipRequests] = useState<PartnershipRequest[]>([]);
+  const [sendingRequest, setSendingRequest] = useState<string | null>(null);
+  const [acceptingRequest, setAcceptingRequest] = useState<number | null>(null);
+  const [rejectingRequest, setRejectingRequest] = useState<number | null>(null);
+  const [removingPartnership, setRemovingPartnership] = useState(false);
 
   // Redirect to auth if not authenticated
   useEffect(() => {
@@ -104,65 +115,166 @@ const LeagueNightPage = () => {
       
       setIsCheckedIn(true);
       
-      // Refresh checked-in players list
-      const updatedPlayers = await leagueNightService.getCheckedInPlayers(parseInt(leagueId), nightId);
-      setCheckedInPlayers(updatedPlayers);
+      // Refresh all data
+      await Promise.all([
+        refreshCheckedInPlayers(),
+        refreshPartnershipRequests()
+      ]);
       
     } catch (error) {
       console.error('Error checking in:', error);
-      // You could add a toast notification here
     } finally {
       setCheckingIn(false);
     }
   };
 
-  const handlePartnerSelect = async (partnerId: string) => {
-    if (!user || selectingPartner || !leagueId || !nightId) return;
+  // Uncheck functionality
+  const handleUncheck = async () => {
+    if (!user || !leagueNight || unchecking || !leagueId || !nightId) return;
 
-    setSelectingPartner(true);
+    setUnchecking(true);
     try {
-      await leagueNightService.createPartnership(parseInt(leagueId), nightId, user.id, partnerId);
+      await leagueNightService.uncheckPlayer(parseInt(leagueId), nightId, user.id);
       
-      setSelectedPartner(partnerId);
+      setIsCheckedIn(false);
+      setSelectedPartner(null);
       
-      // Refresh checked-in players to update partnership status
-      const updatedPlayers = await leagueNightService.getCheckedInPlayers(parseInt(leagueId), nightId);
-      setCheckedInPlayers(updatedPlayers);
+      // Refresh all data
+      await Promise.all([
+        refreshCheckedInPlayers(),
+        refreshPartnershipRequests()
+      ]);
       
     } catch (error) {
-      console.error('Error selecting partner:', error);
-      // You could add a toast notification here
+      console.error('Error unchecking:', error);
     } finally {
-      setSelectingPartner(false);
+      setUnchecking(false);
     }
   };
 
-  // Fetch checked-in players and check user's status
-  useEffect(() => {
-    const fetchCheckedInPlayers = async () => {
-      if (!leagueNight || !leagueId || !nightId) return;
+  // Send partnership request
+  const handleSendPartnershipRequest = async (requestedId: string) => {
+    if (!user || !leagueId || !nightId || sendingRequest) return;
 
-      try {
-        const players = await leagueNightService.getCheckedInPlayers(parseInt(leagueId), nightId);
-        setCheckedInPlayers(players);
+    setSendingRequest(requestedId);
+    try {
+      await leagueNightService.sendPartnershipRequest(parseInt(leagueId), nightId, user.id, requestedId);
+      
+      // Refresh partnership requests
+      await refreshPartnershipRequests();
+      
+    } catch (error) {
+      console.error('Error sending partnership request:', error);
+    } finally {
+      setSendingRequest(null);
+    }
+  };
+
+  // Accept partnership request
+  const handleAcceptPartnershipRequest = async (requestId: number) => {
+    if (!user || !leagueId || !nightId || acceptingRequest) return;
+
+    setAcceptingRequest(requestId);
+    try {
+      await leagueNightService.acceptPartnershipRequest(parseInt(leagueId), nightId, requestId, user.id);
+      
+      // Refresh all data
+      await Promise.all([
+        refreshCheckedInPlayers(),
+        refreshPartnershipRequests()
+      ]);
+      
+    } catch (error) {
+      console.error('Error accepting partnership request:', error);
+    } finally {
+      setAcceptingRequest(null);
+    }
+  };
+
+  // Reject partnership request
+  const handleRejectPartnershipRequest = async (requestId: number) => {
+    if (!user || !leagueId || !nightId || rejectingRequest) return;
+
+    setRejectingRequest(requestId);
+    try {
+      await leagueNightService.rejectPartnershipRequest(parseInt(leagueId), nightId, requestId, user.id);
+      
+      // Refresh partnership requests
+      await refreshPartnershipRequests();
+      
+    } catch (error) {
+      console.error('Error rejecting partnership request:', error);
+    } finally {
+      setRejectingRequest(null);
+    }
+  };
+
+  // Remove partnership
+  const handleRemovePartnership = async () => {
+    if (!user || !leagueId || !nightId || removingPartnership) return;
+
+    setRemovingPartnership(true);
+    try {
+      await leagueNightService.removePartnership(parseInt(leagueId), nightId, user.id);
+      
+      setSelectedPartner(null);
+      
+      // Refresh all data
+      await Promise.all([
+        refreshCheckedInPlayers(),
+        refreshPartnershipRequests()
+      ]);
+      
+    } catch (error) {
+      console.error('Error removing partnership:', error);
+    } finally {
+      setRemovingPartnership(false);
+    }
+  };
+
+  // Helper functions for refreshing data
+  const refreshCheckedInPlayers = async () => {
+    if (!leagueId || !nightId) return;
+    
+    try {
+      const players = await leagueNightService.getCheckedInPlayers(parseInt(leagueId), nightId);
+      setCheckedInPlayers(players);
+      
+      // Check if current user is checked in and has partner
+      if (user) {
+        const userCheckedIn = players.find(p => p.id === user.id);
+        setIsCheckedIn(!!userCheckedIn);
         
-        // Check if current user is already checked in
-        if (user) {
-          const userCheckedIn = players.find(p => p.id === user.id);
-          setIsCheckedIn(!!userCheckedIn);
-          
-          // Check if user has a partner
-          if (userCheckedIn && userCheckedIn.hasPartner) {
-            setSelectedPartner(userCheckedIn.partnerId || null);
-          }
+        if (userCheckedIn && userCheckedIn.hasPartner) {
+          setSelectedPartner(userCheckedIn.partnerId || null);
+        } else {
+          setSelectedPartner(null);
         }
-        
-      } catch (error) {
-        console.error('Error fetching checked-in players:', error);
       }
-    };
+    } catch (error) {
+      console.error('Error refreshing checked-in players:', error);
+    }
+  };
 
-    fetchCheckedInPlayers();
+  const refreshPartnershipRequests = async () => {
+    if (!user || !leagueId || !nightId) return;
+    
+    try {
+      const requests = await leagueNightService.getPartnershipRequests(parseInt(leagueId), nightId, user.id);
+      setPartnershipRequests(requests);
+    } catch (error) {
+      console.error('Error refreshing partnership requests:', error);
+    }
+  };
+
+  // Fetch checked-in players and partnership requests
+  useEffect(() => {
+    if (!leagueNight || !user) return;
+    
+    Promise.all([
+      refreshCheckedInPlayers(),
+      refreshPartnershipRequests()
+    ]);
   }, [leagueNight, leagueId, nightId, user]);
 
   if (loading || authLoading || nightLoading) {
@@ -356,7 +468,7 @@ const LeagueNightPage = () => {
                   )}
                 </div>
                 
-                {!isCheckedIn && (
+                {!isCheckedIn ? (
                   <button 
                     onClick={handleCheckIn}
                     disabled={checkingIn}
@@ -371,6 +483,24 @@ const LeagueNightPage = () => {
                       <>
                         <UserCheck className="h-5 w-5" />
                         <span>Check In - I'm Here!</span>
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <button 
+                    onClick={handleUncheck}
+                    disabled={unchecking}
+                    className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2"
+                  >
+                    {unchecking ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Unchecking...</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserMinus className="h-4 w-4" />
+                        <span>Uncheck</span>
                       </>
                     )}
                   </button>
@@ -394,54 +524,198 @@ const LeagueNightPage = () => {
                   </div>
 
                   {selectedPartner ? (
-                    <div className="bg-pink-50/80 dark:bg-pink-900/20 border-2 border-pink-200 dark:border-pink-700 rounded-2xl p-4 max-w-md mx-auto">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-pink-200 dark:bg-pink-800 rounded-full flex items-center justify-center">
-                          <span className="text-pink-700 dark:text-pink-300 font-semibold">
-                            {checkedInPlayers.find(p => p.id === selectedPartner)?.name.charAt(0) || 'P'}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900 dark:text-white">
-                            {checkedInPlayers.find(p => p.id === selectedPartner)?.name || 'Partner'}
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">
-                            {checkedInPlayers.find(p => p.id === selectedPartner)?.skillLevel || 'Intermediate'}
-                          </p>
+                    <div className="space-y-4">
+                      <div className="bg-pink-50/80 dark:bg-pink-900/20 border-2 border-pink-200 dark:border-pink-700 rounded-2xl p-4 max-w-md mx-auto">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-pink-200 dark:bg-pink-800 rounded-full flex items-center justify-center">
+                              <span className="text-pink-700 dark:text-pink-300 font-semibold">
+                                {checkedInPlayers.find(p => p.id === selectedPartner)?.name.charAt(0) || 'P'}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="font-semibold text-gray-900 dark:text-white">
+                                {checkedInPlayers.find(p => p.id === selectedPartner)?.name || 'Partner'}
+                              </p>
+                              <p className="text-sm text-gray-600 dark:text-gray-300">
+                                {checkedInPlayers.find(p => p.id === selectedPartner)?.skillLevel || 'Intermediate'}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={handleRemovePartnership}
+                            disabled={removingPartnership}
+                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+                            title="Remove partnership"
+                          >
+                            {removingPartnership ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                            ) : (
+                              <X className="h-4 w-4" />
+                            )}
+                          </button>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                      {checkedInPlayers
-                        .filter(player => player.id !== user?.id && !player.hasPartner)
-                        .map((player) => (
-                          <button
-                            key={player.id}
-                            onClick={() => handlePartnerSelect(player.id)}
-                            disabled={selectingPartner}
-                            className="p-4 bg-white/80 dark:bg-slate-700/80 border-2 border-gray-200 dark:border-slate-600 hover:border-pink-300 dark:hover:border-pink-600 rounded-xl transition-all duration-200 hover:scale-105 disabled:opacity-50"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-gray-200 dark:bg-slate-600 rounded-full flex items-center justify-center">
-                                <span className="text-gray-700 dark:text-gray-300 font-semibold">
-                                  {player.name.charAt(0)}
-                                </span>
-                              </div>
-                              <div className="text-left">
-                                <p className="font-semibold text-gray-900 dark:text-white">{player.name}</p>
-                                <p className="text-sm text-gray-600 dark:text-gray-300">{player.skillLevel}</p>
-                              </div>
+                    <div className="space-y-6">
+                      {/* Incoming Partnership Requests */}
+                      {partnershipRequests.filter(req => req.requested_id === user?.id).length > 0 && (
+                        <div className="bg-yellow-50/80 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-2xl p-6">
+                          <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                            Partnership Requests
+                          </h5>
+                          <div className="space-y-3">
+                            {partnershipRequests
+                              .filter(req => req.requested_id === user?.id)
+                              .map((request) => (
+                                <div key={request.id} className="bg-white/80 dark:bg-slate-700/80 rounded-xl p-4 flex items-center justify-between">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-gray-200 dark:bg-slate-600 rounded-full flex items-center justify-center">
+                                      <span className="text-gray-700 dark:text-gray-300 font-semibold">
+                                        {request.requester.full_name.charAt(0)}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold text-gray-900 dark:text-white">
+                                        {request.requester.full_name}
+                                      </p>
+                                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                                        {request.requester.skill_level}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center space-x-2">
+                                    <button
+                                      onClick={() => handleAcceptPartnershipRequest(request.id)}
+                                      disabled={acceptingRequest === request.id}
+                                      className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                                      title="Accept request"
+                                    >
+                                      {acceptingRequest === request.id ? (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                      ) : (
+                                        <Check className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={() => handleRejectPartnershipRequest(request.id)}
+                                      disabled={rejectingRequest === request.id}
+                                      className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                                      title="Reject request"
+                                    >
+                                      {rejectingRequest === request.id ? (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                      ) : (
+                                        <X className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            }
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Available Players to Request Partnership */}
+                      <div>
+                        <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                          Send Partnership Request
+                        </h5>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                          {checkedInPlayers
+                            .filter(player => {
+                              if (player.id === user?.id) return false;
+                              if (player.hasPartner) return false;
+                              
+                              // Don't show if already sent a request to this player
+                              const hasPendingRequest = partnershipRequests.some(req => 
+                                (req.requester_id === user?.id && req.requested_id === player.id) ||
+                                (req.requested_id === user?.id && req.requester_id === player.id)
+                              );
+                              return !hasPendingRequest;
+                            })
+                            .map((player) => (
+                              <button
+                                key={player.id}
+                                onClick={() => handleSendPartnershipRequest(player.id)}
+                                disabled={sendingRequest === player.id}
+                                className="p-4 bg-white/80 dark:bg-slate-700/80 border-2 border-gray-200 dark:border-slate-600 hover:border-pink-300 dark:hover:border-pink-600 rounded-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 flex items-center justify-between"
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <div className="w-10 h-10 bg-gray-200 dark:bg-slate-600 rounded-full flex items-center justify-center">
+                                    <span className="text-gray-700 dark:text-gray-300 font-semibold">
+                                      {player.name.charAt(0)}
+                                    </span>
+                                  </div>
+                                  <div className="text-left">
+                                    <p className="font-semibold text-gray-900 dark:text-white">{player.name}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">{player.skillLevel}</p>
+                                  </div>
+                                </div>
+                                {sendingRequest === player.id ? (
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-600"></div>
+                                ) : (
+                                  <Send className="h-4 w-4 text-pink-600" />
+                                )}
+                              </button>
+                            ))}
+                          
+                          {checkedInPlayers.filter(p => {
+                            if (p.id === user?.id) return false;
+                            if (p.hasPartner) return false;
+                            const hasPendingRequest = partnershipRequests.some(req => 
+                              (req.requester_id === user?.id && req.requested_id === p.id) ||
+                              (req.requested_id === user?.id && req.requester_id === p.id)
+                            );
+                            return !hasPendingRequest;
+                          }).length === 0 && (
+                            <div className="col-span-full text-center py-8">
+                              <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                              <p className="text-gray-500 dark:text-gray-400">
+                                {checkedInPlayers.filter(p => p.id !== user?.id).length === 0
+                                  ? 'No other players checked in yet.'
+                                  : 'All available players already have partnership requests pending.'}
+                              </p>
                             </div>
-                          </button>
-                        ))}
-                      
-                      {checkedInPlayers.filter(p => p.id !== user?.id && !p.hasPartner).length === 0 && (
-                        <div className="col-span-full text-center py-8">
-                          <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                          <p className="text-gray-500 dark:text-gray-400">
-                            No available partners yet. More players will appear here as they check in.
-                          </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Outgoing Requests Status */}
+                      {partnershipRequests.filter(req => req.requester_id === user?.id).length > 0 && (
+                        <div className="bg-blue-50/80 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl p-6">
+                          <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                            Sent Requests
+                          </h5>
+                          <div className="space-y-3">
+                            {partnershipRequests
+                              .filter(req => req.requester_id === user?.id)
+                              .map((request) => (
+                                <div key={request.id} className="bg-white/80 dark:bg-slate-700/80 rounded-xl p-4 flex items-center justify-between">
+                                  <div className="flex items-center space-x-3">
+                                    <div className="w-10 h-10 bg-gray-200 dark:bg-slate-600 rounded-full flex items-center justify-center">
+                                      <span className="text-gray-700 dark:text-gray-300 font-semibold">
+                                        {request.requested.full_name.charAt(0)}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <p className="font-semibold text-gray-900 dark:text-white">
+                                        {request.requested.full_name}
+                                      </p>
+                                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                                        {request.requested.skill_level}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
+                                    Pending...
+                                  </div>
+                                </div>
+                              ))
+                            }
+                          </div>
                         </div>
                       )}
                     </div>
