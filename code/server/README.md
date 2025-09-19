@@ -51,7 +51,7 @@ npm start
 ### Match Assignment System
 - `GET /api/leagues/:leagueId/nights/:nightId/matches` - Get all matches for league night
 - `POST /api/leagues/:leagueId/nights/:nightId/create-matches` - Create matches from available partnerships
-- `POST /api/leagues/:leagueId/nights/:nightId/submit-score` - Submit match score
+- `POST /api/leagues/:leagueId/nights/:nightId/submit-score` - Submit match score with validation
 
 ### System
 - `GET /` - Server information
@@ -69,8 +69,8 @@ The backend connects to a Supabase PostgreSQL database with 10 core tables:
 - **league_night_checkins** - Player attendance tracking
 - **partnership_requests** - Partnership request/accept flow
 - **confirmed_partnerships** - Active doubles partnerships
-- **matches** - Individual games between partnerships with scoring
-- **player_stats** - Performance statistics per league
+- **matches** - Individual games between partnerships with scoring and court assignment
+- **player_stats** - Performance statistics per league with automatic updates
 
 ## 🔧 Environment Variables
 
@@ -93,7 +93,9 @@ CLIENT_URL=http://localhost:5173
 ```
 src/
 ├── controllers/         # Business logic and request handlers
-│   └── leagueNightController.js  # League night operations
+│   ├── leagueController.js      # League management operations
+│   ├── leagueNightController.js # League night and partnership operations
+│   └── matchController.js       # Match assignment and scoring operations
 ├── routes/             # API route definitions
 │   ├── leagues.js      # League management routes
 │   └── leagueNights.js # League night routes
@@ -104,8 +106,13 @@ src/
 
 - **Automatic League Night Creation** - Creates league night instances from templates
 - **Robust Partnership System** - Complete request/accept flow with conflict resolution
+- **Smart Match Assignment** - Priority-based court allocation with queue management
+- **Score Validation** - Enforces pickleball rules (first to 15, win by 2)
+- **Player Statistics** - Automatic tracking of games, wins, losses, and points
+- **Queue Management** - Smart feedback when courts are full with detailed status
 - **Error Handling** - Comprehensive error handling and data validation
 - **Database Constraints** - Proper handling of unique constraints and data integrity
+- **Modular Architecture** - Separated controllers for better maintainability
 - **Real-time Ready** - Structured for future real-time features
 
 ## 🚧 Development Notes
