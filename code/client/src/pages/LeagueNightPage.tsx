@@ -3,6 +3,7 @@ import { useLeague } from '../hooks/useLeagues'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../contexts/ThemeContext'
 import { leagueNightService, type CheckedInPlayer, type PartnershipRequest } from '../services/api/leagueNights'
+import MatchesDisplay from '../components/MatchesDisplay'
 import { useState, useEffect } from 'react'
 import { 
   ArrowLeft, 
@@ -70,38 +71,39 @@ const LeagueNightPage = () => {
     }
   }, [user, authLoading, navigate]);
 
-  // Fetch league night data
+  // Fetch league night data function
+  const fetchLeagueNight = async () => {
+    if (!leagueId || !nightId) return;
+
+    try {
+      // Use testing method to force today's date for any league night
+      const nightData = await leagueNightService.getLeagueNightForTesting(parseInt(leagueId), nightId);
+      
+      // Transform API response to match our interface
+      const isToday = true; // Always treat as today when in test mode
+      const transformedNight: LeagueNight = {
+        id: nightData.id,
+        day: nightData.day,
+        time: nightData.time,
+        date: nightData.date,
+        nextDate: nightData.date, // Use the date for display
+        status: isToday ? 'today' : nightData.status,
+        courtsAvailable: nightData.courtsAvailable,
+        checkedInCount: nightData.checkedInCount,
+        partnershipsCount: nightData.partnershipsCount,
+        possibleGames: nightData.possibleGames
+      };
+      
+      setLeagueNight(transformedNight);
+    } catch (err) {
+      console.error('Error fetching league night:', err);
+    } finally {
+      setNightLoading(false);
+    }
+  };
+
+  // Fetch league night data on component mount
   useEffect(() => {
-    const fetchLeagueNight = async () => {
-      if (!leagueId || !nightId) return;
-
-      try {
-        // Use testing method to force today's date for any league night
-        const nightData = await leagueNightService.getLeagueNightForTesting(parseInt(leagueId), nightId);
-        
-        // Transform API response to match our interface
-        const isToday = true; // Always treat as today when in test mode
-        const transformedNight: LeagueNight = {
-          id: nightData.id,
-          day: nightData.day,
-          time: nightData.time,
-          date: nightData.date,
-          nextDate: nightData.date, // Use the date for display
-          status: isToday ? 'today' : nightData.status,
-          courtsAvailable: nightData.courtsAvailable,
-          checkedInCount: nightData.checkedInCount,
-          partnershipsCount: nightData.partnershipsCount,
-          possibleGames: nightData.possibleGames
-        };
-        
-        setLeagueNight(transformedNight);
-      } catch (err) {
-        console.error('Error fetching league night:', err);
-      } finally {
-        setNightLoading(false);
-      }
-    };
-
     fetchLeagueNight();
   }, [leagueId, nightId]);
 
@@ -230,6 +232,13 @@ const LeagueNightPage = () => {
     } finally {
       setRemovingPartnership(false);
     }
+  };
+
+  // Handle match creation callback
+  const handleMatchesCreated = async () => {
+    // Refresh league night data when matches are created
+    await fetchLeagueNight();
+    await refreshPartnershipRequests();
   };
 
   // Helper functions for refreshing data
@@ -775,6 +784,17 @@ const LeagueNightPage = () => {
             </div>
           )}
         </section>
+
+        {/* Matches Display - Only show for today's league night */}
+        {leagueNight.status === 'today' && leagueId && nightId && (
+          <MatchesDisplay
+            leagueId={leagueId}
+            nightId={nightId}
+            currentUserId={user?.id}
+            onCreateMatches={handleMatchesCreated}
+            isAdmin={true} // Temporary: everyone can create matches for testing
+          />
+        )}
 
       </div>
     </div>

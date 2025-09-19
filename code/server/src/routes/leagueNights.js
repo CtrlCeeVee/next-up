@@ -15,6 +15,12 @@ const {
   removePartnership
 } = require('../controllers/leagueNightController');
 
+const {
+  getMatches,
+  createMatches,
+  submitMatchScore
+} = require('../controllers/matchController');
+
 // GET /api/leagues/:leagueId/nights/:nightId - Get league night details
 router.get('/:leagueId/nights/:nightId', getLeagueNight);
 
@@ -23,6 +29,9 @@ router.get('/:leagueId/nights/:nightId/checkins', getCheckedInPlayers);
 
 // GET /api/leagues/:leagueId/nights/:nightId/partnership-requests - Get partnership requests
 router.get('/:leagueId/nights/:nightId/partnership-requests', getPartnershipRequests);
+
+// GET /api/leagues/:leagueId/nights/:nightId/matches - Get all matches for league night
+router.get('/:leagueId/nights/:nightId/matches', getMatches);
 
 // POST /api/leagues/:leagueId/nights/:nightId/checkin - Check in player
 router.post('/:leagueId/nights/:nightId/checkin', checkInPlayer);
@@ -35,6 +44,12 @@ router.post('/:leagueId/nights/:nightId/partnership-accept', acceptPartnershipRe
 
 // POST /api/leagues/:leagueId/nights/:nightId/partnership-reject - Reject partnership request
 router.post('/:leagueId/nights/:nightId/partnership-reject', rejectPartnershipRequest);
+
+// POST /api/leagues/:leagueId/nights/:nightId/create-matches - Create matches from available partnerships
+router.post('/:leagueId/nights/:nightId/create-matches', createMatches);
+
+// POST /api/leagues/:leagueId/nights/:nightId/submit-score - Submit match score
+router.post('/:leagueId/nights/:nightId/submit-score', submitMatchScore);
 
 // DELETE /api/leagues/:leagueId/nights/:nightId/checkin - Uncheck player
 router.delete('/:leagueId/nights/:nightId/checkin', uncheckPlayer);

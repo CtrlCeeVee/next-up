@@ -48,13 +48,18 @@ npm start
 - `GET /api/leagues/:leagueId/nights/:nightId/partnership-requests` - Get partnership requests
 - `DELETE /api/leagues/:leagueId/nights/:nightId/partnership` - Remove partnership
 
+### Match Assignment System
+- `GET /api/leagues/:leagueId/nights/:nightId/matches` - Get all matches for league night
+- `POST /api/leagues/:leagueId/nights/:nightId/create-matches` - Create matches from available partnerships
+- `POST /api/leagues/:leagueId/nights/:nightId/submit-score` - Submit match score
+
 ### System
 - `GET /` - Server information
 - `GET /health` - Health check endpoint
 
 ## 🗄 Database Schema
 
-The backend connects to a Supabase PostgreSQL database with 9 core tables:
+The backend connects to a Supabase PostgreSQL database with 10 core tables:
 
 - **profiles** - User information extending Supabase Auth
 - **leagues** - League information and ownership
@@ -64,6 +69,7 @@ The backend connects to a Supabase PostgreSQL database with 9 core tables:
 - **league_night_checkins** - Player attendance tracking
 - **partnership_requests** - Partnership request/accept flow
 - **confirmed_partnerships** - Active doubles partnerships
+- **matches** - Individual games between partnerships with scoring
 - **player_stats** - Performance statistics per league
 
 ## 🔧 Environment Variables
