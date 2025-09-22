@@ -114,42 +114,50 @@
 - **League Night Instances**: Dynamic creation of league nights from templates
 - **League Night Check-in**: Robust player check-in/check-out with reactivation support
 - **Partnership System**: Complete request/accept/reject flow with partnership management
-- **Database Schema**: Complete schema with 9 tables, RLS policies, and constraint handling
-- **API Infrastructure**: 15+ RESTful endpoints covering all league night operations
+- **Match Assignment**: Smart court allocation with priority queue for partnerships
+- **Score Submission**: Validated score entry with proper pickleball rules (first to 15, win by 2)
+- **Player Statistics**: Automatic tracking of games played, wins, losses, and points scored
+- **Queue Management**: Smart feedback when courts are full with detailed status display
+- **Database Schema**: Complete schema with 10 tables, RLS policies, and constraint handling
+- **API Infrastructure**: 18+ RESTful endpoints covering complete league night operations
 - **Error Handling**: Comprehensive error handling and duplicate prevention systems
 - **Frontend Integration**: React UI fully connected to live database APIs
-- **Real-time Updates**: Live partnership and check-in status updates
+- **Real-time Updates**: Live partnership, match, and score status updates
 
-### 🚧 **Recently Completed**
-- **Partnership Bug Fixes**: Resolved all duplicate key constraint issues
-- **Check-in Edge Cases**: Fixed sign-out/sign-in scenarios and state management
-- **UI Polish**: Improved button states, loading indicators, and user feedback
-- **Data Consistency**: Proper cleanup of inactive partnerships and requests
+### 🚧 **Recently Completed (September 19, 2025)**
+- **Match Assignment Algorithm**: Priority-based partnership matching with court allocation
+- **Score Validation System**: Client and server-side validation of pickleball scoring rules
+- **Player Statistics Engine**: Automatic calculation of wins, losses, games played, and average points
+- **Queue System Implementation**: Smart court management with wait status and availability feedback
+- **Code Architecture**: Modular controller design for better maintainability
+- **Database Functions**: Optimized partnership and court availability functions
 
-### 📋 **Pending Features**
-- **Match Assignment**: Automatic game assignments based on confirmed partnerships
-- **Score Submission**: Teams can submit and confirm match scores with timeout logic
-- **Player Statistics**: Wins, losses, points tracking per league with leaderboards
-- **Admin Controls**: League owner/admin management capabilities and override functions
-- **Court Management**: Dynamic court configuration per league night
-- **Match History**: Historical game records and performance tracking
+### 📋 **Next Development Phase**
+- **Auto-Assignment**: Automatic match creation when partnerships form or courts become available
+- **Real-time Notifications**: Push updates for match assignments and game completions
+- **Advanced Admin Controls**: League owner/admin management capabilities and match overrides
+- **Tournament Mode**: Round-robin and bracket tournament formats
+- **Advanced Statistics**: Historical performance tracking and leaderboards
+- **Mobile Optimization**: PWA features and mobile-specific UI improvements
 
 ### 🎯 **MVP Data Flow (Current Implementation)**
 1. **League Discovery**: Browse available leagues → Join league → View league schedule
-2. **League Night Participation**: Check into tonight's session → Form partnership with another player → Ready for match assignment
-3. **Partnership Management**: Send/receive partnership requests → Accept/reject partnerships → Form confirmed doubles teams
-4. **Future Flow**: Receive match assignment → Play games → Submit scores → Update stats
+2. **League Night Participation**: Check into tonight's session → Form partnership with another player
+3. **Match Assignment**: System creates matches based on partnerships and court availability → Displays queue status when courts full
+4. **Game Play**: Players receive match assignment → Play game → Submit validated scores
+5. **Statistics Update**: System automatically updates player statistics → Court becomes available for next match
+6. **Continuous Cycle**: New partnerships can immediately get matches or join queue
 
 ### 📊 **Current MVP Completion Status**
 - **Authentication & User Management**: ✅ 100% Complete
 - **League Management**: ✅ 100% Complete  
-- **League Night Operations**: ✅ 95% Complete (check-in + partnerships)
-- **Match Assignment**: ⏳ 0% Complete
-- **Score Submission**: ⏳ 0% Complete
-- **Statistics & Leaderboards**: ⏳ 0% Complete
-- **Admin Controls**: ⏳ 20% Complete (basic league ownership)
+- **League Night Operations**: ✅ 100% Complete (check-in + partnerships + matches)
+- **Match Assignment**: ✅ 95% Complete (manual trigger, queue system operational)
+- **Score Submission**: ✅ 100% Complete (validation + statistics)
+- **Statistics & Tracking**: ✅ 100% Complete (player stats + game history)
+- **Admin Controls**: ⏳ 30% Complete (basic league ownership + match creation)
 
-**Overall MVP Progress: ~85% Complete** - Core league night functionality is fully operational and tested
+**Overall MVP Progress: ~92% Complete** - Full league night management system with statistics tracking operational and tested
 
 ---
 

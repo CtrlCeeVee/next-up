@@ -50,24 +50,29 @@ Next-Up makes local pickleball leagues seamless, dynamic, and fun by providing s
 - **League Nights**: Dynamic league night instances with proper date handling
 - **Check-in System**: Robust player check-in/check-out with reactivation support
 - **Partnership System**: Complete request/accept flow with partnership management
-- **Database**: Full schema with 9 tables, RLS policies, and unique constraints
-- **API Infrastructure**: 15+ RESTful endpoints covering all league night operations
-- **Error Handling**: Comprehensive error handling and duplicate prevention
+- **Match Assignment**: Smart court allocation with priority queue system
+- **Score Submission**: Validated score entry with pickleball rules (first to 15, win by 2)
+- **Player Statistics**: Automatic tracking of games, wins, losses, and points
+- **Queue Management**: Smart feedback and court utilization display
+- **Database**: Full schema with 10 tables, RLS policies, and constraint handling
+- **API Infrastructure**: 18+ RESTful endpoints covering complete league night operations
+- **Error Handling**: Comprehensive validation and duplicate prevention systems
 - **Frontend Integration**: React UI fully connected to live database APIs
 
 **🚧 Recently Completed**  
-- **Partnership Bug Fixes**: Resolved duplicate key constraint issues
-- **Check-in Flow**: Fixed sign-out/sign-in edge cases
-- **Real-time Updates**: Live partnership and check-in status updates
-- **UI Polish**: Improved button states and user feedback
+- **Match Assignment System**: Complete court allocation with partnership priority queuing
+- **Score Validation**: Proper pickleball scoring rules with real-time validation
+- **Player Statistics**: Automatic win/loss tracking and points accumulation
+- **Queue System**: Smart feedback when courts are full with detailed status
+- **Code Modularization**: Separated controllers for better maintainability
 
 **📋 Next Priority**
-- **Match Assignment**: Automatic game pairing based on confirmed partnerships
-- **Score Submission**: Teams submit and confirm match results
-- **Player Statistics**: Win/loss tracking and leaderboards
-- **Admin Controls**: League management and override capabilities
+- **Auto-Assignment**: Automatic match creation when partnerships form or courts free up
+- **Advanced Admin Controls**: League management and match override capabilities
+- **Real-time Notifications**: Push updates for match assignments and score submissions
+- **Tournament Mode**: Round-robin and bracket tournament formats
 
-**🏆 MVP Status**: ~85% Complete - Core league night functionality fully operational and tested
+**🏆 MVP Status**: ~92% Complete - Full league night management system operational with statistics tracking
 
 ## 🤝 Contributing
 

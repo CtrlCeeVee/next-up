@@ -16,6 +16,8 @@ player_stats         league_night_checkins
                      partnership_requests
                           ↓ (instance_id)
                      confirmed_partnerships
+                          ↓ (partnership_id)
+                         matches
 ```
 
 ## Core Tables
@@ -143,6 +145,24 @@ UNIQUE(league_night_instance_id, player2_id)
 CHECK(player1_id != player2_id)
 ```
 
+### **matches**
+Individual games between two partnerships during league nights.
+```sql
+id SERIAL PRIMARY KEY
+league_night_instance_id INTEGER → league_night_instances(id)
+partnership1_id INTEGER → confirmed_partnerships(id)
+partnership2_id INTEGER → confirmed_partnerships(id)
+court_number INTEGER NOT NULL
+status TEXT ('active', 'completed', 'cancelled') DEFAULT 'active'
+team1_score INTEGER
+team2_score INTEGER
+created_at TIMESTAMPTZ DEFAULT NOW()
+completed_at TIMESTAMPTZ
+CHECK(partnership1_id != partnership2_id)
+CHECK(team1_score >= 0)
+CHECK(team2_score >= 0)
+```
+
 ## Relationships
 
 1. **League Ownership**: `leagues.owner_id → profiles.id`
@@ -152,7 +172,8 @@ CHECK(player1_id != player2_id)
 5. **League Night Instances**: `league_night_instances.league_id → leagues.id` (one-to-many)
 6. **Check-ins**: `league_night_checkins` links players to specific league nights
 7. **Partnership Flow**: `partnership_requests → confirmed_partnerships` (request/accept flow)
-8. **Match Pool**: Only players in `confirmed_partnerships` are eligible for matches
+8. **Match Creation**: `matches` links two partnerships for actual games
+9. **Match Pool**: Only players in `confirmed_partnerships` are eligible for matches
 
 ## League Night Flow
 
@@ -162,7 +183,14 @@ CHECK(player1_id != player2_id)
    - Players can request partnerships with other checked-in players
    - Confirmed partnerships move to `confirmed_partnerships` table
    - Only partnered players enter the match pool
-4. **Match Pool**: System uses confirmed partnerships for game assignments
+4. **Match Assignment**: System automatically creates matches between partnerships
+   - Prioritizes partnerships with fewer games played tonight
+   - Assigns available courts based on league night configuration
+   - Creates priority queue when more partnerships than courts
+5. **Game Play & Scoring**: Teams play matches and submit scores
+   - Updates player statistics in `player_stats` table
+   - Frees up courts for next round of matches
+   - Partnerships re-enter queue for continuous play
 
 ## Key Design Decisions
 
@@ -186,3 +214,36 @@ All tables have RLS policies ensuring:
 - Monday & Wednesday 6:30 PM
 - 4 courts at Northcliff Country Club
 - Owner: Luke Renton
+
+## Database Functions
+
+### **get_partnerships_with_game_counts(instance_id INTEGER)**
+Returns partnerships sorted by games played tonight for match assignment priority.
+```sql
+-- Returns: partnership_id, player names, skill levels, games_played_tonight, avg_skill_level
+-- Used by: Match assignment algorithm
+-- Fixed: Column reference ambiguity and bigint/integer type mismatch
+```
+
+### **get_available_courts(instance_id INTEGER)**
+Returns available court numbers based on league configuration and active matches.
+```sql
+-- Returns: court_number (integer indices)
+-- Considers: court_labels array from league_night_instances
+-- Logic: Returns indices 1..N corresponding to court_labels array positions
+-- Used by: Match assignment for court allocation
+-- Fixed: Ambiguous column reference for court_labels
+```
+
+## Migration History
+
+1. **001_add_matches_table.sql** - Initial matches table and functions
+2. **002_fix_partnerships_function.sql** - Fixed column ambiguity and type mismatches
+3. **003_fix_courts_function.sql** - Fixed court_labels column ambiguity, preserved court naming
+
+## Known Database Considerations
+
+- **Type Consistency**: Use `::INTEGER` casts for COUNT() results in functions
+- **Column Qualification**: Always qualify columns in complex queries (e.g., `lni.court_labels`)
+- **Court Indexing**: Court numbers are 1-based indices into the court_labels array
+- **Function Permissions**: Grant EXECUTE to `anon, authenticated` for API access
