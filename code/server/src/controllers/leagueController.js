@@ -129,12 +129,13 @@ const getLeagueTopPlayers = async (req, res) => {
       .select(`
         *,
         profiles (
-          full_name
+          full_name,
+          email
         )
       `)
       .eq('league_id', id)
       .order('average_points', { ascending: false })
-      .limit(3);
+      .limit(10); // Get top 10 instead of just 3
 
     if (error) {
       throw error;
@@ -143,8 +144,10 @@ const getLeagueTopPlayers = async (req, res) => {
     const formattedPlayers = topPlayers.map((player, index) => ({
       id: player.user_id,
       name: player.profiles.full_name,
+      email: player.profiles.email,
       avgScore: player.average_points,
       gamesPlayed: player.games_played,
+      winRate: player.games_played > 0 ? Math.round((player.games_won / player.games_played) * 100 * 10) / 10 : 0, // Round to 1 decimal place
       position: index + 1
     }));
 
@@ -331,11 +334,98 @@ const getLeagueMembers = async (req, res) => {
   }
 };
 
+// Get league statistics
+const getLeagueStats = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get total members count
+    const { data: membersData, error: membersError } = await supabase
+      .from('league_memberships')
+      .select('id')
+      .eq('league_id', id)
+      .eq('is_active', true);
+
+    if (membersError) throw membersError;
+
+    // Get total games played
+    const { data: gamesData, error: gamesError } = await supabase
+      .from('matches')
+      .select(`
+        id,
+        league_night_instances!inner (
+          league_id
+        )
+      `)
+      .eq('league_night_instances.league_id', id)
+      .eq('status', 'completed');
+
+    if (gamesError) throw gamesError;
+
+    // Get league night instances to calculate average attendance
+    // First, let's check both completed and active instances for better data
+    const { data: instancesData, error: instancesError } = await supabase
+      .from('league_night_instances')
+      .select(`
+        id,
+        date,
+        status,
+        league_night_checkins (
+          id
+        )
+      `)
+      .eq('league_id', id)
+      .in('status', ['completed', 'active']); // Include both completed and active sessions
+
+    if (instancesError) throw instancesError;
+
+    // Calculate average attendance
+    let totalAttendance = 0;
+    let totalSessions = 0;
+
+    // Only count sessions that have at least one check-in
+    if (instancesData && instancesData.length > 0) {
+      const sessionsWithAttendance = instancesData.filter(instance => 
+        instance.league_night_checkins && instance.league_night_checkins.length > 0
+      );
+      
+      totalSessions = sessionsWithAttendance.length;
+      totalAttendance = sessionsWithAttendance.reduce((sum, instance) => {
+        return sum + (instance.league_night_checkins?.length || 0);
+      }, 0);
+    }
+
+    // If no sessions with attendance data, use member count as a reasonable estimate
+    const avgAttendance = totalSessions > 0 
+      ? Math.round(totalAttendance / totalSessions) 
+      : Math.round((membersData?.length || 0) * 0.7); // Assume 70% attendance rate as default
+
+    const stats = {
+      totalMembers: membersData?.length || 0,
+      totalGamesPlayed: gamesData?.length || 0,
+      averageAttendance: avgAttendance
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+
+  } catch (error) {
+    console.error('Error fetching league statistics:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch league statistics'
+    });
+  }
+};
+
 module.exports = {
   getAllLeagues,
   getLeagueById,
   getLeagueTopPlayers,
   checkMembership,
   joinLeague,
-  getLeagueMembers
+  getLeagueMembers,
+  getLeagueStats
 };

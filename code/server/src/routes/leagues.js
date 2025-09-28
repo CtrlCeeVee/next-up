@@ -9,7 +9,8 @@ const {
   getLeagueTopPlayers,
   checkMembership,
   joinLeague,
-  getLeagueMembers
+  getLeagueMembers,
+  getLeagueStats
 } = require('../controllers/leagueController');
 
 // GET /api/leagues - Get all leagues
@@ -29,5 +30,8 @@ router.post('/:id/join', joinLeague);
 
 // GET /api/leagues/:id/members - Get league members
 router.get('/:id/members', getLeagueMembers);
+
+// GET /api/leagues/:id/stats - Get league statistics
+router.get('/:id/stats', getLeagueStats);
 
 module.exports = router;

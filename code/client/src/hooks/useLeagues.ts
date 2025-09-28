@@ -15,6 +15,19 @@ export interface League {
   skillLevel?: string
 }
 
+export interface TopPlayer {
+  id: string
+  name: string
+  avgScore: number
+  gamesPlayed: number
+  position: number
+  // Optional properties that can be calculated on the frontend
+  winRate?: number
+  isCurrentUser?: boolean
+  email?: string
+  profilePicture?: string
+}
+
 export function useLeagues() {
   const [leagues, setLeagues] = useState<League[]>([])
   const [loading, setLoading] = useState(true)
@@ -66,3 +79,75 @@ export function useLeague(leagueId: number) {
 
   return { league, loading, error }
 }
+
+// Hook for fetching top players
+export const useTopPlayers = (leagueId: string | undefined, userEmail: string) => {
+  const [topPlayers, setTopPlayers] = useState<TopPlayer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchTopPlayers = async () => {
+      if (!leagueId) return;
+      
+      try {
+        setLoading(true);
+        const data = await leaguesAPI.getTopPlayers(leagueId);
+        
+        // Add isCurrentUser flag based on email match
+        const playersWithCurrentUser = data.map((player: any) => ({
+          ...player,
+          isCurrentUser: player.email === userEmail
+        }));
+        
+        setTopPlayers(playersWithCurrentUser);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching top players:', err);
+        setError('Failed to load top players');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTopPlayers();
+  }, [leagueId, userEmail]);
+
+  return { topPlayers, loading, error };
+};
+
+// Interface for league statistics
+export interface LeagueStats {
+  totalMembers: number;
+  totalGamesPlayed: number;
+  averageAttendance: number;
+}
+
+// Hook for fetching league statistics
+export const useLeagueStats = (leagueId: string | undefined) => {
+  const [stats, setStats] = useState<LeagueStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!leagueId) return;
+      
+      try {
+        setLoading(true);
+        const data = await leaguesAPI.getStats(leagueId);
+        setStats(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching league stats:', err);
+        setError('Failed to load league statistics');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [leagueId]);
+
+  return { stats, loading, error };
+};

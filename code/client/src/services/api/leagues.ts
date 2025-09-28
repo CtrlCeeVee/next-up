@@ -15,4 +15,16 @@ export const leaguesAPI = {
     const response = await apiRequest(`/api/leagues/${id}`);
     return response.success ? response.data : response;
   },
+
+  // Get top players for a league
+  getTopPlayers: async (leagueId: string) => {
+    const response = await apiRequest(`/api/leagues/${leagueId}/top-players`);
+    return response.success ? response.data : response;
+  },
+
+  // Get league statistics
+  getStats: async (leagueId: string) => {
+    const response = await apiRequest(`/api/leagues/${leagueId}/stats`);
+    return response.success ? response.data : response;
+  }
 };

@@ -1,0 +1,12 @@
+1. Top most valuable (but also most time consuming) thing to do is get the league auto assignment flow working:
+    Check-in + Partnership Formation
+    Automatic Match Creation → When and after the league night starts, the system continuously creates matches based on available partnerships
+    Court Assignment → Limited by available courts, creates priority queue for excess players
+    Continuous Play → After finishing a game, players automatically get queued for next match
+    Skill-Based Seeding → Uses average points from previous games (starts random, improves over time)
+
+2. Player stats dashboard (probably segment their own dashboard per league, start with it being modular now)
+
+3. Design stuff
+- emojis on leaderboard are the medal which have the number (1) not 2 or 3
+- Logo is shocking (for anand to solve)

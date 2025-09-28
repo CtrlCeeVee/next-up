@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useLeague } from '../hooks/useLeagues'
+import { useLeague, useTopPlayers, useLeagueStats, type LeagueStats } from '../hooks/useLeagues'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../contexts/ThemeContext'
 import { useMembership, useLeagueMembers } from '../hooks/useMembership'
@@ -12,15 +12,12 @@ import {
   Calendar, 
   MapPin, 
   Trophy, 
-  Target, 
   TrendingUp, 
   Clock, 
   Star,
   Medal,
-  Activity,
   BarChart3,
   Crown,
-  Zap,
   ArrowRight,
   Play,
   UserCheck,
@@ -34,37 +31,11 @@ import {
 // TODO: Move these to a shared types file when implementing real API
 // ===================================
 
-interface LeagueStats {
-  totalMembers: number
-  gamesThisMonth: number
-  averageAttendance: number
-  totalGamesPlayed: number
-  activeToday: number
-  completionRate: number
-}
+// LeagueStats interface is now imported from useLeagues hook
 
-interface TopPlayer {
-  id: string
-  name: string
-  email: string
-  avgScore: number
-  gamesPlayed: number
-  winRate: number
-  position: number
-  profilePicture?: string
-  isCurrentUser?: boolean
-}
+// TopPlayer interface is now imported from useLeagues hook
 
-interface RecentGame {
-  id: string
-  date: string
-  time: string
-  team1: { player1: string, player2: string, score: number }
-  team2: { player1: string, player2: string, score: number }
-  court: number
-  status: 'completed' | 'in_progress' | 'scheduled'
-  duration?: number
-}
+// RecentGame interface removed - not needed for league overview
 
 interface LeagueNight {
   id: string
@@ -100,7 +71,6 @@ function LeaguePage() {
   
   // ===================================
   // HOOKS - These will fetch real data via API
-  // TODO: Update these hooks to use real backend endpoints
   // ===================================
   const { league, loading, error } = useLeague(parseInt(leagueId || '0'));
   const { user, loading: authLoading, signOut } = useAuth();
@@ -109,23 +79,16 @@ function LeaguePage() {
     user?.id || null
   );
   const { members, loading: membersLoading } = useLeagueMembers(parseInt(leagueId || '0'));
+  const { topPlayers, loading: topPlayersLoading, error: topPlayersError } = useTopPlayers(leagueId, user?.email || '');
 
   // ===================================
   // STATE - Will be populated from API calls
-  // TODO: Replace with real API data fetching
+  // TODO: Replace remaining mock data with real API data fetching
   // ===================================
-  const [topPlayers, setTopPlayers] = useState<TopPlayer[]>([]);
-  const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
+  // Recent games state removed - focusing on league nights only
   const [leagueNights, setLeagueNights] = useState<LeagueNight[]>([]);
-  const [leagueStats, setLeagueStats] = useState<LeagueStats>({
-    totalMembers: 0,
-    gamesThisMonth: 0,
-    averageAttendance: 0,
-    totalGamesPlayed: 0,
-    activeToday: 0,
-    completionRate: 0
-  });
-  const [statsLoading, setStatsLoading] = useState(true);
+  // Use real league statistics hook
+  const { stats: leagueStats, loading: statsLoading } = useLeagueStats(leagueId);
   const [currentStatIndex, setCurrentStatIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
@@ -146,9 +109,7 @@ function LeaguePage() {
 
   // ===================================
   // API DATA FETCHING
-  // TODO: Replace with real API endpoints when backend is implemented
-  // Current: Using dummy data for demonstration
-  // Future: Will call actual REST/GraphQL endpoints
+  // TODO: Replace remaining mock data with real API endpoints
   // ===================================
   
   useEffect(() => {
@@ -156,95 +117,13 @@ function LeaguePage() {
       if (!leagueId || !league) return;
 
       try {
-        // TODO: Replace with real API calls
-        // Example endpoints that will be implemented:
+        // TODO: Replace with real API calls for remaining data:
         // - GET /api/leagues/{id}/stats
-        // - GET /api/leagues/{id}/top-players
         // - GET /api/leagues/{id}/recent-games
         // - GET /api/leagues/{id}/schedule
         // - GET /api/leagues/{id}/analytics
 
-        // DUMMY DATA - Remove when real API is ready
-        const mockTopPlayers: TopPlayer[] = [
-          {
-            id: '1',
-            name: 'Luke Renton',
-            email: 'luke@example.com',
-            avgScore: 18.5,
-            gamesPlayed: 42,
-            winRate: 78.5,
-            position: 1,
-            isCurrentUser: user?.email === 'luke@example.com'
-          },
-          {
-            id: '2', 
-            name: 'Sarah Mitchell',
-            email: 'sarah@example.com',
-            avgScore: 17.8,
-            gamesPlayed: 38,
-            winRate: 72.1,
-            position: 2
-          },
-          {
-            id: '3',
-            name: 'James Wilson',
-            email: 'james@example.com', 
-            avgScore: 17.2,
-            gamesPlayed: 35,
-            winRate: 68.9,
-            position: 3
-          },
-          {
-            id: '4',
-            name: 'Emma Rodriguez',
-            email: 'emma@example.com',
-            avgScore: 16.9,
-            gamesPlayed: 41,
-            winRate: 65.2,
-            position: 4
-          },
-          {
-            id: '5',
-            name: 'Michael Chen',
-            email: 'michael@example.com',
-            avgScore: 16.4,
-            gamesPlayed: 33,
-            winRate: 63.8,
-            position: 5
-          }
-        ];
-
-        const mockRecentGames: RecentGame[] = [
-          {
-            id: '1',
-            date: '2024-01-15',
-            time: '18:30',
-            team1: { player1: 'Luke Renton', player2: 'Sarah Mitchell', score: 21 },
-            team2: { player1: 'James Wilson', player2: 'Emma Rodriguez', score: 19 },
-            court: 1,
-            status: 'completed',
-            duration: 35
-          },
-          {
-            id: '2', 
-            date: '2024-01-15',
-            time: '19:15',
-            team1: { player1: 'Michael Chen', player2: 'Lisa Parker', score: 21 },
-            team2: { player1: 'David Johnson', player2: 'Anna Lee', score: 16 },
-            court: 2,
-            status: 'completed',
-            duration: 28
-          },
-          {
-            id: '3',
-            date: '2024-01-17',
-            time: '18:30', 
-            team1: { player1: 'Sarah Mitchell', player2: 'James Wilson', score: 0 },
-            team2: { player1: 'Emma Rodriguez', player2: 'Michael Chen', score: 0 },
-            court: 1,
-            status: 'scheduled'
-          }
-        ];
+        // Recent games mock data removed - focusing on league statistics and schedule
 
         const mockLeagueNights: LeagueNight[] = league.leagueDays.map((day, index) => ({
           id: `night-${index}`,
@@ -260,40 +139,27 @@ function LeaguePage() {
           courtsAvailable: 4
         }));
 
-        const mockStats: LeagueStats = {
-          totalMembers: members.length,
-          gamesThisMonth: 47,
-          averageAttendance: Math.round(members.length * 0.75),
-          totalGamesPlayed: 284,
-          activeToday: Math.floor(members.length * 0.4),
-          completionRate: 94.2
-        };
+        // Simulate API delay for remaining mock data
+        await new Promise(resolve => setTimeout(resolve, 300));
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-
-        setTopPlayers(mockTopPlayers);
-        setRecentGames(mockRecentGames);
         setLeagueNights(mockLeagueNights);
-        setLeagueStats(mockStats);
 
       } catch (error) {
         console.error('Failed to fetch league data:', error);
         // TODO: Implement proper error handling with user feedback
-      } finally {
-        setStatsLoading(false);
       }
     };
 
     fetchLeagueData();
-  }, [leagueId, league, members.length, user?.email]);
+  }, [leagueId, league, members.length]);
 
   // ===================================
   // STATS CAROUSEL AUTO-CYCLING
   // TODO: This will work with real API data
   // ===================================
   
-  const statsArray = [
+  // Create stats array with just the 3 key metrics
+  const statsArray = leagueStats ? [
     {
       icon: <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />,
       bgGradient: "from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50",
@@ -302,41 +168,20 @@ function LeaguePage() {
       trend: <TrendingUp className="h-4 w-4 text-green-500" />
     },
     {
-      icon: <Activity className="h-6 w-6 text-green-600 dark:text-green-400" />,
-      bgGradient: "from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50",
-      value: leagueStats.gamesThisMonth,
-      label: "Games This Month",
-      trend: <TrendingUp className="h-4 w-4 text-green-500" />
-    },
-    {
       icon: <BarChart3 className="h-6 w-6 text-purple-600 dark:text-purple-400" />,
       bgGradient: "from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50",
       value: leagueStats.averageAttendance,
-      label: "Avg Attendance",
+      label: "Avg League Attendance",
       trend: <TrendingUp className="h-4 w-4 text-green-500" />
     },
     {
       icon: <Trophy className="h-6 w-6 text-orange-600 dark:text-orange-400" />,
       bgGradient: "from-orange-100 to-red-100 dark:from-orange-900/50 dark:to-red-900/50",
       value: leagueStats.totalGamesPlayed,
-      label: "Total Games",
-      trend: <TrendingUp className="h-4 w-4 text-green-500" />
-    },
-    {
-      icon: <Zap className="h-6 w-6 text-teal-600 dark:text-teal-400" />,
-      bgGradient: "from-teal-100 to-cyan-100 dark:from-teal-900/50 dark:to-cyan-900/50",
-      value: leagueStats.activeToday,
-      label: "Active Today",
-      trend: <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-    },
-    {
-      icon: <Target className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />,
-      bgGradient: "from-yellow-100 to-amber-100 dark:from-yellow-900/50 dark:to-amber-900/50",
-      value: `${leagueStats.completionRate}%`,
-      label: "Completion Rate",
+      label: "Total Games Played",
       trend: <TrendingUp className="h-4 w-4 text-green-500" />
     }
-  ];
+  ] : [];
 
   // Auto-cycle through stats
   useEffect(() => {
@@ -660,20 +505,36 @@ function LeaguePage() {
 
           {/* Desktop Grid Layout - Hidden on mobile */}
           <div className="hidden lg:grid lg:grid-cols-3 gap-6">
-            {statsArray.map((stat, index) => (
-              <div key={index} className="bg-gray-50/50 dark:bg-slate-700/50 rounded-2xl p-6 border border-gray-200/50 dark:border-slate-600/50 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 bg-gradient-to-br ${stat.bgGradient} rounded-xl`}>
-                    {stat.icon}
+            {statsLoading ? (
+              // Loading skeleton for desktop
+              Array.from({ length: 3 }).map((_, index) => (
+                <div key={index} className="bg-gray-50/50 dark:bg-slate-700/50 rounded-2xl p-6 border border-gray-200/50 dark:border-slate-600/50">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 bg-gray-200 dark:bg-slate-600 rounded-xl animate-pulse w-14 h-14"></div>
+                    <div className="w-6 h-6 bg-gray-200 dark:bg-slate-600 rounded animate-pulse"></div>
                   </div>
-                  {stat.trend}
+                  <div className="text-center">
+                    <div className="h-8 bg-gray-200 dark:bg-slate-600 rounded animate-pulse mb-2"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-slate-600 rounded animate-pulse w-3/4 mx-auto"></div>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stat.value}</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">{stat.label}</div>
+              ))
+            ) : (
+              statsArray.map((stat, index) => (
+                <div key={index} className="bg-gray-50/50 dark:bg-slate-700/50 rounded-2xl p-6 border border-gray-200/50 dark:border-slate-600/50 hover:shadow-lg transition-all duration-300">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 bg-gradient-to-br ${stat.bgGradient} rounded-xl`}>
+                      {stat.icon}
+                    </div>
+                    {stat.trend}
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stat.value}</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">{stat.label}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
 
           {/* Mobile Carousel Layout - Hidden on desktop */}
@@ -700,25 +561,41 @@ function LeaguePage() {
                   document.addEventListener('touchend', handleTouchEnd);
                 }}
               >
-                {statsArray.map((stat, index) => (
-                  <div 
-                    key={index}
-                    className="w-full flex-shrink-0 p-2"
-                  >
+                {statsLoading ? (
+                  // Loading skeleton for mobile
+                  <div className="w-full flex-shrink-0 p-2">
                     <div className="bg-gray-50/50 dark:bg-slate-700/50 rounded-2xl p-6 border border-gray-200/50 dark:border-slate-600/50">
                       <div className="flex items-center justify-between mb-4">
-                        <div className={`p-3 bg-gradient-to-br ${stat.bgGradient} rounded-xl`}>
-                          {stat.icon}
-                        </div>
-                        {stat.trend}
+                        <div className="p-3 bg-gray-200 dark:bg-slate-600 rounded-xl animate-pulse w-14 h-14"></div>
+                        <div className="w-6 h-6 bg-gray-200 dark:bg-slate-600 rounded animate-pulse"></div>
                       </div>
                       <div className="text-center">
-                        <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stat.value}</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">{stat.label}</div>
+                        <div className="h-8 bg-gray-200 dark:bg-slate-600 rounded animate-pulse mb-2"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-slate-600 rounded animate-pulse w-3/4 mx-auto"></div>
                       </div>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  statsArray.map((stat, index) => (
+                    <div 
+                      key={index}
+                      className="w-full flex-shrink-0 p-2"
+                    >
+                      <div className="bg-gray-50/50 dark:bg-slate-700/50 rounded-2xl p-6 border border-gray-200/50 dark:border-slate-600/50">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className={`p-3 bg-gradient-to-br ${stat.bgGradient} rounded-xl`}>
+                            {stat.icon}
+                          </div>
+                          {stat.trend}
+                        </div>
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stat.value}</div>
+                          <div className="text-sm text-gray-600 dark:text-gray-300 font-medium">{stat.label}</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 
@@ -773,7 +650,21 @@ function LeaguePage() {
             </button>
           </div>
 
-          {topPlayers.length > 0 ? (
+          {topPlayersLoading ? (
+            <div className="text-center py-12">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-200 dark:border-green-700 mx-auto mb-4"></div>
+                <div className="absolute inset-0 animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-green-600 dark:border-t-green-400 mx-auto"></div>
+              </div>
+              <p className="text-gray-600 dark:text-gray-300">Loading top players...</p>
+            </div>
+          ) : topPlayersError ? (
+            <div className="text-center py-12">
+              <Trophy className="h-16 w-16 text-red-300 dark:text-red-600 mx-auto mb-4" />
+              <p className="text-red-500 dark:text-red-400 text-lg">Failed to load top players</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">{topPlayersError}</p>
+            </div>
+          ) : topPlayers.length > 0 ? (
             <div className="space-y-4">
               {/* Top 3 Podium */}
               <div className="flex justify-center items-end mb-8">
@@ -827,22 +718,6 @@ function LeaguePage() {
                 )}
                 </div>
               </div>
-
-              {/* Rest of Top Players */}
-              {topPlayers.slice(3).map((player, index) => (
-                <div key={player.id} className="flex items-center justify-between p-4 bg-gray-50/50 dark:bg-slate-700/50 rounded-xl hover:bg-gray-100/50 dark:hover:bg-slate-600/50 transition-colors duration-200">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-full flex items-center justify-center font-bold text-gray-600 dark:text-gray-300">
-                      {index + 4}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-gray-900 dark:text-white">{player.name}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{player.gamesPlayed} games • {player.winRate}% win rate</div>
-                    </div>
-                  </div>
-                  <div className="text-xl font-bold text-gray-900 dark:text-white">{player.avgScore}</div>
-                </div>
-              ))}
             </div>
           ) : (
             <div className="text-center py-12">
@@ -853,83 +728,17 @@ function LeaguePage() {
           )}
         </section>
 
-        {/* Recent Games & League Nights - Two Column Layout */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          
-          {/* Recent Games */}
-          <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-3">
-                <div className="p-3 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-2xl">
-                  <Activity className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Recent Games</h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">Latest match results</p>
-                </div>
-              </div>
-              <button className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium">
-                View All
-              </button>
+        {/* League Nights Schedule - Full Width */}
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="p-3 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 rounded-2xl">
+              <Calendar className="h-6 w-6 text-purple-600 dark:text-purple-400" />
             </div>
-
-            <div className="space-y-4">
-              {recentGames.map((game) => (
-                <div key={game.id} className="p-4 bg-gray-50/50 dark:bg-slate-700/50 rounded-xl border border-gray-200/50 dark:border-slate-600/50">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{game.date}</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">•</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">{game.time}</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">•</span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">Court {game.court}</span>
-                    </div>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      game.status === 'completed' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
-                      game.status === 'in_progress' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
-                      'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                    }`}>
-                      {game.status === 'completed' ? 'Completed' : 
-                       game.status === 'in_progress' ? 'In Progress' : 'Scheduled'}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-4 items-center">
-                    <div className="text-center">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">{game.team1.player1}</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-300">{game.team1.player2}</div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-lg font-bold text-gray-900 dark:text-white">
-                        {game.team1.score} - {game.team2.score}
-                      </div>
-                      {game.duration && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{game.duration} min</div>
-                      )}
-                    </div>
-                    
-                    <div className="text-center">
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">{game.team2.player1}</div>
-                      <div className="text-sm text-gray-600 dark:text-gray-300">{game.team2.player2}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">League Nights</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Upcoming sessions</p>
             </div>
-          </section>
-
-          {/* League Nights Schedule */}
-          <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="p-3 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 rounded-2xl">
-                <Calendar className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">League Nights</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Upcoming sessions</p>
-              </div>
-            </div>
+          </div>
 
             <div className="space-y-4">
               {leagueNights.map((night) => (
@@ -974,8 +783,7 @@ function LeaguePage() {
                 </div>
               ))}
             </div>
-          </section>
-        </div>
+        </section>
 
         {/* League Members */}
         <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
