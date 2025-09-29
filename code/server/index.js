@@ -9,12 +9,17 @@ const leagueNightRoutes = require('./src/routes/leagueNights');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware - CORS configuration for credentials
+// Middleware - CORS configuration for production and development
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'], // Vite dev server and potential React dev server
+  origin: [
+    'http://localhost:5173', // Vite dev server
+    'http://localhost:3000', // React dev server
+    'https://next-up-blond.vercel.app', // Production Vercel domain
+    'https://next-up.co.za' // Custom domain
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 app.use(express.json());
 
