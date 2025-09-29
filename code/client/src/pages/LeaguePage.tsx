@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useLeague, useTopPlayers, useLeagueStats, type LeagueStats } from '../hooks/useLeagues'
+import { useLeague, useTopPlayers, useLeagueStats } from '../hooks/useLeagues'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../contexts/ThemeContext'
 import { useMembership, useLeagueMembers } from '../hooks/useMembership'
@@ -13,8 +13,6 @@ import {
   MapPin, 
   Trophy, 
   TrendingUp, 
-  Clock, 
-  Star,
   Medal,
   BarChart3,
   Crown,
@@ -22,7 +20,6 @@ import {
   Play,
   UserCheck,
   ChevronRight,
-  Sparkles,
   ChevronLeft
 } from 'lucide-react'
 
@@ -50,20 +47,6 @@ interface LeagueNight {
   courtsAvailable: number
 }
 
-interface Member {
-  id: string
-  name: string
-  email: string
-  skillLevel: 'Beginner' | 'Intermediate' | 'Advanced'
-  role: 'player' | 'admin'
-  joinedAt: string
-  gamesPlayed: number
-  avgScore: number
-  winRate: number
-  isActive: boolean
-  lastSeen?: string
-}
-
 function LeaguePage() {
   const { leagueId } = useParams<{ leagueId: string }>();
   const navigate = useNavigate();
@@ -78,7 +61,7 @@ function LeaguePage() {
     parseInt(leagueId || '0'), 
     user?.id || null
   );
-  const { members, loading: membersLoading } = useLeagueMembers(parseInt(leagueId || '0'));
+  const { members } = useLeagueMembers(parseInt(leagueId || '0'));
   const { topPlayers, loading: topPlayersLoading, error: topPlayersError } = useTopPlayers(leagueId, user?.email || '');
 
   // ===================================

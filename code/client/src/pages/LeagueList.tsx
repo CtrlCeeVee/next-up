@@ -2,7 +2,7 @@ import { useLeagues } from '../hooks/useLeagues'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../contexts/ThemeContext'
 import { useNavigate } from 'react-router-dom'
-import { Moon, Sun, Sparkles, Zap, Trophy, Users, MapPin, Calendar, Star, ArrowRight, Play } from 'lucide-react'
+import { Moon, Sun, Zap, Trophy, Users, MapPin, Calendar, Star, ArrowRight, Play } from 'lucide-react'
 
 function LeagueList() {
   const { leagues, loading, error } = useLeagues();
