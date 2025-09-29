@@ -15,7 +15,8 @@ app.use(cors({
     'http://localhost:5173', // Vite dev server
     'http://localhost:3000', // React dev server
     'https://next-up-blond.vercel.app', // Production Vercel domain
-    'https://next-up.co.za' // Custom domain
+    'https://next-up.co.za', // Custom domain
+    'https://www.next-up.co.za' // Custom domain (www)
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
