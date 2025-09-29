@@ -102,9 +102,23 @@ function LeagueList() {
               
               {user ? (
                 <>
-                  <div className="hidden sm:block text-sm text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-slate-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
+                  {/* Desktop Profile Button */}
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="hidden sm:block text-sm text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-slate-800/50 px-3 py-2 rounded-full backdrop-blur-sm hover:bg-white/70 dark:hover:bg-slate-800/70 transition-all duration-200 hover:scale-105 cursor-pointer"
+                  >
                     <span className="text-green-600 dark:text-green-400 font-medium">Hello,</span> {user?.user_metadata?.full_name || user?.email || 'Player'}
-                  </div>
+                  </button>
+
+                  {/* Mobile Profile Button */}
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="sm:hidden bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-all duration-200"
+                    title="My Profile"
+                  >
+                    👤
+                  </button>
+
                   <button 
                     onClick={handleSignOut}
                     className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
