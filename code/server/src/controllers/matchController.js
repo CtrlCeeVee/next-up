@@ -9,7 +9,124 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// Helper function to get league night instance (imported from leagueNightController logic)
+// Auto-assignment function - centralized logic for creating matches automatically
+const tryAutoAssignMatches = async (instanceId) => {
+  try {
+    console.log(`Attempting auto-assignment for instance ${instanceId}`);
+    
+    // Get partnerships with game counts
+    const { data: partnerships, error: partnershipsError } = await supabase
+      .rpc('get_partnerships_with_game_counts', { instance_id: instanceId });
+
+    if (partnershipsError) {
+      console.error('Error fetching partnerships for auto-assignment:', partnershipsError);
+      return { success: false, error: partnershipsError.message };
+    }
+
+    if (!partnerships || partnerships.length < 2) {
+      console.log(`Not enough partnerships for auto-assignment: ${partnerships?.length || 0}`);
+      return { success: true, message: 'Not enough partnerships', matches: [] };
+    }
+
+    // Get available courts
+    const { data: availableCourts, error: courtsError } = await supabase
+      .rpc('get_available_courts', { instance_id: instanceId });
+
+    if (courtsError) {
+      console.error('Error fetching courts for auto-assignment:', courtsError);
+      return { success: false, error: courtsError.message };
+    }
+
+    if (!availableCourts || availableCourts.length === 0) {
+      console.log('No available courts for auto-assignment');
+      return { success: true, message: 'No courts available', matches: [] };
+    }
+
+    // Fair queue system: Assign new partnerships the current minimum games played
+    // This prevents late joiners from getting unfair priority
+    const minGamesPlayed = Math.min(...partnerships.map(p => p.games_played_tonight));
+    
+    const adjustedPartnerships = partnerships.map(partnership => ({
+      ...partnership,
+      // If a partnership has 0 games (new), set it to current minimum to ensure fairness
+      effective_games: partnership.games_played_tonight === 0 ? minGamesPlayed : partnership.games_played_tonight
+    }));
+
+    // Sort by effective games played (ascending) then by skill level for variety
+    const sortedPartnerships = adjustedPartnerships.sort((a, b) => {
+      if (a.effective_games !== b.effective_games) {
+        return a.effective_games - b.effective_games;
+      }
+      // If same effective games, mix skill levels for variety
+      return Math.random() - 0.5;
+    });
+
+    // Calculate how many matches we can create
+    const maxPossibleMatches = Math.floor(sortedPartnerships.length / 2);
+    const maxCourtMatches = availableCourts.length;
+    const matchesToCreateCount = Math.min(maxPossibleMatches, maxCourtMatches);
+
+    if (matchesToCreateCount === 0) {
+      return { success: true, message: 'Unable to create matches', matches: [] };
+    }
+
+    // Create matches for available courts
+    const matchesToCreate = [];
+    const courtsToUse = availableCourts.slice(0, matchesToCreateCount);
+
+    for (let i = 0; i < courtsToUse.length && (i * 2 + 1) < sortedPartnerships.length; i++) {
+      const partnership1 = sortedPartnerships[i * 2];
+      const partnership2 = sortedPartnerships[i * 2 + 1];
+      const court = courtsToUse[i];
+
+      matchesToCreate.push({
+        league_night_instance_id: instanceId,
+        partnership1_id: partnership1.partnership_id,
+        partnership2_id: partnership2.partnership_id,
+        court_number: court.court_number,
+        status: 'active'
+      });
+    }
+
+    if (matchesToCreate.length === 0) {
+      return { success: true, message: 'No matches to create', matches: [] };
+    }
+
+    // Insert matches into database
+    const { data: createdMatches, error: insertError } = await supabase
+      .from('matches')
+      .insert(matchesToCreate)
+      .select(`
+        *,
+        partnership1:confirmed_partnerships!partnership1_id (
+          player1:profiles!player1_id (full_name),
+          player2:profiles!player2_id (full_name)
+        ),
+        partnership2:confirmed_partnerships!partnership2_id (
+          player1:profiles!player1_id (full_name),
+          player2:profiles!player2_id (full_name)
+        )
+      `);
+
+    if (insertError) {
+      console.error('Error creating matches in auto-assignment:', insertError);
+      return { success: false, error: insertError.message };
+    }
+
+    console.log(`Auto-assignment successful: Created ${createdMatches.length} matches`);
+    return {
+      success: true,
+      matches: createdMatches,
+      message: `Auto-assigned ${createdMatches.length} match(es)`
+    };
+
+  } catch (error) {
+    console.error('Unexpected error in auto-assignment:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Helper function to get league night instance with auto-start functionality
 const getOrCreateLeagueNightInstance = async (leagueId, nightId, forceToday = false) => {
   try {
     // First, try to get existing instance by ID
@@ -20,7 +137,11 @@ const getOrCreateLeagueNightInstance = async (leagueId, nightId, forceToday = fa
         .eq('id', nightId)
         .single();
       
-      if (!error && instance) return instance;
+      if (!error && instance) {
+        // Check if league night should auto-start
+        const updatedInstance = await checkAndAutoStartLeagueNight(instance);
+        return updatedInstance;
+      }
     }
 
     // If nightId is in format 'night-0', 'night-1', derive from league_days
@@ -70,7 +191,9 @@ const getOrCreateLeagueNightInstance = async (leagueId, nightId, forceToday = fa
       .single();
 
     if (!existingError && existingInstance) {
-      return existingInstance;
+      // Check if league night should auto-start
+      const updatedInstance = await checkAndAutoStartLeagueNight(existingInstance);
+      return updatedInstance;
     }
 
     // Create new instance
@@ -89,11 +212,68 @@ const getOrCreateLeagueNightInstance = async (leagueId, nightId, forceToday = fa
       .single();
 
     if (createError) throw createError;
-    return newInstance;
+    
+    // Check if this new instance should auto-start
+    const updatedInstance = await checkAndAutoStartLeagueNight(newInstance);
+    return updatedInstance;
 
   } catch (error) {
     console.error('Error getting/creating league night instance:', error);
     throw error;
+  }
+};
+
+// Auto-start league night when current time >= start time on the correct day
+const checkAndAutoStartLeagueNight = async (instance) => {
+  try {
+    // Only check if status is still 'scheduled'
+    if (instance.status !== 'scheduled') {
+      return instance;
+    }
+
+    const now = new Date();
+    const instanceDate = new Date(instance.date);
+    const [startHour, startMinute] = instance.start_time.split(':').map(Number);
+    
+    // Create start time for the instance date
+    const startTime = new Date(instanceDate);
+    startTime.setHours(startHour, startMinute, 0, 0);
+    
+    // Check if current time is past start time and it's the correct date
+    const todayStr = now.toISOString().split('T')[0];
+    const instanceDateStr = instanceDate.toISOString().split('T')[0];
+    
+    if (todayStr === instanceDateStr && now >= startTime) {
+      console.log(`Auto-starting league night ${instance.id} - time: ${now.toISOString()}, start: ${startTime.toISOString()}`);
+      
+      // Update instance status to 'active'
+      const { data: updatedInstance, error: updateError } = await supabase
+        .from('league_night_instances')
+        .update({ 
+          status: 'active',
+          auto_started_at: now.toISOString()
+        })
+        .eq('id', instance.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error auto-starting league night:', updateError);
+        return instance;
+      }
+
+      // Try to create initial matches if partnerships exist
+      console.log(`League night ${instance.id} auto-started, checking for partnerships...`);
+      const autoAssignResult = await tryAutoAssignMatches(instance.id);
+      console.log('Initial auto-assignment result:', autoAssignResult);
+      
+      return updatedInstance;
+    }
+    
+    return instance;
+  } catch (error) {
+    console.error('Error in checkAndAutoStartLeagueNight:', error);
+    return instance;
   }
 };
 
@@ -563,5 +743,6 @@ const updateSinglePlayerStats = async ({ user_id, league_id, points_scored, won 
 module.exports = {
   getMatches,
   createMatches,
-  submitMatchScore
+  submitMatchScore,
+  tryAutoAssignMatches
 };

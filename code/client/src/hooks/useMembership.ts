@@ -4,6 +4,7 @@ import { membershipService, type LeagueMember } from '../services/api/membership
 
 export const useMembership = (leagueId: number, userId: string | null) => {
   const [isMember, setIsMember] = useState<boolean>(false);
+  const [membership, setMembership] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [joining, setJoining] = useState<boolean>(false);
@@ -19,6 +20,7 @@ export const useMembership = (leagueId: number, userId: string | null) => {
       try {
         const result = await membershipService.checkMembership(leagueId, userId);
         setIsMember(result.isMember);
+        setMembership(result.membership);
       } catch (err) {
         console.error('Error checking membership:', err);
         setError(err instanceof Error ? err.message : 'Failed to check membership');
@@ -50,6 +52,7 @@ export const useMembership = (leagueId: number, userId: string | null) => {
 
   return {
     isMember,
+    membership,
     loading,
     error,
     joining,

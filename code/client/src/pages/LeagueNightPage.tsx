@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLeague } from '../hooks/useLeagues'
 import { useAuth } from '../hooks/useAuth'
+import { useMembership } from '../hooks/useMembership'
 import { useTheme } from '../contexts/ThemeContext'
 import { leagueNightService, type CheckedInPlayer, type PartnershipRequest } from '../services/api/leagueNights'
 import MatchesDisplay from '../components/MatchesDisplay'
@@ -33,6 +34,7 @@ interface LeagueNight {
   date: string
   nextDate: string  // For display compatibility
   status: 'scheduled' | 'active' | 'completed' | 'today' // Add 'today' for local status
+  backendStatus?: 'scheduled' | 'active' | 'completed' // The actual backend status
   courtsAvailable: number
   checkedInCount: number
   partnershipsCount: number
@@ -46,6 +48,7 @@ const LeagueNightPage = () => {
   
   const { league, loading, error } = useLeague(parseInt(leagueId || '0'));
   const { user, loading: authLoading } = useAuth();
+  const { isMember, membership } = useMembership(parseInt(leagueId || '0'), user?.id || null);
   
   const [leagueNight, setLeagueNight] = useState<LeagueNight | null>(null);
   const [nightLoading, setNightLoading] = useState(true);
@@ -88,6 +91,7 @@ const LeagueNightPage = () => {
         date: nightData.date,
         nextDate: nightData.date, // Use the date for display
         status: isToday ? 'today' : nightData.status,
+        backendStatus: nightData.status, // Store the actual backend status
         courtsAvailable: nightData.courtsAvailable,
         checkedInCount: nightData.checkedInCount,
         partnershipsCount: nightData.partnershipsCount,
@@ -792,7 +796,8 @@ const LeagueNightPage = () => {
             nightId={nightId}
             currentUserId={user?.id}
             onCreateMatches={handleMatchesCreated}
-            isAdmin={true} // Temporary: everyone can create matches for testing
+            isAdmin={isMember && membership?.role === 'admin'} // Check if user is admin of this league
+            leagueNightStatus={leagueNight.backendStatus || 'scheduled'} // Use actual backend status
           />
         )}
 

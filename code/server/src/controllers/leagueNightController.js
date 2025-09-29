@@ -483,11 +483,19 @@ const acceptPartnershipRequest = async (req, res) => {
       .eq('status', 'pending')
       .neq('id', request_id);
 
+    // Auto-assignment: Try to create matches now that a new partnership is formed
+    // Import the auto-assignment function from matchController
+    const { tryAutoAssignMatches } = require('./matchController');
+    console.log(`New partnership formed between ${request.requester_id} and ${request.requested_id}`);
+    const autoAssignResult = await tryAutoAssignMatches(instance.id);
+    console.log('Auto-assignment after partnership formation:', autoAssignResult);
+
     res.json({
       success: true,
       data: {
         partnership,
-        message: 'Partnership request accepted successfully'
+        message: 'Partnership request accepted successfully',
+        autoAssignment: autoAssignResult
       }
     });
 
@@ -720,6 +728,81 @@ const removePartnership = async (req, res) => {
   }
 };
 
+// POST /api/leagues/:leagueId/nights/:nightId/start-league - Manually start league (admin only)
+const startLeague = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    // Check if user is admin of this league
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || membership.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins can manually start the league'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    if (instance.status === 'active') {
+      return res.status(400).json({
+        success: false,
+        error: 'League night is already active'
+      });
+    }
+
+    // Manually start the league night
+    const { data: updatedInstance, error: updateError } = await supabase
+      .from('league_night_instances')
+      .update({ 
+        status: 'active',
+        auto_started_at: new Date().toISOString()
+      })
+      .eq('id', instance.id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Try to create initial matches if partnerships exist
+    const { tryAutoAssignMatches } = require('./matchController');
+    console.log(`League night ${instance.id} manually started by admin ${user_id}`);
+    const autoAssignResult = await tryAutoAssignMatches(instance.id);
+    console.log('Auto-assignment after manual start:', autoAssignResult);
+
+    res.json({
+      success: true,
+      data: {
+        instance: updatedInstance,
+        message: 'League night started successfully',
+        autoAssignment: autoAssignResult
+      }
+    });
+
+  } catch (error) {
+    console.error('Error starting league:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to start league'
+    });
+  }
+};
+
 module.exports = {
   getLeagueNight,
   getCheckedInPlayers,
@@ -729,5 +812,6 @@ module.exports = {
   rejectPartnershipRequest,
   getPartnershipRequests,
   uncheckPlayer,
-  removePartnership
+  removePartnership,
+  startLeague
 };

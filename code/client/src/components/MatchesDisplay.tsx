@@ -28,6 +28,7 @@ interface MatchesDisplayProps {
   currentUserId?: string;
   onCreateMatches: () => void;
   isAdmin?: boolean;
+  leagueNightStatus?: 'scheduled' | 'active' | 'completed';
 }
 
 const MatchesDisplay: React.FC<MatchesDisplayProps> = ({ 
@@ -35,12 +36,14 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
   nightId, 
   currentUserId,
   onCreateMatches,
-  isAdmin = false
+  isAdmin = false,
+  leagueNightStatus = 'scheduled'
 }) => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [creatingMatches, setCreatingMatches] = useState(false);
+  const [startingLeague, setStartingLeague] = useState(false);
   const [queueInfo, setQueueInfo] = useState<{
     partnershipsWaiting: number;
     message?: string;
@@ -106,6 +109,38 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
       setError(err instanceof Error ? err.message : 'Failed to create matches');
     } finally {
       setCreatingMatches(false);
+    }
+  };
+
+  const handleStartLeague = async () => {
+    try {
+      setStartingLeague(true);
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/start-league`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: currentUserId })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to start league');
+      }
+      
+      const data = await response.json();
+      if (data.success) {
+        // Refresh matches list to show any auto-created matches
+        await fetchMatches();
+        onCreateMatches(); // This will refresh the league night status
+      } else {
+        throw new Error(data.error || 'Failed to start league');
+      }
+    } catch (err) {
+      console.error('Error starting league:', err);
+      setError(err instanceof Error ? err.message : 'Failed to start league');
+    } finally {
+      setStartingLeague(false);
     }
   };
 
@@ -391,19 +426,40 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
           <div className="text-center py-8">
             <Users className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              No Matches Yet
+              {leagueNightStatus === 'scheduled' ? 'League Night Not Started' : 'No Matches Yet'}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Once partnerships are formed, matches will be created automatically.
+              {leagueNightStatus === 'scheduled' 
+                ? 'The league night will start automatically at the scheduled time, or an admin can start it manually.'
+                : 'Once partnerships are formed, matches will be created automatically.'
+              }
             </p>
             {isAdmin && (
-              <button
-                onClick={handleCreateMatches}
-                disabled={creatingMatches}
-                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300"
-              >
-                Create First Matches
-              </button>
+              <div className="space-y-3">
+                {leagueNightStatus === 'scheduled' && (
+                  <button
+                    onClick={handleStartLeague}
+                    disabled={startingLeague}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 mr-3"
+                  >
+                    {startingLeague ? 'Starting...' : 'Start League Night'}
+                  </button>
+                )}
+                {leagueNightStatus === 'active' && (
+                  <button
+                    onClick={handleCreateMatches}
+                    disabled={creatingMatches}
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300"
+                  >
+                    {creatingMatches ? 'Creating...' : 'Create Matches Manually'}
+                  </button>
+                )}
+              </div>
+            )}
+            {!isAdmin && leagueNightStatus === 'scheduled' && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                Waiting for league night to start...
+              </p>
             )}
           </div>
         </div>

@@ -3,7 +3,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { 
+const {
   getLeagueNight,
   getCheckedInPlayers,
   checkInPlayer,
@@ -12,10 +12,9 @@ const {
   rejectPartnershipRequest,
   getPartnershipRequests,
   uncheckPlayer,
-  removePartnership
-} = require('../controllers/leagueNightController');
-
-const {
+  removePartnership,
+  startLeague
+} = require('../controllers/leagueNightController');const {
   getMatches,
   createMatches,
   submitMatchScore
@@ -50,6 +49,9 @@ router.post('/:leagueId/nights/:nightId/create-matches', createMatches);
 
 // POST /api/leagues/:leagueId/nights/:nightId/submit-score - Submit match score
 router.post('/:leagueId/nights/:nightId/submit-score', submitMatchScore);
+
+// POST /api/leagues/:leagueId/nights/:nightId/start-league - Manually start league (admin only)
+router.post('/:leagueId/nights/:nightId/start-league', startLeague);
 
 // DELETE /api/leagues/:leagueId/nights/:nightId/checkin - Uncheck player
 router.delete('/:leagueId/nights/:nightId/checkin', uncheckPlayer);
