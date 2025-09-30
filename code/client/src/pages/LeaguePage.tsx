@@ -305,55 +305,55 @@ function LeaguePage() {
 
       {/* Enhanced Header */}
       <header className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg shadow-lg border-b border-white/20 dark:border-slate-700/50">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <button 
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center w-full sm:w-auto space-y-3 sm:space-y-0 sm:space-x-6">
+              <button
                 onClick={() => navigate('/')}
-                className="flex items-center space-x-2 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 p-3 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300 group"
+                className="flex items-center space-x-2 text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 p-2 sm:p-3 rounded-xl hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300 group"
               >
-                <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform duration-300" />
-                <span className="font-medium">Back to Leagues</span>
+                <ArrowLeft className="h-4 sm:h-5 w-4 sm:w-5 group-hover:-translate-x-1 transition-transform duration-300" />
+                <span className="text-sm sm:text-base font-medium">Back</span>
               </button>
-              
-              <div className="border-l border-gray-300 dark:border-gray-600 pl-6">
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
+
+              <div className="sm:border-l border-gray-300 dark:border-gray-600 sm:pl-6">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
                   {league.name}
                 </h1>
-                <div className="flex items-center space-x-4 mt-1">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-1">
                   <div className="flex items-center text-gray-600 dark:text-gray-300">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    <span className="text-sm">{league.location}</span>
+                    <MapPin className="h-3 sm:h-4 w-3 sm:w-4 mr-1" />
+                    <span className="text-xs sm:text-sm">{league.location}</span>
                   </div>
                   <div className="flex items-center text-gray-600 dark:text-gray-300">
-                    <Calendar className="h-4 w-4 mr-1" />
-                    <span className="text-sm">{league.leagueDays.join(', ')}</span>
+                    <Calendar className="h-3 sm:h-4 w-3 sm:w-4 mr-1" />
+                    <span className="text-xs sm:text-sm">{league.leagueDays.join(', ')}</span>
                   </div>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-full bg-gray-100/80 dark:bg-slate-800/80 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-300 group"
+                className="p-1.5 sm:p-2 rounded-full bg-gray-100/80 dark:bg-slate-800/80 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-300 group"
               >
                 {theme === 'light' ? (
-                  <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300 group-hover:rotate-12 transition-transform duration-300" />
+                  <Moon className="h-4 sm:h-5 w-4 sm:w-5 text-gray-600 dark:text-gray-300 group-hover:rotate-12 transition-transform duration-300" />
                 ) : (
-                  <Sun className="h-5 w-5 text-yellow-500 group-hover:rotate-12 transition-transform duration-300" />
+                  <Sun className="h-4 sm:h-5 w-4 sm:w-5 text-yellow-500 group-hover:rotate-12 transition-transform duration-300" />
                 )}
               </button>
 
               {user && (
                 <>
-                  <div className="hidden sm:block text-sm text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-slate-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
+                  <div className="hidden lg:block text-sm text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-slate-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
                     <span className="text-green-600 dark:text-green-400 font-medium">Hello,</span> {user?.user_metadata?.full_name || user?.email || 'Player'}
                   </div>
-                  <button 
+                  <button
                     onClick={handleSignOut}
-                    className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
+                    className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
                   >
                     Sign Out
                   </button>
@@ -365,11 +365,11 @@ function LeaguePage() {
       </header>
 
       {/* Main Content */}
-      <main className="relative max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <main className="relative max-w-7xl mx-auto px-4 py-4 sm:py-6 md:py-8 space-y-4 sm:space-y-6 md:space-y-8">
         
         {/* League Overview Hero Section */}
-        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
-          <div className="grid md:grid-cols-3 gap-8">
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             <div className="md:col-span-2">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="p-3 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-2xl">
@@ -408,8 +408,12 @@ function LeaguePage() {
             {/* Membership Status & Action */}
             <div className="flex flex-col items-center justify-center space-y-6">
               <div className="text-center">
-                <div className="w-24 h-24 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-full flex items-center justify-center mb-4 mx-auto shadow-lg">
-                  <span className="text-3xl">🥎</span>
+                <div className="w-32 h-32 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-full flex items-center justify-center mb-4 mx-auto shadow-lg p-4">
+                  <img
+                    src="/logo.png"
+                    alt="Next-Up Logo"
+                    className="w-24 h-24 object-contain"
+                  />
                 </div>
                 <div className="space-y-2">
                   <div className="text-lg font-bold text-gray-900 dark:text-white">League Status</div>
@@ -457,7 +461,7 @@ function LeaguePage() {
         </section>
 
         {/* League Statistics - Responsive Design */}
-        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-3">
               <div className="p-3 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/50 dark:to-purple-900/50 rounded-2xl">
@@ -616,7 +620,7 @@ function LeaguePage() {
         </section>
 
         {/* Top Players Leaderboard */}
-        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
               <div className="p-3 bg-gradient-to-br from-yellow-100 to-amber-100 dark:from-yellow-900/50 dark:to-amber-900/50 rounded-2xl">
@@ -650,19 +654,19 @@ function LeaguePage() {
           ) : topPlayers.length > 0 ? (
             <div className="space-y-4">
               {/* Top 3 Podium */}
-              <div className="flex justify-center items-end mb-8">
-                <div className="flex items-end space-x-6">
+              <div className="flex justify-center items-end mb-4 sm:mb-6 md:mb-8 overflow-x-auto">
+                <div className="flex items-end space-x-1 sm:space-x-3 md:space-x-6 min-w-fit">
                 {/* 2nd Place */}
                 {topPlayers[1] && (
                   <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mb-3 shadow-lg">
-                      <Medal className="h-8 w-8 text-gray-600 dark:text-gray-300" />
+                    <div className="w-10 sm:w-14 md:w-16 h-10 sm:h-14 md:h-16 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mb-1 sm:mb-2 md:mb-3 shadow-lg">
+                      <Medal className="h-5 sm:h-7 md:h-8 w-5 sm:w-7 md:w-8 text-gray-600 dark:text-gray-300" />
                     </div>
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 px-4 py-6 rounded-2xl min-h-[120px] flex flex-col justify-center shadow-lg border w-36 text-center">
-                      <div className="font-bold text-gray-900 dark:text-white text-sm">{topPlayers[1].name}</div>
-                      <div className="text-2xl font-bold text-gray-700 dark:text-gray-300">{topPlayers[1].avgScore}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{topPlayers[1].gamesPlayed} games</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{topPlayers[1].winRate}% win rate</div>
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 px-2 sm:px-3 md:px-4 py-2 sm:py-4 md:py-6 rounded-lg sm:rounded-xl md:rounded-2xl min-h-[80px] sm:min-h-[110px] md:min-h-[120px] flex flex-col justify-center shadow-lg border w-20 sm:w-28 md:w-36 text-center">
+                      <div className="font-bold text-gray-900 dark:text-white text-xs truncate px-1">{topPlayers[1].name}</div>
+                      <div className="text-base sm:text-xl md:text-2xl font-bold text-gray-700 dark:text-gray-300">{topPlayers[1].avgScore}</div>
+                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{topPlayers[1].gamesPlayed} games</div>
+                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{topPlayers[1].winRate}% win</div>
                     </div>
                   </div>
                 )}
@@ -670,17 +674,17 @@ function LeaguePage() {
                 {/* 1st Place */}
                 {topPlayers[0] && (
                   <div className="flex flex-col items-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-yellow-300 to-amber-400 rounded-full flex items-center justify-center mb-3 shadow-xl">
-                      <Crown className="h-10 w-10 text-yellow-700" />
+                    <div className="w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 bg-gradient-to-br from-yellow-300 to-amber-400 rounded-full flex items-center justify-center mb-1 sm:mb-2 md:mb-3 shadow-xl">
+                      <Crown className="h-6 sm:h-8 md:h-10 w-6 sm:w-8 md:w-10 text-yellow-700" />
                     </div>
-                    <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border-2 border-yellow-300 dark:border-yellow-600 px-6 py-8 rounded-2xl min-h-[140px] flex flex-col justify-center shadow-xl w-36 text-center">
-                      <div className="font-bold text-gray-900 dark:text-white">{topPlayers[0].name}</div>
+                    <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border-2 border-yellow-300 dark:border-yellow-600 px-2 sm:px-3 md:px-6 py-3 sm:py-5 md:py-8 rounded-lg sm:rounded-xl md:rounded-2xl min-h-[95px] sm:min-h-[130px] md:min-h-[140px] flex flex-col justify-center shadow-xl w-20 sm:w-28 md:w-36 text-center">
+                      <div className="font-bold text-gray-900 dark:text-white text-[10px] sm:text-xs md:text-base truncate px-1">{topPlayers[0].name}</div>
                       {topPlayers[0].isCurrentUser && (
-                        <div className="text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-1 rounded-full mb-1">You!</div>
+                        <div className="text-[10px] sm:text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-1 sm:px-2 py-0.5 rounded-full mb-0.5">You!</div>
                       )}
-                      <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">{topPlayers[0].avgScore}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{topPlayers[0].gamesPlayed} games</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{topPlayers[0].winRate}% win rate</div>
+                      <div className="text-lg sm:text-2xl md:text-3xl font-bold text-yellow-600 dark:text-yellow-400">{topPlayers[0].avgScore}</div>
+                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{topPlayers[0].gamesPlayed} games</div>
+                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{topPlayers[0].winRate}% win</div>
                     </div>
                   </div>
                 )}
@@ -688,14 +692,14 @@ function LeaguePage() {
                 {/* 3rd Place */}
                 {topPlayers[2] && (
                   <div className="flex flex-col items-center">
-                    <div className="w-16 h-16 bg-gradient-to-br from-orange-200 to-red-300 dark:from-orange-800 dark:to-red-700 rounded-full flex items-center justify-center mb-3 shadow-lg">
-                      <Medal className="h-8 w-8 text-orange-700 dark:text-orange-300" />
+                    <div className="w-10 sm:w-14 md:w-16 h-10 sm:h-14 md:h-16 bg-gradient-to-br from-orange-200 to-red-300 dark:from-orange-800 dark:to-red-700 rounded-full flex items-center justify-center mb-1 sm:mb-2 md:mb-3 shadow-lg">
+                      <Medal className="h-5 sm:h-7 md:h-8 w-5 sm:w-7 md:w-8 text-orange-700 dark:text-orange-300" />
                     </div>
-                    <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/30 dark:to-red-900/30 px-4 py-6 rounded-2xl min-h-[120px] flex flex-col justify-center shadow-lg border border-orange-200 dark:border-orange-700 w-36 text-center">
-                      <div className="font-bold text-gray-900 dark:text-white text-sm">{topPlayers[2].name}</div>
-                      <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{topPlayers[2].avgScore}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{topPlayers[2].gamesPlayed} games</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{topPlayers[2].winRate}% win rate</div>
+                    <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/30 dark:to-red-900/30 px-2 sm:px-3 md:px-4 py-2 sm:py-4 md:py-6 rounded-lg sm:rounded-xl md:rounded-2xl min-h-[80px] sm:min-h-[110px] md:min-h-[120px] flex flex-col justify-center shadow-lg border border-orange-200 dark:border-orange-700 w-20 sm:w-28 md:w-36 text-center">
+                      <div className="font-bold text-gray-900 dark:text-white text-xs truncate px-1">{topPlayers[2].name}</div>
+                      <div className="text-base sm:text-xl md:text-2xl font-bold text-orange-600 dark:text-orange-400">{topPlayers[2].avgScore}</div>
+                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{topPlayers[2].gamesPlayed} games</div>
+                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{topPlayers[2].winRate}% win</div>
                     </div>
                   </div>
                 )}
@@ -712,7 +716,7 @@ function LeaguePage() {
         </section>
 
         {/* League Nights Schedule - Full Width */}
-        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
           <div className="flex items-center space-x-3 mb-6">
             <div className="p-3 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 rounded-2xl">
               <Calendar className="h-6 w-6 text-purple-600 dark:text-purple-400" />
@@ -734,9 +738,9 @@ function LeaguePage() {
                       : 'bg-gray-50/50 dark:bg-slate-700/50 border-gray-200/50 dark:border-slate-600/50 hover:border-green-300 dark:hover:border-green-600'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-6">
-                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-lg transition-colors ${
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center space-x-3 sm:space-x-6">
+                      <div className={`w-12 sm:w-14 md:w-16 h-12 sm:h-14 md:h-16 rounded-xl sm:rounded-2xl flex items-center justify-center font-bold text-sm sm:text-base md:text-lg transition-colors ${
                         night.status === 'today' 
                           ? 'bg-green-200 dark:bg-green-800 text-green-700 dark:text-green-300' 
                           : 'bg-gray-200 dark:bg-slate-600 text-gray-700 dark:text-gray-300 group-hover:bg-green-200 dark:group-hover:bg-green-800'
@@ -751,16 +755,16 @@ function LeaguePage() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-6">
+                    <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto space-x-4 sm:space-x-6">
                       <div className="text-center">
-                        <div className="text-xl font-bold text-gray-900 dark:text-white">{night.avgAttendance}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">Avg Players</div>
+                        <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{night.avgAttendance}</div>
+                        <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Avg Players</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-xl font-bold text-gray-900 dark:text-white">{night.upcomingGames}</div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">Games</div>
+                        <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">{night.upcomingGames}</div>
+                        <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Games</div>
                       </div>
-                      <ArrowRight className="h-6 w-6 text-green-600 dark:text-green-400 group-hover:translate-x-2 transition-transform duration-200" />
+                      <ArrowRight className="h-5 sm:h-6 w-5 sm:w-6 text-green-600 dark:text-green-400 group-hover:translate-x-1 sm:group-hover:translate-x-2 transition-transform duration-200" />
                     </div>
                   </div>
                 </div>
@@ -769,7 +773,7 @@ function LeaguePage() {
         </section>
 
         {/* League Members */}
-        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
               <div className="p-3 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-2xl">

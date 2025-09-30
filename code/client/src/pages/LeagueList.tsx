@@ -2,7 +2,7 @@ import { useLeagues } from '../hooks/useLeagues'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../contexts/ThemeContext'
 import { useNavigate } from 'react-router-dom'
-import { Moon, Sun, Zap, Trophy, Users, MapPin, Calendar, Star, ArrowRight, Play } from 'lucide-react'
+import { Moon, Sun, Zap, Trophy, Users, MapPin, Calendar, Star, ArrowRight, Play, User } from 'lucide-react'
 
 function LeagueList() {
   const { leagues, loading, error } = useLeagues();
@@ -79,13 +79,14 @@ function LeagueList() {
 
       {/* Header */}
       <header className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg shadow-lg border-b border-white/20 dark:border-slate-700/50">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
-                Next-Up
-              </h1>
-              <span className="text-2xl animate-bounce">🥎</span>
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center">
+              <img
+                src="/logo.png"
+                alt="Next-Up Logo"
+                className="h-12 sm:h-16 md:h-20 lg:h-22 w-auto"
+              />
             </div>
             <div className="flex items-center space-x-4">
               {/* Theme Toggle */}
@@ -102,9 +103,23 @@ function LeagueList() {
               
               {user ? (
                 <>
-                  <div className="hidden sm:block text-sm text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-slate-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
+                  {/* Desktop Profile Button */}
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="hidden sm:block text-sm text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-slate-800/50 px-3 py-2 rounded-full backdrop-blur-sm hover:bg-white/70 dark:hover:bg-slate-800/70 transition-all duration-200 hover:scale-105 cursor-pointer"
+                  >
                     <span className="text-green-600 dark:text-green-400 font-medium">Hello,</span> {user?.user_metadata?.full_name || user?.email || 'Player'}
-                  </div>
+                  </button>
+
+                  {/* Mobile Profile Button */}
+                  <button
+                    onClick={() => navigate('/profile')}
+                    className="sm:hidden bg-green-500 text-white p-2 rounded-full hover:bg-green-600 transition-all duration-200 flex items-center justify-center"
+                    title="My Profile"
+                  >
+                    <User className="h-5 w-5" />
+                  </button>
+
                   <button 
                     onClick={handleSignOut}
                     className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors duration-200"
@@ -128,13 +143,13 @@ function LeagueList() {
 
       {/* Hero Section */}
       <main className="relative">
-        <div className="max-w-7xl mx-auto px-4 py-16">
-          <div className="text-center mb-16">
+        <div className="max-w-7xl mx-auto px-4 py-8 sm:py-16">
+          <div className="text-center mb-8 sm:mb-16">
             <div className="inline-flex items-center space-x-2 bg-green-100/80 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-4 py-2 rounded-full text-sm font-medium mb-6 backdrop-blur-sm">
               <Zap className="h-4 w-4" />
               <span>South Africa's Premier Pickleball Platform</span>
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6">
               <span className="bg-gradient-to-r from-slate-900 via-green-600 to-emerald-600 dark:from-white dark:via-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
                 Discover Amazing
               </span>
@@ -143,7 +158,7 @@ function LeagueList() {
                 Pickleball Leagues
               </span>
             </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">
+            <p className="text-base sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-6 sm:mb-8 px-4 sm:px-0">
               Join dynamic leagues, track your progress, and become part of South Africa's fastest-growing pickleball community. 
               <span className="font-semibold text-green-600 dark:text-green-400">
                 {!user && 'Sign in to unlock your potential!'}
@@ -198,7 +213,7 @@ function LeagueList() {
         </div>
 
         {/* League Cards */}
-        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
           {leagues.map((league, index) => (
             <div 
               key={league.id}
@@ -226,10 +241,10 @@ function LeagueList() {
                 </div>
               )}
               
-              <div className="relative p-8">
-                <div className="mb-6">
-                  <div className="mb-3">
-                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
+              <div className="relative p-4 sm:p-6 md:p-8">
+                <div className="mb-4 sm:mb-6">
+                  <div className="mb-2 sm:mb-3">
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors duration-300">
                       {league.name}
                     </h3>
                   </div>
@@ -276,8 +291,8 @@ function LeagueList() {
       </section>
 
       {/* Quick Actions */}
-      <section className="relative max-w-7xl mx-auto px-4 pb-16">
-        <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+      <section className="relative max-w-7xl mx-auto px-4 pb-8 sm:pb-16">
+        <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
           <div className="text-center mb-8">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               Quick Actions
@@ -285,8 +300,8 @@ function LeagueList() {
             <p className="text-gray-600 dark:text-gray-300">Everything you need to manage your pickleball journey</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <button className="group flex flex-col items-center space-y-4 p-6 text-center hover:bg-green-50/50 dark:hover:bg-green-900/20 rounded-2xl transition-all duration-300 transform hover:scale-105 border border-transparent hover:border-green-200 dark:hover:border-green-700/50">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <button className="group flex flex-col items-center space-y-3 sm:space-y-4 p-4 sm:p-6 text-center hover:bg-green-50/50 dark:hover:bg-green-900/20 rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 border border-transparent hover:border-green-200 dark:hover:border-green-700/50">
               <div className="p-4 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-2xl group-hover:scale-110 transition-transform duration-300">
                 <Trophy className="h-8 w-8 text-green-600 dark:text-green-400" />
               </div>
@@ -296,7 +311,7 @@ function LeagueList() {
               </div>
             </button>
             
-            <button className="group flex flex-col items-center space-y-4 p-6 text-center hover:bg-blue-50/50 dark:hover:bg-blue-900/20 rounded-2xl transition-all duration-300 transform hover:scale-105 border border-transparent hover:border-blue-200 dark:hover:border-blue-700/50">
+            <button className="group flex flex-col items-center space-y-3 sm:space-y-4 p-4 sm:p-6 text-center hover:bg-blue-50/50 dark:hover:bg-blue-900/20 rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 border border-transparent hover:border-blue-200 dark:hover:border-blue-700/50">
               <div className="p-4 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/50 dark:to-indigo-900/50 rounded-2xl group-hover:scale-110 transition-transform duration-300">
                 <Users className="h-8 w-8 text-blue-600 dark:text-blue-400" />
               </div>
@@ -306,7 +321,7 @@ function LeagueList() {
               </div>
             </button>
             
-            <button className="group flex flex-col items-center space-y-4 p-6 text-center hover:bg-purple-50/50 dark:hover:bg-purple-900/20 rounded-2xl transition-all duration-300 transform hover:scale-105 border border-transparent hover:border-purple-200 dark:hover:border-purple-700/50">
+            <button className="group flex flex-col items-center space-y-3 sm:space-y-4 p-4 sm:p-6 text-center hover:bg-purple-50/50 dark:hover:bg-purple-900/20 rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 border border-transparent hover:border-purple-200 dark:hover:border-purple-700/50">
               <div className="p-4 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/50 dark:to-pink-900/50 rounded-2xl group-hover:scale-110 transition-transform duration-300">
                 <Star className="h-8 w-8 text-purple-600 dark:text-purple-400" />
               </div>
@@ -323,11 +338,12 @@ function LeagueList() {
       <footer className="relative border-t border-white/20 dark:border-slate-700/50 bg-white/40 dark:bg-slate-900/40 backdrop-blur-lg">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <h3 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
-                Next-Up
-              </h3>
-              <span className="text-xl">🥎</span>
+            <div className="flex items-center justify-center mb-4">
+              <img
+                src="/logo.png"
+                alt="Next-Up Logo"
+                className="h-20 sm:h-24 md:h-28 w-auto"
+              />
             </div>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
               Revolutionizing pickleball leagues across South Africa

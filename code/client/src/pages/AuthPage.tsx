@@ -37,11 +37,12 @@ export function AuthPage() {
         <div className="max-w-md w-full">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center space-x-3 mb-6">
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400 bg-clip-text text-transparent">
-                Next-Up
-              </h1>
-              <span className="text-3xl">🥎</span>
+            <div className="flex items-center justify-center mb-6">
+              <img
+                src="/logo.png"
+                alt="Next-Up Logo"
+                className="h-16 sm:h-20 md:h-24 lg:h-28 w-auto"
+              />
             </div>
             
             <div className="inline-flex items-center space-x-2 bg-green-100/80 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-4 py-2 rounded-full text-sm font-medium mb-4 backdrop-blur-sm">

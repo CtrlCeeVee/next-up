@@ -5,11 +5,25 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
+/* Prevent horizontal scroll on mobile */
+#root {
+  overflow-x: hidden;
+  width: 100%;
+  min-height: 100vh;
 }
 
 /* Custom scrollbar */
@@ -175,11 +189,74 @@ body {
   100% { background-position: -200% 0; }
 }
 
-/* Responsive utilities */
-@media (max-width: 640px) {
+/* Mobile-first responsive utilities */
+@media (max-width: 768px) {
+  /* Disable hover effects on mobile */
   .card-hover:hover {
     transform: none;
-    box-shadow: 0 4px 25px -5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 15px -5px rgba(0, 0, 0, 0.08);
+  }
+
+  .card-enhanced:hover {
+    transform: none;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Adjust floating elements on mobile */
+  .animate-float {
+    animation: none;
+  }
+
+  /* Reduce padding on mobile */
+  section {
+    padding: 1rem !important;
+  }
+
+  /* Ensure cards don't overflow */
+  .overflow-hidden {
+    overflow: hidden !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small devices */
+  .glass,
+  .glass-dark,
+  .glass-enhanced {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Reduce text sizes on very small screens */
+  .text-5xl {
+    font-size: 2rem !important;
+  }
+
+  .text-4xl {
+    font-size: 1.75rem !important;
+  }
+
+  .text-3xl {
+    font-size: 1.5rem !important;
+  }
+
+  .text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  /* Adjust padding for mobile */
+  .px-8 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .py-8 {
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+
+  .p-8 {
+    padding: 1rem !important;
   }
 }
 
