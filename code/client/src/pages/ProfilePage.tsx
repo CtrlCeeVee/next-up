@@ -224,11 +224,11 @@ const ProfilePage = () => {
           <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
             {/* Avatar */}
             <div className="relative">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 bg-white rounded-full flex items-center justify-center shadow-lg">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-white to-gray-50 rounded-full flex items-center justify-center shadow-xl border-4 border-white/30">
                 {profile.avatar ? (
                   <img src={profile.avatar} alt={profile.name} className="w-full h-full rounded-full object-cover" />
                 ) : (
-                  <User className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400" />
+                  <User className="w-12 h-12 sm:w-16 sm:h-16 text-gray-500" />
                 )}
               </div>
               {profile.isCurrentUser && isEditing && (
