@@ -9,7 +9,8 @@ export interface AuthUser extends User {
 export interface SignUpData {
   email: string
   password: string
-  fullName: string
+  firstName: string
+  lastName: string
   skillLevel: 'Beginner' | 'Intermediate' | 'Advanced'
 }
 
@@ -19,14 +20,28 @@ export interface SignInData {
 }
 
 class AuthService {
+  // Generate username from first and last name
+  private generateUsername(firstName: string, lastName: string): string {
+    // Sanitize and combine names
+    const sanitize = (str: string) => str.toLowerCase().replace(/[^a-z0-9]/g, '')
+    const sanitizedFirst = sanitize(firstName)
+    const sanitizedLast = sanitize(lastName)
+    return `${sanitizedFirst}_${sanitizedLast}`
+  }
+
   // Sign up new user
-  async signUp({ email, password, fullName, skillLevel }: SignUpData) {
+  async signUp({ email, password, firstName, lastName, skillLevel }: SignUpData) {
+    // Generate username (we'll handle collisions in the database trigger)
+    const username = this.generateUsername(firstName, lastName)
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
-          full_name: fullName,
+          first_name: firstName,
+          last_name: lastName,
+          username: username,
           skill_level: skillLevel,
         }
       }

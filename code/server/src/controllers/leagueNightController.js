@@ -163,7 +163,8 @@ const getCheckedInPlayers = async (req, res) => {
         *,
         profiles (
           id,
-          full_name,
+          first_name,
+          last_name,
           email,
           skill_level
         )
@@ -192,7 +193,7 @@ const getCheckedInPlayers = async (req, res) => {
 
     const formattedPlayers = checkins.map(checkin => ({
       id: checkin.profiles.id,
-      name: checkin.profiles.full_name,
+      name: `${checkin.profiles.first_name} ${checkin.profiles.last_name}`,
       email: checkin.profiles.email,
       skillLevel: checkin.profiles.skill_level || 'Intermediate',
       checkedInAt: checkin.checked_in_at,
@@ -586,12 +587,14 @@ const getPartnershipRequests = async (req, res) => {
         *,
         requester:profiles!partnership_requests_requester_id_fkey (
           id,
-          full_name,
+          first_name,
+          last_name,
           skill_level
         ),
         requested:profiles!partnership_requests_requested_id_fkey (
           id,
-          full_name,
+          first_name,
+          last_name,
           skill_level
         )
       `)

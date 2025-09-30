@@ -129,7 +129,8 @@ const getLeagueTopPlayers = async (req, res) => {
       .select(`
         *,
         profiles (
-          full_name,
+          first_name,
+          last_name,
           email
         )
       `)
@@ -143,7 +144,7 @@ const getLeagueTopPlayers = async (req, res) => {
 
     const formattedPlayers = topPlayers.map((player, index) => ({
       id: player.user_id,
-      name: player.profiles.full_name,
+      name: `${player.profiles.first_name} ${player.profiles.last_name}`,
       email: player.profiles.email,
       avgScore: player.average_points,
       gamesPlayed: player.games_played,
@@ -298,7 +299,8 @@ const getLeagueMembers = async (req, res) => {
       .select(`
         *,
         profiles (
-          full_name,
+          first_name,
+          last_name,
           email,
           skill_level
         )
@@ -313,7 +315,7 @@ const getLeagueMembers = async (req, res) => {
 
     const formattedMembers = members.map(member => ({
       id: member.user_id,
-      name: member.profiles.full_name,
+      name: `${member.profiles.first_name} ${member.profiles.last_name}`,
       email: member.profiles.email,
       skillLevel: member.profiles.skill_level,
       role: member.role,
@@ -420,6 +422,88 @@ const getLeagueStats = async (req, res) => {
   }
 };
 
+// Get player statistics across all their leagues
+const getPlayerStats = async (req, res) => {
+  try {
+    const { user_id } = req.query;
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    // Get player stats for all leagues they're a member of
+    const { data: playerStats, error: statsError } = await supabase
+      .from('player_stats')
+      .select(`
+        *,
+        leagues (
+          id,
+          name,
+          location
+        )
+      `)
+      .eq('user_id', user_id);
+
+    if (statsError) throw statsError;
+
+    // Get overall totals across all leagues
+    let totalGamesPlayed = 0;
+    let totalGamesWon = 0;
+    let totalPoints = 0;
+    let totalLeagues = playerStats.length;
+
+    const leagueStats = playerStats.map(stat => {
+      totalGamesPlayed += stat.games_played;
+      totalGamesWon += stat.games_won;
+      totalPoints += stat.total_points;
+
+      return {
+        leagueId: stat.league_id,
+        leagueName: stat.leagues.name,
+        leagueLocation: stat.leagues.location,
+        gamesPlayed: stat.games_played,
+        gamesWon: stat.games_won,
+        gamesLost: stat.games_lost,
+        winRate: stat.games_played > 0 ? Math.round((stat.games_won / stat.games_played) * 100 * 10) / 10 : 0,
+        averagePoints: stat.average_points,
+        totalPoints: stat.total_points
+      };
+    });
+
+    // Calculate overall statistics
+    const overallWinRate = totalGamesPlayed > 0 ? Math.round((totalGamesWon / totalGamesPlayed) * 100 * 10) / 10 : 0;
+    const overallAvgPoints = totalGamesPlayed > 0 ? Math.round((totalPoints / totalGamesPlayed) * 10) / 10 : 0;
+
+    const response = {
+      overall: {
+        totalLeagues: totalLeagues,
+        totalGamesPlayed: totalGamesPlayed,
+        totalGamesWon: totalGamesWon,
+        totalGamesLost: totalGamesPlayed - totalGamesWon,
+        overallWinRate: overallWinRate,
+        overallAvgPoints: overallAvgPoints,
+        totalPoints: totalPoints
+      },
+      leagueStats: leagueStats
+    };
+
+    res.json({
+      success: true,
+      data: response
+    });
+
+  } catch (error) {
+    console.error('Error fetching player statistics:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch player statistics'
+    });
+  }
+};
+
 module.exports = {
   getAllLeagues,
   getLeagueById,
@@ -427,5 +511,6 @@ module.exports = {
   checkMembership,
   joinLeague,
   getLeagueMembers,
-  getLeagueStats
+  getLeagueStats,
+  getPlayerStats
 };

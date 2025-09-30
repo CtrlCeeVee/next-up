@@ -108,7 +108,7 @@ function LeagueList() {
                     onClick={() => navigate('/profile')}
                     className="hidden sm:block text-sm text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-slate-800/50 px-3 py-2 rounded-full backdrop-blur-sm hover:bg-white/70 dark:hover:bg-slate-800/70 transition-all duration-200 hover:scale-105 cursor-pointer"
                   >
-                    <span className="text-green-600 dark:text-green-400 font-medium">Hello,</span> {user?.user_metadata?.full_name || user?.email || 'Player'}
+                    <span className="text-green-600 dark:text-green-400 font-medium">Hello,</span> {user?.user_metadata?.first_name || user?.email || 'Player'}
                   </button>
 
                   {/* Mobile Profile Button */}

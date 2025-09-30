@@ -10,11 +10,15 @@ const {
   checkMembership,
   joinLeague,
   getLeagueMembers,
-  getLeagueStats
+  getLeagueStats,
+  getPlayerStats
 } = require('../controllers/leagueController');
 
 // GET /api/leagues - Get all leagues
 router.get('/', getAllLeagues);
+
+// GET /api/leagues/player-stats - Get player statistics across all leagues (must be before /:id route)
+router.get('/player-stats', getPlayerStats);
 
 // GET /api/leagues/:id - Get specific league
 router.get('/:id', getLeagueById);

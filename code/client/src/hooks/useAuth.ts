@@ -51,10 +51,10 @@ export function useAuth() {
     }
   }
 
-  const signUp = async (email: string, password: string, fullName: string, skillLevel: 'Beginner' | 'Intermediate' | 'Advanced') => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string, skillLevel: 'Beginner' | 'Intermediate' | 'Advanced') => {
     setState(prev => ({ ...prev, loading: true }))
     try {
-      const data = await authService.signUp({ email, password, fullName, skillLevel })
+      const data = await authService.signUp({ email, password, firstName, lastName, skillLevel })
       return data
     } catch (error) {
       setState(prev => ({ ...prev, loading: false }))

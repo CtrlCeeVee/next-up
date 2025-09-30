@@ -349,7 +349,7 @@ function LeaguePage() {
               {user && (
                 <>
                   <div className="hidden lg:block text-sm text-gray-600 dark:text-gray-300 bg-white/50 dark:bg-slate-800/50 px-3 py-2 rounded-full backdrop-blur-sm">
-                    <span className="text-green-600 dark:text-green-400 font-medium">Hello,</span> {user?.user_metadata?.full_name || user?.email || 'Player'}
+                    <span className="text-green-600 dark:text-green-400 font-medium">Hello,</span> {user?.user_metadata?.first_name || user?.email || 'Player'}
                   </div>
                   <button
                     onClick={handleSignOut}

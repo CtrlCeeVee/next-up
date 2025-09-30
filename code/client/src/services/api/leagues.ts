@@ -26,5 +26,11 @@ export const leaguesAPI = {
   getStats: async (leagueId: string) => {
     const response = await apiRequest(`/api/leagues/${leagueId}/stats`);
     return response.success ? response.data : response;
+  },
+
+  // Get player statistics across all leagues
+  getPlayerStats: async (userId: string) => {
+    const response = await apiRequest(`/api/leagues/player-stats?user_id=${userId}`);
+    return response.success ? response.data : response;
   }
 };

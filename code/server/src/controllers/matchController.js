@@ -99,12 +99,12 @@ const tryAutoAssignMatches = async (instanceId) => {
       .select(`
         *,
         partnership1:confirmed_partnerships!partnership1_id (
-          player1:profiles!player1_id (full_name),
-          player2:profiles!player2_id (full_name)
+          player1:profiles!player1_id (first_name, last_name),
+          player2:profiles!player2_id (first_name, last_name)
         ),
         partnership2:confirmed_partnerships!partnership2_id (
-          player1:profiles!player1_id (full_name),
-          player2:profiles!player2_id (full_name)
+          player1:profiles!player1_id (first_name, last_name),
+          player2:profiles!player2_id (first_name, last_name)
         )
       `);
 
@@ -291,13 +291,13 @@ const getMatches = async (req, res) => {
         *,
         partnership1:confirmed_partnerships!partnership1_id (
           id,
-          player1:profiles!player1_id (id, full_name, skill_level),
-          player2:profiles!player2_id (id, full_name, skill_level)
+          player1:profiles!player1_id (id, first_name, last_name, skill_level),
+          player2:profiles!player2_id (id, first_name, last_name, skill_level)
         ),
         partnership2:confirmed_partnerships!partnership2_id (
           id,
-          player1:profiles!player1_id (id, full_name, skill_level),
-          player2:profiles!player2_id (id, full_name, skill_level)
+          player1:profiles!player1_id (id, first_name, last_name, skill_level),
+          player2:profiles!player2_id (id, first_name, last_name, skill_level)
         )
       `)
       .eq('league_night_instance_id', instance.id)
@@ -453,12 +453,12 @@ const createMatches = async (req, res) => {
       .select(`
         *,
         partnership1:confirmed_partnerships!partnership1_id (
-          player1:profiles!player1_id (full_name),
-          player2:profiles!player2_id (full_name)
+          player1:profiles!player1_id (first_name, last_name),
+          player2:profiles!player2_id (first_name, last_name)
         ),
         partnership2:confirmed_partnerships!partnership2_id (
-          player1:profiles!player1_id (full_name),
-          player2:profiles!player2_id (full_name)
+          player1:profiles!player1_id (first_name, last_name),
+          player2:profiles!player2_id (first_name, last_name)
         )
       `);
 

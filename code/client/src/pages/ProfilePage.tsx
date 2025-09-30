@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
+import { usePlayerStats, type PlayerStats, type LeagueStats } from '../hooks/usePlayerStats';
 import {
   ArrowLeft,
   Moon,
@@ -34,30 +35,7 @@ interface PlayerProfile {
   isCurrentUser: boolean;
 }
 
-interface PlayerStats {
-  totalGames: number;
-  wins: number;
-  losses: number;
-  winRate: number;
-  totalPoints: number;
-  averagePoints: number;
-  currentStreak: number;
-  bestStreak: number;
-  leaguesJoined: number;
-  activeLeagues: number;
-}
 
-interface LeagueStats {
-  leagueId: number;
-  leagueName: string;
-  games: number;
-  wins: number;
-  losses: number;
-  winRate: number;
-  points: number;
-  ranking: number;
-  totalPlayers: number;
-}
 
 const ProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -66,15 +44,19 @@ const ProfilePage = () => {
   const { user } = useAuth();
 
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
-  const [stats, setStats] = useState<PlayerStats | null>(null);
-  const [leagueStats, setLeagueStats] = useState<LeagueStats[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'leagues' | 'social'>('overview');
   const [isEditing, setIsEditing] = useState(false);
 
   // Use current user if no userId provided
   const targetUserId = userId || user?.id;
   const isOwnProfile = !userId || userId === user?.id;
+
+  // Use the player stats hook for real data
+  const { stats, leagueStats, loading: statsLoading, error: statsError, refetch } = usePlayerStats(targetUserId || null);
+
+  // Overall loading state combines profile and stats loading
+  const loading = profileLoading || statsLoading;
 
   useEffect(() => {
     // Wait for auth to load before making decisions
@@ -91,13 +73,15 @@ const ProfilePage = () => {
   }, [targetUserId, user]);
 
   const fetchProfileData = async () => {
-    setLoading(true);
+    setProfileLoading(true);
     try {
-      // TODO: Replace with actual API calls
-      // Mock data for now
+      // TODO: Replace with actual profile API call when available
+      // For now, create profile from auth data
       const mockProfile: PlayerProfile = {
         id: targetUserId!,
-        name: isOwnProfile ? (user?.user_metadata?.full_name || 'Your Name') : 'Player Name',
+        name: isOwnProfile ? 
+          `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || 'Your Name' 
+          : 'Player Name',
         email: isOwnProfile ? user?.email || '' : 'player@email.com',
         skillLevel: 'Intermediate',
         bio: 'Passionate pickleball player who loves the competitive spirit and community.',
@@ -106,51 +90,11 @@ const ProfilePage = () => {
         isCurrentUser: isOwnProfile
       };
 
-      const mockStats: PlayerStats = {
-        totalGames: 45,
-        wins: 28,
-        losses: 17,
-        winRate: 62.2,
-        totalPoints: 612,
-        averagePoints: 13.6,
-        currentStreak: 3,
-        bestStreak: 7,
-        leaguesJoined: 3,
-        activeLeagues: 2
-      };
-
-      const mockLeagueStats: LeagueStats[] = [
-        {
-          leagueId: 1,
-          leagueName: 'Northcliff Eagles',
-          games: 25,
-          wins: 16,
-          losses: 9,
-          winRate: 64,
-          points: 358,
-          ranking: 3,
-          totalPlayers: 24
-        },
-        {
-          leagueId: 2,
-          leagueName: 'Sandton Smashers',
-          games: 20,
-          wins: 12,
-          losses: 8,
-          winRate: 60,
-          points: 254,
-          ranking: 5,
-          totalPlayers: 18
-        }
-      ];
-
       setProfile(mockProfile);
-      setStats(mockStats);
-      setLeagueStats(mockLeagueStats);
     } catch (error) {
       console.error('Error fetching profile data:', error);
     } finally {
-      setLoading(false);
+      setProfileLoading(false);
     }
   };
 
@@ -393,8 +337,41 @@ const ProfilePage = () => {
 
         {activeTab === 'stats' && (
           <div className="space-y-8">
+            {/* Error state for stats */}
+            {statsError && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800 dark:text-red-200">Error loading statistics</h3>
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-300">{statsError}</p>
+                    <button
+                      onClick={() => refetch()}
+                      className="mt-2 text-sm font-medium text-red-800 dark:text-red-200 hover:underline"
+                    >
+                      Try again
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Loading state for stats */}
+            {statsLoading && !statsError && (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+                <span className="ml-2 text-gray-600 dark:text-gray-400">Loading statistics...</span>
+              </div>
+            )}
+
             {/* Performance Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {!statsLoading && !statsError && (
+              <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
                 <div className="flex items-center justify-between">
                   <div>
@@ -605,6 +582,8 @@ const ProfilePage = () => {
                 </div>
               </div>
             </div>
+            </>
+            )}
           </div>
         )}
 
