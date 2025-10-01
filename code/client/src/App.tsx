@@ -5,6 +5,11 @@ import LeagueList from './pages/LeagueList.tsx'
 import LeaguePage from './pages/LeaguePage.tsx'
 import LeagueNightPage from './pages/LeagueNightPage.tsx'
 import ProfilePage from './pages/ProfilePage.tsx'
+import AboutPage from './pages/AboutPage.tsx'
+import ContactPage from './pages/ContactPage.tsx'
+import PrivacyPage from './pages/PrivacyPage.tsx'
+import TermsPage from './pages/TermsPage.tsx'
+import LeaderboardPage from './pages/LeaderboardPage.tsx'
 import { AuthPage } from './pages/AuthPage'
 import './App.css'
 
@@ -36,8 +41,28 @@ function App() {
             element={<ProfilePage />}
           />
           <Route
-            path="/profile/:userId"
+            path="/profile/:username"
             element={<ProfilePage />}
+          />
+          <Route
+            path="/about"
+            element={<AboutPage />}
+          />
+          <Route
+            path="/contact"
+            element={<ContactPage />}
+          />
+          <Route
+            path="/privacy"
+            element={<PrivacyPage />}
+          />
+          <Route
+            path="/terms"
+            element={<TermsPage />}
+          />
+          <Route
+            path="/leaderboard"
+            element={<LeaderboardPage />}
           />
         </Routes>
       </Router>

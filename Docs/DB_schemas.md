@@ -27,10 +27,13 @@ Extends Supabase Auth with player information.
 ```sql
 id UUID PRIMARY KEY → auth.users(id)
 email TEXT UNIQUE NOT NULL
-full_name TEXT
+first_name TEXT NOT NULL
+last_name TEXT NOT NULL
+username TEXT UNIQUE NOT NULL -- internal slug (generated on signup)
 phone TEXT
 skill_level TEXT ('Beginner', 'Intermediate', 'Advanced')
-created_at, updated_at TIMESTAMPTZ
+created_at TIMESTAMPTZ DEFAULT NOW()
+updated_at TIMESTAMPTZ
 ```
 
 ### **leagues**
@@ -207,6 +210,26 @@ All tables have RLS policies ensuring:
 - League owners/admins control their league data
 - Members can view stats within their leagues
 
+## Profile creation (canonical)
+
+Profiles are created and owned by the application (canonical approach documented here):
+
+- When a user signs up via Supabase Auth the backend/application is responsible for creating the matching `profiles` record (preferred).
+- This approach avoids fragile DB trigger/search_path/SECURITY DEFINER pitfalls and makes username collision handling and custom metadata simpler to manage.
+- The repo contains optional trigger SQL (see Migration files below) for teams who prefer automatic DB-side profile creation; the trigger SQL is kept as a reference but is not the canonical flow.
+
+If you prefer to enable DB-triggered profile creation, see the `fixed_trigger.sql` / `fresh_setup.sql` files — they contain a `handle_new_user()` function and trigger on `auth.users` with explicit schema qualification and collision handling.
+
+## Username generation & collision handling
+
+- Username: generated using sanitized first + last name (client attempts generation before signup). The application must ensure uniqueness before inserting into `profiles`.
+- Collision handling strategy (documented implementation): the app checks for existing usernames and, on collision, appends a numeric suffix (e.g. `jane-doe`, `jane-doe-1`, `jane-doe-2`) until a free name is found.
+- A `fix_username_bug.sql` file exists in the repo fixing a previously-too-aggressive regex used in earlier trigger variants; that fix is included in the canonical migration notes.
+
+Note: `display_name` is derived, not stored: concatenate `first_name || ' ' || last_name` when returning profile names to clients, or expose a read-only `display_name` view if preferred
+
+## Migration History
+
 ## Current Production Data
 
 **Northcliff Eagles** (ID: 1)
@@ -240,6 +263,7 @@ Returns available court numbers based on league configuration and active matches
 1. **001_add_matches_table.sql** - Initial matches table and functions
 2. **002_fix_partnerships_function.sql** - Fixed column ambiguity and type mismatches
 3. **003_fix_courts_function.sql** - Fixed court_labels column ambiguity, preserved court naming
+4. **004_split_fullname_add_username.sql** - Split `full_name` into `first_name`/`last_name` and added `username` (NOT NULL, UNIQUE); documented application-managed profile creation and added migration scripts for both app-managed and optional DB-triggered creation.
 
 ## Known Database Considerations
 
@@ -247,3 +271,28 @@ Returns available court numbers based on league configuration and active matches
 - **Column Qualification**: Always qualify columns in complex queries (e.g., `lni.court_labels`)
 - **Court Indexing**: Court numbers are 1-based indices into the court_labels array
 - **Function Permissions**: Grant EXECUTE to `anon, authenticated` for API access
+
+## Notes, TODOs and pending work
+
+- The `full_name` column was removed and replaced by `first_name` and `last_name`. Several server and client code paths were updated accordingly, but some places still reference `full_name` and must be refactored to avoid runtime SQL errors. Known remaining locations:
+    - `server/src/controllers/matchController.js` — multiple `.select()` calls that still reference `full_name` (needs updates to select `first_name`/`last_name` or to return a derived `display_name`).
+    - Client components such as `MatchesDisplay.tsx` and any UI expecting `full_name` must be updated to use `first_name`/`last_name` or `display_name`.
+
+- When writing new queries, prefer qualifying columns (e.g., `profiles.first_name`) in complex joins and use `first_name || ' ' || last_name AS display_name` when a single string is required by the API.
+
+- If you later decide to adopt DB-triggered profile creation as canonical, move the `handle_new_user()` SQL into your main migrations and ensure the function is created in `public` schema with `SECURITY DEFINER` and an explicit `search_path` to avoid permission/search_path issues.
+
+## Where to look in the repo
+
+- Server-side signup/profile logic: `server/src/controllers/*` and `server/src/routes/*` (look for `joinLeague`, `handle sign-up`, and profile creation logic).
+- Client signup code: `client/src/components/auth/SignUpForm.tsx`, `client/src/services/auth.ts`, `client/src/hooks/useAuth.ts` (username generation and metadata passed to Supabase).
+- SQL / migration files: `code/` and top-level SQL files mentioned above (search for `create_profiles_table.sql`, `fix_username_bug.sql`, `fresh_setup.sql`).
+
+---
+
+If you'd like, next I can:
+
+1. Create a new, minimal migration SQL `004_split_fullname_add_username.sql` that represents the canonical application-managed change (adds columns and backfills data if needed). OR
+2. Update remaining `full_name` usages across the codebase (I can prepare an exact list of edits or apply them if you want me to make code changes).
+
+Tell me which of those (1 or 2) you want next and I'll proceed.

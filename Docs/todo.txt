@@ -6,7 +6,7 @@
     Skill-Based Seeding → Uses average points from previous games (starts random, improves over time)
 
 2. Player stats dashboard (probably segment their own dashboard per league, start with it being modular now)
-
-3. Design stuff
+ - implemented but with mock data
+3. Design stuff [✅ - DONE!]
 - emojis on leaderboard are the medal which have the number (1) not 2 or 3
 - Logo is shocking (for anand to solve)

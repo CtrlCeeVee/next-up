@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePlayerStats, type PlayerStats, type LeagueStats } from '../hooks/usePlayerStats';
@@ -38,19 +38,25 @@ interface PlayerProfile {
 
 
 const ProfilePage = () => {
-  const { userId } = useParams<{ userId: string }>();
+  const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
 
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'leagues' | 'social'>('overview');
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Get tab from URL search params using proper React Router hook
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'leagues' | 'social'>(
+    (searchParams.get('tab') as any) || 'overview'
+  );
+  const [targetUserId, setTargetUserId] = useState<string | null>(null);
 
-  // Use current user if no userId provided
-  const targetUserId = userId || user?.id;
-  const isOwnProfile = !userId || userId === user?.id;
+  // Determine if this is the current user's profile
+  const currentUserUsername = user?.user_metadata?.username;
+  const isOwnProfile = !username || username === currentUserUsername;
 
   // Use the player stats hook for real data
   const { stats, leagueStats, loading: statsLoading, error: statsError, refetch } = usePlayerStats(targetUserId || null);
@@ -58,27 +64,73 @@ const ProfilePage = () => {
   // Overall loading state combines profile and stats loading
   const loading = profileLoading || statsLoading;
 
+  // Sync activeTab with URL search params
+  useEffect(() => {
+    const tabFromUrl = searchParams.get('tab') as 'overview' | 'stats' | 'leagues' | 'social';
+    if (tabFromUrl && ['overview', 'stats', 'leagues', 'social'].includes(tabFromUrl)) {
+      setActiveTab(tabFromUrl);
+    } else {
+      setActiveTab('overview');
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     // Wait for auth to load before making decisions
     if (!user) {
       return;
     }
 
-    if (!targetUserId) {
-      navigate('/auth');
+    // If no username provided, show current user's profile
+    if (!username) {
+      setTargetUserId(user.id);
+      fetchProfileData(user.id);
       return;
     }
 
-    fetchProfileData();
-  }, [targetUserId, user]);
+    // If viewing own profile by username
+    if (username === currentUserUsername) {
+      setTargetUserId(user.id);
+      fetchProfileData(user.id);
+      return;
+    }
 
-  const fetchProfileData = async () => {
+    // TODO: Implement username-to-userId resolution API call
+    // For now, we'll handle it in fetchProfileData
+    fetchProfileDataByUsername(username);
+  }, [username, user, currentUserUsername]);
+
+  const fetchProfileDataByUsername = async (username: string) => {
+    setProfileLoading(true);
+    try {
+      // TODO: Replace with actual API call to get user by username
+      // For now, mock the response for non-current users
+      const mockProfile: PlayerProfile = {
+        id: 'mock-user-id',
+        name: username.charAt(0).toUpperCase() + username.slice(1).replace(/-/g, ' '),
+        email: `${username}@example.com`,
+        skillLevel: 'Intermediate',
+        bio: 'Passionate pickleball player who loves the competitive spirit and community.',
+        location: 'Johannesburg, SA',
+        joinedDate: '2024-01-15',
+        isCurrentUser: false
+      };
+
+      setProfile(mockProfile);
+      setTargetUserId('mock-user-id');
+    } catch (error) {
+      console.error('Error fetching profile data by username:', error);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  const fetchProfileData = async (userId: string) => {
     setProfileLoading(true);
     try {
       // TODO: Replace with actual profile API call when available
       // For now, create profile from auth data
       const mockProfile: PlayerProfile = {
-        id: targetUserId!,
+        id: userId,
         name: isOwnProfile ? 
           `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || 'Your Name' 
           : 'Player Name',
@@ -163,55 +215,55 @@ const ProfilePage = () => {
       </header>
 
       {/* Profile Hero Section */}
-      <div className="bg-gradient-to-r from-green-500 to-blue-600 px-4 py-8">
+      <div className="bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900 px-4 py-8 border-b border-green-100 dark:border-slate-700">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
             {/* Avatar */}
             <div className="relative">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-white to-gray-50 rounded-full flex items-center justify-center shadow-xl border-4 border-white/30">
+              <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-white to-gray-50 dark:from-slate-700 dark:to-slate-600 rounded-full flex items-center justify-center shadow-xl border-4 border-green-200/50 dark:border-green-700/50">
                 {profile.avatar ? (
                   <img src={profile.avatar} alt={profile.name} className="w-full h-full rounded-full object-cover" />
                 ) : (
-                  <User className="w-12 h-12 sm:w-16 sm:h-16 text-gray-500" />
+                  <User className="w-12 h-12 sm:w-16 sm:h-16 text-gray-500 dark:text-gray-300" />
                 )}
               </div>
               {profile.isCurrentUser && isEditing && (
-                <button className="absolute -bottom-2 -right-2 bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600">
+                <button className="absolute -bottom-2 -right-2 bg-green-500 dark:bg-green-600 text-white p-2 rounded-full shadow-lg hover:bg-green-600 dark:hover:bg-green-500">
                   <Edit3 className="w-4 h-4" />
                 </button>
               )}
             </div>
 
             {/* Profile Info */}
-            <div className="text-center sm:text-left text-white">
-              <h1 className="text-3xl font-bold">{profile.name}</h1>
-              <p className="text-green-100 mt-1">{profile.skillLevel} Player</p>
+            <div className="text-center sm:text-left">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{profile.name}</h1>
+              <p className="text-green-600 dark:text-green-400 mt-1 font-medium">{profile.skillLevel} Player</p>
               {profile.location && (
-                <div className="flex items-center justify-center sm:justify-start mt-2 text-green-100">
-                  <MapPin className="w-4 h-4 mr-1" />
+                <div className="flex items-center justify-center sm:justify-start mt-2 text-gray-600 dark:text-gray-300">
+                  <MapPin className="w-4 h-4 mr-1 text-green-500 dark:text-green-400" />
                   <span>{profile.location}</span>
                 </div>
               )}
-              <div className="flex items-center justify-center sm:justify-start mt-2 text-green-100">
-                <Calendar className="w-4 h-4 mr-1" />
+              <div className="flex items-center justify-center sm:justify-start mt-2 text-gray-600 dark:text-gray-300">
+                <Calendar className="w-4 h-4 mr-1 text-green-500 dark:text-green-400" />
                 <span>Joined {new Date(profile.joinedDate).toLocaleDateString()}</span>
               </div>
             </div>
 
             {/* Quick Stats */}
             <div className="flex-1 sm:text-right">
-              <div className="grid grid-cols-3 gap-4 text-center text-white">
-                <div>
-                  <div className="text-2xl font-bold">{stats?.totalGames || 0}</div>
-                  <div className="text-green-100 text-sm">Games</div>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl p-3 border border-white/20 dark:border-slate-700/50">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.totalGames || 0}</div>
+                  <div className="text-gray-600 dark:text-gray-300 text-sm">Games</div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold">{stats?.winRate?.toFixed(1) || 0}%</div>
-                  <div className="text-green-100 text-sm">Win Rate</div>
+                <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl p-3 border border-white/20 dark:border-slate-700/50">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats?.winRate?.toFixed(1) || 0}%</div>
+                  <div className="text-gray-600 dark:text-gray-300 text-sm">Win Rate</div>
                 </div>
-                <div>
-                  <div className="text-2xl font-bold">{stats?.activeLeagues || 0}</div>
-                  <div className="text-green-100 text-sm">Active Leagues</div>
+                <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm rounded-xl p-3 border border-white/20 dark:border-slate-700/50">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.activeLeagues || 0}</div>
+                  <div className="text-gray-600 dark:text-gray-300 text-sm">Active Leagues</div>
                 </div>
               </div>
             </div>
@@ -231,7 +283,19 @@ const ProfilePage = () => {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => {
+                  // Update URL which will trigger the useEffect to update activeTab
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    if (tab.id === 'overview') {
+                      // Remove tab parameter for overview (default)
+                      newParams.delete('tab');
+                    } else {
+                      newParams.set('tab', tab.id);
+                    }
+                    return newParams;
+                  });
+                }}
                 className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
                     ? 'border-green-500 text-green-600 dark:text-green-400'

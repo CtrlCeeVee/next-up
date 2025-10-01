@@ -323,10 +323,10 @@ const LeagueNightPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
-      <div className="container mx-auto px-4 py-4 sm:py-6 md:py-8 max-w-6xl">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 md:py-12 max-w-6xl">
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 sm:mb-10">
           <div className="flex items-center space-x-3 sm:space-x-4 w-full sm:w-auto">
             <button
               onClick={() => navigate(`/league/${leagueId}`)}
@@ -356,7 +356,7 @@ const LeagueNightPage = () => {
         </div>
 
         {/* League Night Status */}
-        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl mb-6 sm:mb-8">
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 border border-white/20 dark:border-slate-700/50 shadow-2xl mb-8 sm:mb-10">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-start sm:items-center space-x-4 sm:space-x-6">
               <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl ${
@@ -398,7 +398,7 @@ const LeagueNightPage = () => {
         </section>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-10">
           <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20 dark:border-slate-700/50 shadow-xl">
             <div className="flex items-center space-x-3">
               <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg sm:rounded-xl">
@@ -409,7 +409,7 @@ const LeagueNightPage = () => {
                   {leagueNight.status === 'today' ? 'Checked In' : 'Expected'}
                 </p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                  {leagueNight.checkedInCount}
+                  {checkedInPlayers.length}
                 </p>
               </div>
             </div>
@@ -452,7 +452,7 @@ const LeagueNightPage = () => {
         </div>
 
         {/* Main Action Area */}
-        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 border border-white/20 dark:border-slate-700/50 shadow-2xl mb-10">
           {leagueNight.status === 'today' ? (
             <div className="space-y-8">
               {/* Check-in Section */}
@@ -522,11 +522,11 @@ const LeagueNightPage = () => {
 
               {/* Partner Selection Section - Only show if checked in */}
               {isCheckedIn && (
-                <div className="border-t border-gray-200/50 dark:border-slate-600/50 pt-8">
-                  <div className="text-center mb-6">
-                    <Heart className="h-12 w-12 text-pink-600 dark:text-pink-400 mx-auto mb-4" />
+                <div className="border-t border-gray-200/50 dark:border-slate-600/50 pt-10 mt-10">
+                  <div className="text-center mb-8">
+                    <Users className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
                     <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                      {selectedPartner ? 'Your Partner' : 'Select Your Partner'}
+                      {selectedPartner ? 'Your Game Partner' : 'Select Your Game Partner'}
                     </h4>
                     <p className="text-gray-600 dark:text-gray-300">
                       {selectedPartner 
@@ -538,11 +538,11 @@ const LeagueNightPage = () => {
 
                   {selectedPartner ? (
                     <div className="space-y-4">
-                      <div className="bg-pink-50/80 dark:bg-pink-900/20 border-2 border-pink-200 dark:border-pink-700 rounded-2xl p-4 max-w-md mx-auto">
+                      <div className="bg-blue-50/80 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-2xl p-6 max-w-md mx-auto">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-pink-200 dark:bg-pink-800 rounded-full flex items-center justify-center">
-                              <span className="text-pink-700 dark:text-pink-300 font-semibold">
+                            <div className="w-12 h-12 bg-blue-200 dark:bg-blue-800 rounded-full flex items-center justify-center">
+                              <span className="text-blue-700 dark:text-blue-300 font-semibold text-lg">
                                 {checkedInPlayers.find(p => p.id === selectedPartner)?.name.charAt(0) || 'P'}
                               </span>
                             </div>
@@ -738,8 +738,8 @@ const LeagueNightPage = () => {
 
               {/* Checked-in Players List */}
               {checkedInPlayers.length > 0 && (
-                <div className="border-t border-gray-200/50 dark:border-slate-600/50 pt-8">
-                  <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-4 text-center">
+                <div className="border-t border-gray-200/50 dark:border-slate-600/50 pt-10 mt-10">
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-6 text-center">
                     Checked-in Players ({checkedInPlayers.length})
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-w-4xl mx-auto">

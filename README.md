@@ -59,20 +59,25 @@ Next-Up makes local pickleball leagues seamless, dynamic, and fun by providing s
 - **Error Handling**: Comprehensive validation and duplicate prevention systems
 - **Frontend Integration**: React UI fully connected to live database APIs
 
-**🚧 Recently Completed**  
-- **Match Assignment System**: Complete court allocation with partnership priority queuing
-- **Score Validation**: Proper pickleball scoring rules with real-time validation
-- **Player Statistics**: Automatic win/loss tracking and points accumulation
-- **Queue System**: Smart feedback when courts are full with detailed status
-- **Code Modularization**: Separated controllers for better maintainability
+**🚧 Recently Completed (v1.1)**  
+- **Enhanced UX**: Skeleton loading states for improved perceived performance
+- **Profile System**: Complete player profiles with username-based routing and tabbed navigation
+- **Statistics Dashboard**: Comprehensive stats tracking with performance metrics and league analytics
+- **Content Pages**: Professional About, Contact, Privacy, Terms, and Leaderboard (coming soon) pages
+- **Navigation System**: Fully functional Quick Actions with seamless page linking
+- **Design Improvements**: Glass-morphism effects, improved spacing, and consistent UI patterns
+- **Contact Integration**: Real contact information with form infrastructure ready for EmailJS
+- **Theme System**: Dark/light mode support across all pages
 
 **📋 Next Priority**
+- **Email Integration**: EmailJS setup for functional contact forms
 - **Auto-Assignment**: Automatic match creation when partnerships form or courts free up
 - **Advanced Admin Controls**: League management and match override capabilities
 - **Real-time Notifications**: Push updates for match assignments and score submissions
 - **Tournament Mode**: Round-robin and bracket tournament formats
+- **Leaderboard System**: Comprehensive ranking and competition features
 
-**🏆 MVP Status**: ~92% Complete - Full league night management system operational with statistics tracking
+**🏆 MVP Status**: ~95% Complete - Full-featured pickleball league platform with professional UX
 
 ## 🤝 Contributing
 
@@ -83,7 +88,12 @@ Next-Up makes local pickleball leagues seamless, dynamic, and fun by providing s
 
 ## 📞 Support
 
-For league organizers interested in using Next-Up, contact us at [email].
+For league organizers interested in using Next-Up:
+- **Email**: luke.renton@next-up.co.za
+- **Phone**: +27 60 728 9497
+- **Location**: Johannesburg, South Africa
+
+Visit our contact page in the app for support hours and additional information.
 
 ---
 

@@ -35,24 +35,63 @@ npm run preview
 ```
 src/
 ├── components/        # Reusable UI components
-│   ├── auth/         # Authentication forms
+│   ├── auth/         # Authentication forms (SignInForm, SignUpForm)
 │   └── ...           # Other component categories
 ├── contexts/         # React Context providers
+│   └── ThemeContext.tsx  # Dark/light mode management
 ├── hooks/           # Custom React hooks
+│   ├── useAuth.ts   # Authentication state management
+│   ├── useLeagues.ts # League data and operations
+│   ├── useMembership.ts # League membership management
+│   └── usePlayerStats.ts # Player statistics and analytics
 ├── pages/           # Page components
+│   ├── AuthPage.tsx      # Login/registration
+│   ├── LeagueList.tsx    # Main league discovery page
+│   ├── LeaguePage.tsx    # Individual league details
+│   ├── LeagueNightPage.tsx # League night management
+│   ├── ProfilePage.tsx   # Player profiles with stats
+│   ├── AboutPage.tsx     # Company information
+│   ├── ContactPage.tsx   # Contact form and information
+│   ├── PrivacyPage.tsx   # Privacy policy
+│   ├── TermsPage.tsx     # Terms of service
+│   └── LeaderboardPage.tsx # Coming soon page
 ├── services/        # API services and Supabase client
-├── App.tsx          # Main application component
+│   ├── api/         # API endpoint modules
+│   ├── auth.ts      # Authentication services
+│   └── supabase.ts  # Supabase client configuration
+├── utils/           # Utility functions
+│   └── profileUtils.ts # Username-based routing utilities
+├── App.tsx          # Main application component with routing
 └── main.tsx         # Application entry point
 ```
 
 ## 🔧 Key Features
 
+**🎨 User Experience**
 - **Responsive Design** - Mobile-first approach with Tailwind CSS
-- **Type Safety** - Full TypeScript integration
+- **Dark/Light Mode** - System-wide theme support with smooth transitions
+- **Glass-morphism UI** - Modern design with backdrop-blur effects
+- **Enhanced Loading** - Skeleton loading states for improved perceived performance
+- **Intuitive Navigation** - Tab-based routing and breadcrumb navigation
+
+**⚙️ Technical Features**
+- **Type Safety** - Full TypeScript integration with strict typing
 - **Real-time Updates** - Live data with Supabase subscriptions
 - **Modern React** - Hooks, Context API, and functional components
 - **Fast Development** - Vite HMR for instant feedback
 - **Production Ready** - Optimized builds with code splitting
+- **URL-based State** - Clean URLs with search params for deep linking
+
+**📊 Player Features**
+- **Comprehensive Profiles** - Multi-tab player profiles with statistics
+- **Performance Analytics** - Detailed stats tracking and trend analysis
+- **Partnership Management** - Social features and partnership history
+- **League Integration** - Seamless league membership and participation
+
+**🏢 Content Management**
+- **Professional Pages** - Complete About, Contact, Privacy, and Terms pages
+- **Contact Integration** - Ready for EmailJS integration with proper form handling
+- **SEO Ready** - Proper meta tags and semantic HTML structure
 
 ## 🌐 Environment Setup
 
