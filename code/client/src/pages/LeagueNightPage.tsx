@@ -543,7 +543,7 @@ const LeagueNightPage = () => {
                           <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 bg-blue-200 dark:bg-blue-800 rounded-full flex items-center justify-center">
                               <span className="text-blue-700 dark:text-blue-300 font-semibold text-lg">
-                                {checkedInPlayers.find(p => p.id === selectedPartner)?.name.charAt(0) || 'P'}
+                                {checkedInPlayers.find(p => p.id === selectedPartner)?.name?.charAt(0) || 'P'}
                               </span>
                             </div>
                             <div>
@@ -586,12 +586,12 @@ const LeagueNightPage = () => {
                                   <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-gray-200 dark:bg-slate-600 rounded-full flex items-center justify-center">
                                       <span className="text-gray-700 dark:text-gray-300 font-semibold">
-                                        {request.requester.full_name.charAt(0)}
+                                        {request.requester?.first_name?.charAt(0) || 'P'}
                                       </span>
                                     </div>
                                     <div>
                                       <p className="font-semibold text-gray-900 dark:text-white">
-                                        {request.requester.full_name}
+                                        {`${request.requester?.first_name || ''} ${request.requester?.last_name || ''}`.trim() || 'Unknown Player'}
                                       </p>
                                       <p className="text-sm text-gray-600 dark:text-gray-300">
                                         {request.requester.skill_level}
@@ -710,12 +710,12 @@ const LeagueNightPage = () => {
                                   <div className="flex items-center space-x-3">
                                     <div className="w-10 h-10 bg-gray-200 dark:bg-slate-600 rounded-full flex items-center justify-center">
                                       <span className="text-gray-700 dark:text-gray-300 font-semibold">
-                                        {request.requested.full_name.charAt(0)}
+                                        {request.requested?.first_name?.charAt(0) || 'P'}
                                       </span>
                                     </div>
                                     <div>
                                       <p className="font-semibold text-gray-900 dark:text-white">
-                                        {request.requested.full_name}
+                                        {`${request.requested?.first_name || ''} ${request.requested?.last_name || ''}`.trim() || 'Unknown Player'}
                                       </p>
                                       <p className="text-sm text-gray-600 dark:text-gray-300">
                                         {request.requested.skill_level}
@@ -754,7 +754,7 @@ const LeagueNightPage = () => {
                       >
                         <div className="w-8 h-8 bg-gray-200 dark:bg-slate-600 rounded-full flex items-center justify-center mx-auto mb-2">
                           <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                            {player.name.charAt(0)}
+                            {player.name?.charAt(0) || 'P'}
                           </span>
                         </div>
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">

@@ -14,9 +14,26 @@ const tryAutoAssignMatches = async (instanceId) => {
   try {
     console.log(`Attempting auto-assignment for instance ${instanceId}`);
     
-    // Get partnerships with game counts
+    // Get partnerships with game counts using direct SQL (avoid RPC with outdated field names)
     const { data: partnerships, error: partnershipsError } = await supabase
-      .rpc('get_partnerships_with_game_counts', { instance_id: instanceId });
+      .from('partnerships')
+      .select(`
+        id as partnership_id,
+        player1_id,
+        player2_id,
+        p1:profiles!partnerships_player1_id_fkey (
+          first_name,
+          last_name,
+          skill_level
+        ),
+        p2:profiles!partnerships_player2_id_fkey (
+          first_name,
+          last_name,
+          skill_level
+        )
+      `)
+      .eq('league_night_instance_id', instanceId)
+      .eq('is_active', true);
 
     if (partnershipsError) {
       console.error('Error fetching partnerships for auto-assignment:', partnershipsError);
@@ -27,6 +44,52 @@ const tryAutoAssignMatches = async (instanceId) => {
       console.log(`Not enough partnerships for auto-assignment: ${partnerships?.length || 0}`);
       return { success: true, message: 'Not enough partnerships', matches: [] };
     }
+
+    // Get match counts for each partnership tonight
+    const { data: matchCounts, error: matchCountsError } = await supabase
+      .from('matches')
+      .select('partnership1_id, partnership2_id')
+      .eq('league_night_instance_id', instanceId);
+
+    if (matchCountsError) {
+      console.error('Error fetching match counts for auto-assignment:', matchCountsError);
+      return { success: false, error: matchCountsError.message };
+    }
+
+    // Calculate games played for each partnership
+    const partnershipGameCounts = {};
+    partnerships.forEach(p => {
+      partnershipGameCounts[p.partnership_id] = 0;
+    });
+
+    matchCounts?.forEach(match => {
+      if (partnershipGameCounts[match.partnership1_id] !== undefined) {
+        partnershipGameCounts[match.partnership1_id]++;
+      }
+      if (partnershipGameCounts[match.partnership2_id] !== undefined) {
+        partnershipGameCounts[match.partnership2_id]++;
+      }
+    });
+
+    // Enhance partnerships with game counts and skill levels
+    const enhancedPartnerships = partnerships.map(partnership => {
+      const p1SkillLevel = partnership.p1?.skill_level === 'Advanced' ? 3 : 
+                          partnership.p1?.skill_level === 'Intermediate' ? 2 : 1;
+      const p2SkillLevel = partnership.p2?.skill_level === 'Advanced' ? 3 : 
+                          partnership.p2?.skill_level === 'Intermediate' ? 2 : 1;
+      
+      return {
+        partnership_id: partnership.partnership_id,
+        player1_id: partnership.player1_id,
+        player2_id: partnership.player2_id,
+        p1_full_name: `${partnership.p1?.first_name || ''} ${partnership.p1?.last_name || ''}`.trim(),
+        p2_full_name: `${partnership.p2?.first_name || ''} ${partnership.p2?.last_name || ''}`.trim(),
+        p1_skill_level: partnership.p1?.skill_level || 'Beginner',
+        p2_skill_level: partnership.p2?.skill_level || 'Beginner',
+        games_played_tonight: partnershipGameCounts[partnership.partnership_id] || 0,
+        avg_skill_level: (p1SkillLevel + p2SkillLevel) / 2
+      };
+    });
 
     // Get available courts
     const { data: availableCourts, error: courtsError } = await supabase
@@ -44,9 +107,9 @@ const tryAutoAssignMatches = async (instanceId) => {
 
     // Fair queue system: Assign new partnerships the current minimum games played
     // This prevents late joiners from getting unfair priority
-    const minGamesPlayed = Math.min(...partnerships.map(p => p.games_played_tonight));
+    const minGamesPlayed = Math.min(...enhancedPartnerships.map(p => p.games_played_tonight));
     
-    const adjustedPartnerships = partnerships.map(partnership => ({
+    const adjustedPartnerships = enhancedPartnerships.map(partnership => ({
       ...partnership,
       // If a partnership has 0 games (new), set it to current minimum to ensure fairness
       effective_games: partnership.games_played_tonight === 0 ? minGamesPlayed : partnership.games_played_tonight
@@ -328,24 +391,89 @@ const createMatches = async (req, res) => {
     const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
     console.log('League night instance:', instance.id);
 
-    // Get partnerships with game counts (using our helper function)
-    const { data: partnerships, error: partnershipsError } = await supabase
-      .rpc('get_partnerships_with_game_counts', { instance_id: instance.id });
-
-    console.log('Partnerships result:', { partnerships, partnershipsError });
+    // Get partnerships with game counts using direct SQL (avoid RPC with outdated field names)
+    const { data: partnershipsData, error: partnershipsError } = await supabase
+      .from('partnerships')
+      .select(`
+        id as partnership_id,
+        player1_id,
+        player2_id,
+        p1:profiles!partnerships_player1_id_fkey (
+          first_name,
+          last_name,
+          skill_level
+        ),
+        p2:profiles!partnerships_player2_id_fkey (
+          first_name,
+          last_name,
+          skill_level
+        )
+      `)
+      .eq('league_night_instance_id', instance.id)
+      .eq('is_active', true);
 
     if (partnershipsError) {
       console.error('Partnerships error:', partnershipsError);
       throw partnershipsError;
     }
 
-    if (!partnerships || partnerships.length < 2) {
-      console.log('Not enough partnerships:', partnerships?.length || 0);
+    if (!partnershipsData || partnershipsData.length < 2) {
+      console.log('Not enough partnerships:', partnershipsData?.length || 0);
       return res.status(400).json({
         success: false,
         error: 'Need at least 2 partnerships to create matches'
       });
     }
+
+    // Get match counts for each partnership tonight
+    const { data: matchCounts, error: matchCountsError } = await supabase
+      .from('matches')
+      .select('partnership1_id, partnership2_id')
+      .eq('league_night_instance_id', instance.id);
+
+    if (matchCountsError) {
+      console.error('Error fetching match counts:', matchCountsError);
+      throw matchCountsError;
+    }
+
+    // Calculate games played for each partnership
+    const partnershipGameCounts = {};
+    partnershipsData.forEach(p => {
+      partnershipGameCounts[p.partnership_id] = 0;
+    });
+
+    matchCounts?.forEach(match => {
+      if (partnershipGameCounts[match.partnership1_id] !== undefined) {
+        partnershipGameCounts[match.partnership1_id]++;
+      }
+      if (partnershipGameCounts[match.partnership2_id] !== undefined) {
+        partnershipGameCounts[match.partnership2_id]++;
+      }
+    });
+
+    // Enhance partnerships with game counts and skill levels
+    const partnerships = partnershipsData.map(partnership => {
+      const p1SkillLevel = partnership.p1?.skill_level === 'Advanced' ? 3 : 
+                          partnership.p1?.skill_level === 'Intermediate' ? 2 : 1;
+      const p2SkillLevel = partnership.p2?.skill_level === 'Advanced' ? 3 : 
+                          partnership.p2?.skill_level === 'Intermediate' ? 2 : 1;
+      
+      return {
+        partnership_id: partnership.partnership_id,
+        player1_id: partnership.player1_id,
+        player2_id: partnership.player2_id,
+        p1_full_name: `${partnership.p1?.first_name || ''} ${partnership.p1?.last_name || ''}`.trim(),
+        p2_full_name: `${partnership.p2?.first_name || ''} ${partnership.p2?.last_name || ''}`.trim(),
+        p1_skill_level: partnership.p1?.skill_level || 'Beginner',
+        p2_skill_level: partnership.p2?.skill_level || 'Beginner',
+        games_played_tonight: partnershipGameCounts[partnership.partnership_id] || 0,
+        avg_skill_level: (p1SkillLevel + p2SkillLevel) / 2
+      };
+    });
+
+    console.log('Partnerships result:', { partnerships, partnershipsError });
+
+
 
     // Get available courts
     const { data: availableCourts, error: courtsError } = await supabase

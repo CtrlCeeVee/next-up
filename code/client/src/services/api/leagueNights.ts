@@ -40,12 +40,14 @@ export interface PartnershipRequest {
   created_at: string;
   requester: {
     id: string;
-    full_name: string;
+    first_name: string;
+    last_name: string;
     skill_level: string;
   };
   requested: {
     id: string;
-    full_name: string;
+    first_name: string;
+    last_name: string;
     skill_level: string;
   };
 }
