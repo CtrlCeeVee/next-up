@@ -16,17 +16,17 @@ const tryAutoAssignMatches = async (instanceId) => {
     
     // Get partnerships with game counts using direct SQL (avoid RPC with outdated field names)
     const { data: partnerships, error: partnershipsError } = await supabase
-      .from('partnerships')
+      .from('confirmed_partnerships')
       .select(`
-        id as partnership_id,
+        id,
         player1_id,
         player2_id,
-        p1:profiles!partnerships_player1_id_fkey (
+        p1:profiles!confirmed_partnerships_player1_id_fkey (
           first_name,
           last_name,
           skill_level
         ),
-        p2:profiles!partnerships_player2_id_fkey (
+        p2:profiles!confirmed_partnerships_player2_id_fkey (
           first_name,
           last_name,
           skill_level
@@ -59,7 +59,7 @@ const tryAutoAssignMatches = async (instanceId) => {
     // Calculate games played for each partnership
     const partnershipGameCounts = {};
     partnerships.forEach(p => {
-      partnershipGameCounts[p.partnership_id] = 0;
+      partnershipGameCounts[p.id] = 0;
     });
 
     matchCounts?.forEach(match => {
@@ -79,14 +79,14 @@ const tryAutoAssignMatches = async (instanceId) => {
                           partnership.p2?.skill_level === 'Intermediate' ? 2 : 1;
       
       return {
-        partnership_id: partnership.partnership_id,
+        partnership_id: partnership.id,
         player1_id: partnership.player1_id,
         player2_id: partnership.player2_id,
         p1_full_name: `${partnership.p1?.first_name || ''} ${partnership.p1?.last_name || ''}`.trim(),
         p2_full_name: `${partnership.p2?.first_name || ''} ${partnership.p2?.last_name || ''}`.trim(),
         p1_skill_level: partnership.p1?.skill_level || 'Beginner',
         p2_skill_level: partnership.p2?.skill_level || 'Beginner',
-        games_played_tonight: partnershipGameCounts[partnership.partnership_id] || 0,
+        games_played_tonight: partnershipGameCounts[partnership.id] || 0,
         avg_skill_level: (p1SkillLevel + p2SkillLevel) / 2
       };
     });
@@ -190,7 +190,7 @@ const tryAutoAssignMatches = async (instanceId) => {
 };
 
 // Helper function to get league night instance with auto-start functionality
-const getOrCreateLeagueNightInstance = async (leagueId, nightId, forceToday = false) => {
+const getOrCreateLeagueNightInstance = async (leagueId, nightId) => {
   try {
     // First, try to get existing instance by ID
     if (nightId && !nightId.startsWith('night-')) {
@@ -230,15 +230,10 @@ const getOrCreateLeagueNightInstance = async (leagueId, nightId, forceToday = fa
     
     let daysUntilTarget = targetDay - todayDay;
     
-    // For testing purposes, if forceToday is true, create instance for today regardless of day
-    if (forceToday) {
-      daysUntilTarget = 0;
-    } else {
-      // If today IS the target day, create instance for today
-      // Otherwise, create for next occurrence
-      if (daysUntilTarget < 0) {
-        daysUntilTarget += 7;
-      }
+    // If today IS the target day, create instance for today
+    // Otherwise, create for next occurrence
+    if (daysUntilTarget < 0) {
+      daysUntilTarget += 7;
     }
     
     const targetDate = new Date(today);
@@ -393,17 +388,17 @@ const createMatches = async (req, res) => {
 
     // Get partnerships with game counts using direct SQL (avoid RPC with outdated field names)
     const { data: partnershipsData, error: partnershipsError } = await supabase
-      .from('partnerships')
+      .from('confirmed_partnerships')
       .select(`
-        id as partnership_id,
+        id,
         player1_id,
         player2_id,
-        p1:profiles!partnerships_player1_id_fkey (
+        p1:profiles!confirmed_partnerships_player1_id_fkey (
           first_name,
           last_name,
           skill_level
         ),
-        p2:profiles!partnerships_player2_id_fkey (
+        p2:profiles!confirmed_partnerships_player2_id_fkey (
           first_name,
           last_name,
           skill_level
@@ -439,7 +434,7 @@ const createMatches = async (req, res) => {
     // Calculate games played for each partnership
     const partnershipGameCounts = {};
     partnershipsData.forEach(p => {
-      partnershipGameCounts[p.partnership_id] = 0;
+      partnershipGameCounts[p.id] = 0;
     });
 
     matchCounts?.forEach(match => {
@@ -459,14 +454,14 @@ const createMatches = async (req, res) => {
                           partnership.p2?.skill_level === 'Intermediate' ? 2 : 1;
       
       return {
-        partnership_id: partnership.partnership_id,
+        partnership_id: partnership.id,
         player1_id: partnership.player1_id,
         player2_id: partnership.player2_id,
         p1_full_name: `${partnership.p1?.first_name || ''} ${partnership.p1?.last_name || ''}`.trim(),
         p2_full_name: `${partnership.p2?.first_name || ''} ${partnership.p2?.last_name || ''}`.trim(),
         p1_skill_level: partnership.p1?.skill_level || 'Beginner',
         p2_skill_level: partnership.p2?.skill_level || 'Beginner',
-        games_played_tonight: partnershipGameCounts[partnership.partnership_id] || 0,
+        games_played_tonight: partnershipGameCounts[partnership.id] || 0,
         avg_skill_level: (p1SkillLevel + p2SkillLevel) / 2
       };
     });
@@ -716,11 +711,17 @@ const submitMatchScore = async (req, res) => {
     // Update player statistics
     await updatePlayerStats(instance.league_id, match, score1, score2, team1Won);
 
+    // Try to create new matches now that a court is available (continuous flow)
+    console.log(`Match ${match_id} completed, checking for new matches...`);
+    const autoAssignResult = await tryAutoAssignMatches(instance.id);
+    console.log('Auto-assignment after match completion:', autoAssignResult);
+
     res.json({
       success: true,
       data: {
         match: updatedMatch,
-        message: 'Match score submitted successfully'
+        message: 'Match score submitted successfully',
+        autoAssignment: autoAssignResult
       }
     });
 

@@ -335,7 +335,7 @@ function LeagueList() {
             <p className="text-base sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-6 sm:mb-8 px-4 sm:px-0">
               Join dynamic leagues, track your progress, and become part of South Africa's fastest-growing pickleball community. 
               <span className="font-semibold text-green-600 dark:text-green-400">
-                {!user && 'Sign in to unlock your potential!'}
+                {!user && ' Sign in to unlock your potential!'}
               </span>
             </p>
             

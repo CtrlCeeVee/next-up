@@ -50,13 +50,13 @@ interface Match {
   team2_score?: number;
   partnership1: {
     id: number;
-    player1: { id: string; full_name: string; skill_level: string };
-    player2: { id: string; full_name: string; skill_level: string };
+    player1: { id: string; first_name: string; last_name: string; skill_level: string };
+    player2: { id: string; first_name: string; last_name: string; skill_level: string };
   };
   partnership2: {
     id: number;
-    player1: { id: string; full_name: string; skill_level: string };
-    player2: { id: string; full_name: string; skill_level: string };
+    player1: { id: string; first_name: string; last_name: string; skill_level: string };
+    player2: { id: string; first_name: string; last_name: string; skill_level: string };
   };
 }
 
@@ -210,7 +210,7 @@ const ScoreSubmission: React.FC<ScoreSubmissionProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {match.partnership1.player1.full_name} & {match.partnership1.player2.full_name}
+              {`${match.partnership1.player1.first_name} ${match.partnership1.player1.last_name}`} & {`${match.partnership1.player2.first_name} ${match.partnership1.player2.last_name}`}
               {isUserTeam1 && <span className="text-green-600 dark:text-green-400 ml-2">(Your Team)</span>}
             </p>
           </div>
@@ -235,7 +235,7 @@ const ScoreSubmission: React.FC<ScoreSubmissionProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {match.partnership2.player1.full_name} & {match.partnership2.player2.full_name}
+              {`${match.partnership2.player1.first_name} ${match.partnership2.player1.last_name}`} & {`${match.partnership2.player2.first_name} ${match.partnership2.player2.last_name}`}
               {!isUserTeam1 && <span className="text-green-600 dark:text-green-400 ml-2">(Your Team)</span>}
             </p>
           </div>

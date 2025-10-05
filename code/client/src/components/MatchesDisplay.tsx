@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Trophy, Users, Clock, Target } from 'lucide-react';
 import ScoreSubmission from './ScoreSubmission';
+
 
 interface Match {
   id: number;
@@ -12,13 +13,13 @@ interface Match {
   completed_at?: string;
   partnership1: {
     id: number;
-    player1: { id: string; full_name: string; skill_level: string };
-    player2: { id: string; full_name: string; skill_level: string };
+    player1: { id: string; first_name: string; last_name: string; skill_level: string };
+    player2: { id: string; first_name: string; last_name: string; skill_level: string };
   };
   partnership2: {
     id: number;
-    player1: { id: string; full_name: string; skill_level: string };
-    player2: { id: string; full_name: string; skill_level: string };
+    player1: { id: string; first_name: string; last_name: string; skill_level: string };
+    player2: { id: string; first_name: string; last_name: string; skill_level: string };
   };
 }
 
@@ -29,6 +30,8 @@ interface MatchesDisplayProps {
   onCreateMatches: () => void;
   isAdmin?: boolean;
   leagueNightStatus?: 'scheduled' | 'active' | 'completed';
+  leagueNightInstanceId?: number; // Add this for real-time subscriptions
+  refreshTrigger?: number; // Add this to trigger refreshes from parent
 }
 
 const MatchesDisplay: React.FC<MatchesDisplayProps> = ({ 
@@ -37,7 +40,9 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
   currentUserId,
   onCreateMatches,
   isAdmin = false,
-  leagueNightStatus = 'scheduled'
+  leagueNightStatus = 'scheduled',
+  leagueNightInstanceId,
+  refreshTrigger
 }) => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,9 +170,24 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
     return null;
   };
 
+  // Real-time matches update callback
+  const handleMatchesUpdate = useCallback(() => {
+    console.log('Real-time: Matches updated, refreshing...');
+    fetchMatches();
+  }, [leagueId, nightId]);
+
+  // Real-time matches updates are handled by the parent LeagueNightPage component
+
   useEffect(() => {
     fetchMatches();
   }, [leagueId, nightId]);
+
+  // Refresh matches when triggered by parent component (real-time updates)
+  useEffect(() => {
+    if (refreshTrigger !== undefined) {
+      fetchMatches();
+    }
+  }, [refreshTrigger]);
 
   if (loading) {
     return (
@@ -274,10 +294,10 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
                       : 'bg-gray-50 dark:bg-slate-700/50'
                   }`}>
                     <div className="font-semibold text-gray-900 dark:text-white">
-                      {match.partnership1.player1.full_name}
+                      {`${match.partnership1.player1.first_name} ${match.partnership1.player1.last_name}`}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-300">
-                      & {match.partnership1.player2.full_name}
+                      & {`${match.partnership1.player2.first_name} ${match.partnership1.player2.last_name}`}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {match.partnership1.player1.skill_level} • {match.partnership1.player2.skill_level}
@@ -296,10 +316,10 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
                       : 'bg-gray-50 dark:bg-slate-700/50'
                   }`}>
                     <div className="font-semibold text-gray-900 dark:text-white">
-                      {match.partnership2.player1.full_name}
+                      {`${match.partnership2.player1.first_name} ${match.partnership2.player1.last_name}`}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-300">
-                      & {match.partnership2.player2.full_name}
+                      & {`${match.partnership2.player2.first_name} ${match.partnership2.player2.last_name}`}
                     </div>
                     <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                       {match.partnership2.player1.skill_level} • {match.partnership2.player2.skill_level}
@@ -347,13 +367,13 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-2 items-center text-sm">
                 <div className="text-center">
                   <div className="font-medium text-gray-900 dark:text-white">
-                    {match.partnership1.player1.full_name} & {match.partnership1.player2.full_name}
+                    {`${match.partnership1.player1.first_name} ${match.partnership1.player1.last_name}`} & {`${match.partnership1.player2.first_name} ${match.partnership1.player2.last_name}`}
                   </div>
                 </div>
                 <div className="text-center text-gray-400">vs</div>
                 <div className="text-center">
                   <div className="font-medium text-gray-900 dark:text-white">
-                    {match.partnership2.player1.full_name} & {match.partnership2.player2.full_name}
+                    {`${match.partnership2.player1.first_name} ${match.partnership2.player1.last_name}`} & {`${match.partnership2.player2.first_name} ${match.partnership2.player2.last_name}`}
                   </div>
                 </div>
               </div>

@@ -10,9 +10,9 @@ const supabase = createClient(
 );
 
 // Helper function to create league night instance if it doesn't exist
-const getOrCreateLeagueNightInstance = async (leagueId, nightId, forceToday = false) => {
+const getOrCreateLeagueNightInstance = async (leagueId, nightId) => {
   try {
-    // First, try to get existing instance by ID
+    // First try to get existing instance by ID
     if (nightId && !nightId.startsWith('night-')) {
       const { data: instance, error } = await supabase
         .from('league_night_instances')
@@ -46,15 +46,10 @@ const getOrCreateLeagueNightInstance = async (leagueId, nightId, forceToday = fa
     
     let daysUntilTarget = targetDay - todayDay;
     
-    // For testing purposes, if forceToday is true, create instance for today regardless of day
-    if (forceToday) {
-      daysUntilTarget = 0;
-    } else {
-      // If today IS the target day, create instance for today
-      // Otherwise, create for next occurrence
-      if (daysUntilTarget < 0) {
-        daysUntilTarget += 7;
-      }
+    // If today IS the target day, create instance for today
+    // Otherwise, create for next occurrence
+    if (daysUntilTarget < 0) {
+      daysUntilTarget += 7;
     }
     
     const targetDate = new Date(today);
@@ -101,9 +96,7 @@ const getOrCreateLeagueNightInstance = async (leagueId, nightId, forceToday = fa
 const getLeagueNight = async (req, res) => {
   try {
     const { leagueId, nightId } = req.params;
-    const { forceToday } = req.query; // Check for testing parameter
-
-    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId, forceToday === 'true');
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
 
     // Get check-in count for this night
     const { data: checkins, error: checkinsError } = await supabase
@@ -443,11 +436,12 @@ const acceptPartnershipRequest = async (req, res) => {
     if (existingError) throw existingError;
 
     if (existingPartnerships.length > 0) {
-      // Update request status to rejected since someone already has a partnership
+            // Update request status to declined since someone already has a partnership
+      console.log('Declining request since one player already has a partnership');
       await supabase
         .from('partnership_requests')
-        .update({ status: 'rejected' })
-        .eq('id', request_id);
+        .update({ status: 'declined' })
+        .eq('id', request.id);
 
       return res.status(400).json({
         success: false,
@@ -478,25 +472,17 @@ const acceptPartnershipRequest = async (req, res) => {
     // Reject any other pending requests involving these players
     await supabase
       .from('partnership_requests')
-      .update({ status: 'rejected' })
+      .update({ status: 'declined' })
       .eq('league_night_instance_id', instance.id)
       .or(`requester_id.eq.${request.requester_id},requested_id.eq.${request.requester_id},requester_id.eq.${request.requested_id},requested_id.eq.${request.requested_id}`)
       .eq('status', 'pending')
       .neq('id', request_id);
 
-    // Auto-assignment: Try to create matches now that a new partnership is formed
-    // Import the auto-assignment function from matchController
-    const { tryAutoAssignMatches } = require('./matchController');
-    console.log(`New partnership formed between ${request.requester_id} and ${request.requested_id}`);
-    const autoAssignResult = await tryAutoAssignMatches(instance.id);
-    console.log('Auto-assignment after partnership formation:', autoAssignResult);
-
     res.json({
       success: true,
       data: {
         partnership,
-        message: 'Partnership request accepted successfully',
-        autoAssignment: autoAssignResult
+        message: 'Partnership request accepted successfully'
       }
     });
 
@@ -541,10 +527,10 @@ const rejectPartnershipRequest = async (req, res) => {
       });
     }
 
-    // Update request status to rejected
+    // Update request status to declined
     const { error: updateError } = await supabase
       .from('partnership_requests')
-      .update({ status: 'rejected' })
+      .update({ status: 'declined' })
       .eq('id', request_id);
 
     if (updateError) throw updateError;
@@ -552,7 +538,7 @@ const rejectPartnershipRequest = async (req, res) => {
     res.json({
       success: true,
       data: {
-        message: 'Partnership request rejected successfully'
+        message: 'Partnership request declined successfully'
       }
     });
 
@@ -605,9 +591,39 @@ const getPartnershipRequests = async (req, res) => {
 
     if (error) throw error;
 
+    // Also get confirmed partnerships for this user
+    const { data: confirmedPartnership, error: partnershipError } = await supabase
+      .from('confirmed_partnerships')
+      .select(`
+        *,
+        player1:profiles!confirmed_partnerships_player1_id_fkey (
+          id,
+          first_name,
+          last_name,
+          skill_level
+        ),
+        player2:profiles!confirmed_partnerships_player2_id_fkey (
+          id,
+          first_name,
+          last_name,
+          skill_level
+        )
+      `)
+      .eq('league_night_instance_id', instance.id)
+      .or(`player1_id.eq.${user_id},player2_id.eq.${user_id}`)
+      .eq('is_active', true)
+      .single();
+
+    if (partnershipError && partnershipError.code !== 'PGRST116') { // PGRST116 is "no rows found"
+      throw partnershipError;
+    }
+
     res.json({
       success: true,
-      data: requests || []
+      data: {
+        requests: requests || [],
+        confirmedPartnership: confirmedPartnership || null
+      }
     });
 
   } catch (error) {
@@ -695,7 +711,7 @@ const removePartnership = async (req, res) => {
 
     const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
 
-    // Remove confirmed partnership involving this user
+    // Deactivate confirmed partnership involving this user (preserves historical data)
     const { error: partnershipError } = await supabase
       .from('confirmed_partnerships')
       .update({ is_active: false })

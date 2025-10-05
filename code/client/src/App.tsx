@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { ToastProvider } from './contexts/ToastContext'
 import LeagueList from './pages/LeagueList.tsx'
 import LeaguePage from './pages/LeaguePage.tsx'
 import LeagueNightPage from './pages/LeagueNightPage.tsx'
@@ -18,7 +19,8 @@ function App() {
 
   return (
     <ThemeProvider>
-      <Router>
+      <ToastProvider>
+        <Router>
         <Routes>
           <Route
             path="/auth"
@@ -65,7 +67,8 @@ function App() {
             element={<LeaderboardPage />}
           />
         </Routes>
-      </Router>
+        </Router>
+      </ToastProvider>
     </ThemeProvider>
   )
 }

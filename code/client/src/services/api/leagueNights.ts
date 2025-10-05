@@ -36,7 +36,7 @@ export interface PartnershipRequest {
   league_night_instance_id: number;
   requester_id: string;
   requested_id: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: 'pending' | 'accepted' | 'declined';
   created_at: string;
   requester: {
     id: string;
@@ -52,11 +52,36 @@ export interface PartnershipRequest {
   };
 }
 
+export interface ConfirmedPartnership {
+  id: number;
+  league_night_instance_id: number;
+  player1_id: string;
+  player2_id: string;
+  is_active: boolean;
+  created_at: string;
+  player1: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    skill_level: string;
+  };
+  player2: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    skill_level: string;
+  };
+}
+
+export interface PartnershipRequestsResponse {
+  requests: PartnershipRequest[];
+  confirmedPartnership: ConfirmedPartnership | null;
+}
+
 class LeagueNightService {
   // Get league night details
-  async getLeagueNight(leagueId: number, nightId: string, forceToday: boolean = false): Promise<LeagueNightInstance> {
-    const queryParams = forceToday ? '?forceToday=true' : '';
-    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}${queryParams}`);
+  async getLeagueNight(leagueId: number, nightId: string): Promise<LeagueNightInstance> {
+    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch league night');
@@ -66,10 +91,7 @@ class LeagueNightService {
     return result.data;
   }
 
-  // Get league night for testing (forces today's date)
-  async getLeagueNightForTesting(leagueId: number, nightId: string): Promise<LeagueNightInstance> {
-    return this.getLeagueNight(leagueId, nightId, true);
-  }
+
 
   // Get checked-in players for a league night
   async getCheckedInPlayers(leagueId: number, nightId: string): Promise<CheckedInPlayer[]> {
@@ -100,6 +122,8 @@ class LeagueNightService {
     
     return response.json();
   }
+
+
 
   // Uncheck a player from a league night
   async uncheckPlayer(leagueId: number, nightId: string, userId: string): Promise<void> {
@@ -185,7 +209,7 @@ class LeagueNightService {
   }
 
   // Get partnership requests for a user
-  async getPartnershipRequests(leagueId: number, nightId: string, userId: string): Promise<PartnershipRequest[]> {
+  async getPartnershipRequests(leagueId: number, nightId: string, userId: string): Promise<PartnershipRequestsResponse> {
     const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/partnership-requests?user_id=${userId}`);
     
     if (!response.ok) {
@@ -211,6 +235,24 @@ class LeagueNightService {
       throw new Error(error.error || 'Failed to remove partnership');
     }
     
+    return response.json();
+  }
+
+  // Start league night (admin only)
+  async startLeague(leagueId: number, nightId: string, userId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/start-league`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_id: userId }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to start league night');
+    }
+
     return response.json();
   }
 }

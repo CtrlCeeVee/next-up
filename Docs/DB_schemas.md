@@ -274,9 +274,7 @@ Returns available court numbers based on league configuration and active matches
 
 ## Notes, TODOs and pending work
 
-- The `full_name` column was removed and replaced by `first_name` and `last_name`. Several server and client code paths were updated accordingly, but some places still reference `full_name` and must be refactored to avoid runtime SQL errors. Known remaining locations:
-    - `server/src/controllers/matchController.js` — multiple `.select()` calls that still reference `full_name` (needs updates to select `first_name`/`last_name` or to return a derived `display_name`).
-    - Client components such as `MatchesDisplay.tsx` and any UI expecting `full_name` must be updated to use `first_name`/`last_name` or `display_name`.
+- ✅ **COMPLETED**: The `full_name` column was removed and replaced by `first_name` and `last_name`. All server and client code paths have been updated to use the new field structure. The migration is complete and all references have been refactored to avoid SQL errors.
 
 - When writing new queries, prefer qualifying columns (e.g., `profiles.first_name`) in complex joins and use `first_name || ' ' || last_name AS display_name` when a single string is required by the API.
 

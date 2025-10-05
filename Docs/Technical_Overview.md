@@ -20,10 +20,14 @@
 - **Hosting**: Render
 
 ### Database & Authentication
-- **Database**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth
+- **Database**: Supabase (PostgreSQL) with Row Level Security
+- **Authentication**: Supabase Auth with email-based authentication
 - **Storage**: Supabase Storage (for avatars, etc.)
-- **Real-time**: Supabase Real-time (for live match updates)
+- **Real-time**: Supabase WebSocket subscriptions for live updates
+  - Partnership requests and confirmations
+  - Player check-in/check-out status
+  - League night status changes
+  - Match assignments and completions
 
 ### Domain & Deployment
 - **Domain**: next-up.co.za (points to frontend)
@@ -174,19 +178,120 @@ JWT_SECRET=your_jwt_secret_here
 - `GET /api/leagues/:id/members` - Get league members
 
 ### League Night Endpoints (Implemented)
-- `GET /api/leagues/:leagueId/nights/:nightId` - Get league night details
-- `GET /api/leagues/:leagueId/nights/:nightId/checkins` - Get checked-in players
+- `GET /api/leagues/:leagueId/nights/:nightId` - Get league night details with real-time data
+- `GET /api/leagues/:leagueId/nights/:nightId/checkins` - Get checked-in players with partnership status
 - `POST /api/leagues/:leagueId/nights/:nightId/checkin` - Check in player
-- `POST /api/leagues/:leagueId/nights/:nightId/partnership` - Create partnership
+- `DELETE /api/leagues/:leagueId/nights/:nightId/checkin` - Check out player
+- `POST /api/leagues/:leagueId/nights/:nightId/start-league` - Admin: Start league night (triggers auto-assignment)
 
-### Planned Endpoints
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration  
-- `GET /api/leagues/:id/matches` - Get league matches
-- `POST /api/matches/:id/score` - Submit match score
-- `GET /api/users/:id/stats` - Get user statistics
+### Partnership Management Endpoints (Implemented)
+- `GET /api/leagues/:leagueId/nights/:nightId/partnership-requests` - Get partnership requests and confirmed partnerships
 - `POST /api/leagues/:leagueId/nights/:nightId/partnership-request` - Send partnership request
 - `POST /api/leagues/:leagueId/nights/:nightId/partnership-accept` - Accept partnership request
+- `POST /api/leagues/:leagueId/nights/:nightId/partnership-reject` - Reject partnership request  
+- `DELETE /api/leagues/:leagueId/nights/:nightId/partnership` - Remove confirmed partnership
+
+### Match Management Endpoints (Implemented)
+- `GET /api/leagues/:leagueId/nights/:nightId/matches` - Get matches with partnership details
+- `POST /api/leagues/:leagueId/nights/:nightId/create-matches` - Create matches with smart assignment
+- `POST /api/leagues/:leagueId/nights/:nightId/submit-score` - Submit match score with validation
+
+### Authentication Endpoints (Supabase Handled)
+- Authentication handled entirely by Supabase Auth
+- JWT token validation middleware implemented
+- Row Level Security policies active on all tables
+
+### Planned Endpoints
+- `GET /api/users/:id/stats` - Enhanced user statistics and analytics
+- `POST /api/leagues/:id/admin/override-match` - Admin match override capabilities
+- `GET /api/leagues/:id/tournaments` - Tournament management system
+
+---
+
+## Real-time Architecture
+
+### Overview
+Next-Up implements a comprehensive real-time system using Supabase WebSocket subscriptions to eliminate the need for manual page refreshes during league nights.
+
+### Real-time Components
+
+#### 1. **WebSocket Subscriptions** (`useLeagueNightRealtime.ts`)
+- Single channel per league night instance to prevent subscription churn
+- Listens to 5 database tables: `league_night_checkins`, `partnership_requests`, `confirmed_partnerships`, `matches`, `league_night_instances`
+- Stable callback references using `useRef` to prevent infinite re-renders
+- Connection status tracking and error handling
+- Automatic cleanup on component unmount
+
+#### 2. **Database Tables with Real-time**
+- **`league_night_checkins`**: Player check-in/check-out status changes
+- **`partnership_requests`**: Partnership request creation, acceptance, rejection
+- **`confirmed_partnerships`**: Partnership confirmations and removals
+- **`matches`**: Match creation, score submission, completion
+- **`league_night_instances`**: League status changes (scheduled → active → completed)
+
+#### 3. **Frontend Integration**
+```typescript
+const { isConnected } = useLeagueNightRealtime(leagueNight?.id || 0, user?.id || '', {
+  onCheckinsUpdate: () => refreshCheckedInPlayers(),
+  onPartnershipRequestsUpdate: () => refreshPartnershipRequests(),
+  onConfirmedPartnershipsUpdate: () => {
+    refreshPartnershipRequests();
+    refreshCheckedInPlayers(); // Updates "Paired" status
+  },
+  onMatchesUpdate: () => refreshMatches(),
+  onLeagueNightStatusUpdate: () => fetchLeagueNight()
+});
+```
+
+#### 4. **Row Level Security Integration**
+- All real-time subscriptions work seamlessly with RLS policies
+- Users only receive updates for data they're authorized to see
+- No additional security concerns with WebSocket connections
+
+### Real-time Data Flow
+
+1. **User Action** (e.g., sends partnership request)
+2. **API Call** updates database table
+3. **Supabase Real-time** broadcasts change via WebSocket
+4. **Frontend Hook** receives notification
+5. **Callback Function** refreshes relevant data
+6. **UI Updates** automatically without page refresh
+7. **All Connected Browsers** receive the same updates instantly
+
+### Performance Considerations
+
+- **Single Channel Strategy**: One WebSocket channel per league night prevents connection overhead
+- **Selective Callbacks**: Only refresh data that actually changed
+- **Stable References**: Prevent unnecessary re-subscriptions
+- **Connection Management**: Proper cleanup prevents memory leaks
+
+### Benefits Achieved
+
+✅ **Zero Manual Refreshes**: Players never need to refresh their browsers
+✅ **Instant Feedback**: Actions reflect immediately across all devices  
+✅ **Coordinated Gameplay**: Teams can see each other's actions in real-time
+✅ **Admin Visibility**: League organizers see live activity as it happens
+✅ **Mobile Friendly**: Works seamlessly on phones during games
+
+---
+
+## Database Schema
+
+### Partnership Management
+- **Unique Constraints**: Partial unique index on active partnerships only: `(league_night_instance_id, LEAST(player1_id, player2_id), GREATEST(player1_id, player2_id)) WHERE is_active = true`
+- **Historical Data**: Inactive partnerships preserved for analytics
+- **Constraint Benefits**: Allows partnership recreation while preventing duplicates
+
+### Row Level Security (RLS)
+- **Comprehensive Coverage**: All tables protected with RLS policies
+- **User Context**: Policies use `auth.uid()` for user-specific data access
+- **League Membership**: Access controlled by league membership status
+- **Admin Overrides**: Admin roles can access broader data sets
+
+### Real-time Optimizations
+- **Efficient Queries**: Indexes optimized for real-time subscription filters
+- **Minimal Payload**: Only essential data included in real-time events
+- **Filter Optimization**: Database-level filtering reduces client processing
 
 ---
 

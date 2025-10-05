@@ -3,9 +3,11 @@ import { useLeague } from '../hooks/useLeagues'
 import { useAuth } from '../hooks/useAuth'
 import { useMembership } from '../hooks/useMembership'
 import { useTheme } from '../contexts/ThemeContext'
-import { leagueNightService, type CheckedInPlayer, type PartnershipRequest } from '../services/api/leagueNights'
+import { leagueNightService, type CheckedInPlayer, type PartnershipRequest, type ConfirmedPartnership } from '../services/api/leagueNights'
 import MatchesDisplay from '../components/MatchesDisplay'
-import { useState, useEffect } from 'react'
+
+import { useLeagueNightRealtime } from '../hooks/useLeagueNightRealtime'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { 
   ArrowLeft, 
   Moon, 
@@ -61,11 +63,16 @@ const LeagueNightPage = () => {
   
   // Partnership related state
   const [selectedPartner, setSelectedPartner] = useState<string | null>(null);
+  
+  // Real-time refresh triggers
+  const [matchesRefreshTrigger, setMatchesRefreshTrigger] = useState(0);
   const [partnershipRequests, setPartnershipRequests] = useState<PartnershipRequest[]>([]);
+  const [confirmedPartnership, setConfirmedPartnership] = useState<ConfirmedPartnership | null>(null);
   const [sendingRequest, setSendingRequest] = useState<string | null>(null);
   const [acceptingRequest, setAcceptingRequest] = useState<number | null>(null);
   const [rejectingRequest, setRejectingRequest] = useState<number | null>(null);
   const [removingPartnership, setRemovingPartnership] = useState(false);
+  const [startingLeague, setStartingLeague] = useState(false);
 
   // Redirect to auth if not authenticated
   useEffect(() => {
@@ -79,19 +86,20 @@ const LeagueNightPage = () => {
     if (!leagueId || !nightId) return;
 
     try {
-      // Use testing method to force today's date for any league night
-      const nightData = await leagueNightService.getLeagueNightForTesting(parseInt(leagueId), nightId);
+      // Get the natural league night instance for this date
+      const nightData = await leagueNightService.getLeagueNight(parseInt(leagueId), nightId);
       
       // Transform API response to match our interface
-      const isToday = true; // Always treat as today when in test mode
+      const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+      const isToday = nightData.date === today;
       const transformedNight: LeagueNight = {
         id: nightData.id,
         day: nightData.day,
         time: nightData.time,
         date: nightData.date,
-        nextDate: nightData.date, // Use the date for display
+        nextDate: nightData.date,
         status: isToday ? 'today' : nightData.status,
-        backendStatus: nightData.status, // Store the actual backend status
+        backendStatus: nightData.status,
         courtsAvailable: nightData.courtsAvailable,
         checkedInCount: nightData.checkedInCount,
         partnershipsCount: nightData.partnershipsCount,
@@ -223,8 +231,6 @@ const LeagueNightPage = () => {
     try {
       await leagueNightService.removePartnership(parseInt(leagueId), nightId, user.id);
       
-      setSelectedPartner(null);
-      
       // Refresh all data
       await Promise.all([
         refreshCheckedInPlayers(),
@@ -243,6 +249,24 @@ const LeagueNightPage = () => {
     // Refresh league night data when matches are created
     await fetchLeagueNight();
     await refreshPartnershipRequests();
+  };
+
+  // Handle starting league night (admin only)
+  const handleStartLeague = async () => {
+    if (!user || !leagueId || !nightId || startingLeague) return;
+
+    setStartingLeague(true);
+    try {
+      await leagueNightService.startLeague(parseInt(leagueId), nightId, user.id);
+      
+      // Refresh league night data to show new status
+      await fetchLeagueNight();
+      
+    } catch (error) {
+      console.error('Error starting league:', error);
+    } finally {
+      setStartingLeague(false);
+    }
   };
 
   // Helper functions for refreshing data
@@ -269,16 +293,76 @@ const LeagueNightPage = () => {
     }
   };
 
-  const refreshPartnershipRequests = async () => {
+  const refreshPartnershipRequests = useCallback(async () => {
     if (!user || !leagueId || !nightId) return;
     
     try {
-      const requests = await leagueNightService.getPartnershipRequests(parseInt(leagueId), nightId, user.id);
-      setPartnershipRequests(requests);
+      const data = await leagueNightService.getPartnershipRequests(parseInt(leagueId), nightId, user.id);
+      setPartnershipRequests(data.requests);
+      setConfirmedPartnership(data.confirmedPartnership);
     } catch (error) {
       console.error('Error refreshing partnership requests:', error);
     }
-  };
+  }, [user, leagueId, nightId]);
+
+  // Compute current partner info from confirmed partnership
+  const currentPartner = useMemo(() => {
+    if (!confirmedPartnership || !user?.id) return null;
+    
+    const partnerId = confirmedPartnership.player1_id === user.id 
+      ? confirmedPartnership.player2_id 
+      : confirmedPartnership.player1_id;
+    
+    const partnerProfile = confirmedPartnership.player1_id === user.id
+      ? confirmedPartnership.player2
+      : confirmedPartnership.player1;
+      
+    return {
+      id: partnerId,
+      name: `${partnerProfile.first_name} ${partnerProfile.last_name}`.trim(),
+      skillLevel: partnerProfile.skill_level
+    };
+  }, [confirmedPartnership, user?.id]);
+
+  // Real-time update callbacks
+  const handleCheckinsUpdate = useCallback(() => {
+    refreshCheckedInPlayers();
+  }, []);
+
+  const handlePartnershipRequestsUpdate = useCallback(() => {
+    refreshPartnershipRequests();
+  }, [refreshPartnershipRequests]);
+
+  const handleConfirmedPartnershipsUpdate = useCallback(() => {
+    refreshPartnershipRequests();
+    // Also refresh checked-in players to update "Paired" status  
+    if (leagueId && nightId) {
+      leagueNightService.getCheckedInPlayers(parseInt(leagueId), nightId)
+        .then(players => {
+          setCheckedInPlayers(players);
+          if (user) {
+            const userCheckedIn = players.find(p => p.id === user.id);
+            setIsCheckedIn(!!userCheckedIn);
+          }
+        })
+        .catch(error => console.error('Error refreshing checked-in players:', error));
+    }
+  }, [refreshPartnershipRequests, leagueId, nightId, user]);
+
+  const handleLeagueNightStatusUpdate = useCallback(() => {
+    fetchLeagueNight();
+  }, []);
+
+  // Set up real-time subscriptions
+  const realtimeStatus = useLeagueNightRealtime(leagueNight?.id || 0, user?.id || '', {
+    onCheckinsUpdate: handleCheckinsUpdate,
+    onPartnershipRequestsUpdate: handlePartnershipRequestsUpdate,
+    onConfirmedPartnershipsUpdate: handleConfirmedPartnershipsUpdate,
+    onLeagueNightStatusUpdate: handleLeagueNightStatusUpdate,
+    onMatchesUpdate: () => {
+      setMatchesRefreshTrigger(prev => prev + 1);
+    }
+  });
 
   // Fetch checked-in players and partnership requests
   useEffect(() => {
@@ -323,6 +407,8 @@ const LeagueNightPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+
+      
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 md:py-12 max-w-6xl">
 
         {/* Header */}
@@ -453,7 +539,7 @@ const LeagueNightPage = () => {
 
         {/* Main Action Area */}
         <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 border border-white/20 dark:border-slate-700/50 shadow-2xl mb-10">
-          {leagueNight.status === 'today' ? (
+          {(leagueNight.status === 'today' || leagueNight.backendStatus === 'active') ? (
             <div className="space-y-8">
               {/* Check-in Section */}
               <div className="text-center">
@@ -526,32 +612,32 @@ const LeagueNightPage = () => {
                   <div className="text-center mb-8">
                     <Users className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
                     <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                      {selectedPartner ? 'Your Game Partner' : 'Select Your Game Partner'}
+                      {currentPartner ? 'Your Game Partner' : 'Select Your Game Partner'}
                     </h4>
                     <p className="text-gray-600 dark:text-gray-300">
-                      {selectedPartner 
+                      {currentPartner 
                         ? 'You\'re paired up and ready for matches!'
                         : 'Choose someone from the checked-in players to be your doubles partner.'
                       }
                     </p>
                   </div>
 
-                  {selectedPartner ? (
+                  {currentPartner ? (
                     <div className="space-y-4">
                       <div className="bg-blue-50/80 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-2xl p-6 max-w-md mx-auto">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-3">
                             <div className="w-12 h-12 bg-blue-200 dark:bg-blue-800 rounded-full flex items-center justify-center">
                               <span className="text-blue-700 dark:text-blue-300 font-semibold text-lg">
-                                {checkedInPlayers.find(p => p.id === selectedPartner)?.name?.charAt(0) || 'P'}
+                                {currentPartner?.name?.charAt(0) || 'P'}
                               </span>
                             </div>
                             <div>
                               <p className="font-semibold text-gray-900 dark:text-white">
-                                {checkedInPlayers.find(p => p.id === selectedPartner)?.name || 'Partner'}
+                                {currentPartner?.name || 'Partner'}
                               </p>
                               <p className="text-sm text-gray-600 dark:text-gray-300">
-                                {checkedInPlayers.find(p => p.id === selectedPartner)?.skillLevel || 'Intermediate'}
+                                {currentPartner?.skillLevel || 'Intermediate'}
                               </p>
                             </div>
                           </div>
@@ -642,6 +728,9 @@ const LeagueNightPage = () => {
                               if (player.id === user?.id) return false;
                               if (player.hasPartner) return false;
                               
+                              // Don't show if current user already has a confirmed partnership
+                              if (currentPartner) return false;
+                              
                               // Don't show if already sent a request to this player
                               const hasPendingRequest = partnershipRequests.some(req => 
                                 (req.requester_id === user?.id && req.requested_id === player.id) ||
@@ -678,6 +767,7 @@ const LeagueNightPage = () => {
                           {checkedInPlayers.filter(p => {
                             if (p.id === user?.id) return false;
                             if (p.hasPartner) return false;
+                            if (currentPartner) return false;
                             const hasPendingRequest = partnershipRequests.some(req => 
                               (req.requester_id === user?.id && req.requested_id === p.id) ||
                               (req.requested_id === user?.id && req.requester_id === p.id)
@@ -779,18 +869,40 @@ const LeagueNightPage = () => {
               <div className="mb-6">
                 <CheckCircle className="h-16 w-16 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  Coming Soon!
+                  {leagueNight.backendStatus === 'scheduled' ? 'Coming Soon!' : 'League Night'}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto">
-                  This league night is scheduled for {leagueNight.nextDate}. Check back on the day to participate.
+                <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto mb-6">
+                  This league night is scheduled for {leagueNight.nextDate}.
+                  {leagueNight.backendStatus === 'scheduled' && ' Check back on the day to participate.'}
                 </p>
+                
+                {/* Admin Start League Night Button */}
+                {isMember && membership?.role === 'admin' && leagueNight.backendStatus === 'scheduled' && (
+                  <button
+                    onClick={handleStartLeague}
+                    disabled={startingLeague}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 mx-auto"
+                  >
+                    {startingLeague ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Starting League...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Target className="h-4 w-4" />
+                        <span>Start League Night (Admin)</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
           )}
         </section>
 
-        {/* Matches Display - Only show for today's league night */}
-        {leagueNight.status === 'today' && leagueId && nightId && (
+        {/* Matches Display - Show for active league nights */}
+        {(leagueNight.status === 'today' || leagueNight.backendStatus === 'active') && leagueId && nightId && (
           <MatchesDisplay
             leagueId={leagueId}
             nightId={nightId}
@@ -798,6 +910,8 @@ const LeagueNightPage = () => {
             onCreateMatches={handleMatchesCreated}
             isAdmin={isMember && membership?.role === 'admin'} // Check if user is admin of this league
             leagueNightStatus={leagueNight.backendStatus || 'scheduled'} // Use actual backend status
+            leagueNightInstanceId={leagueNight.id} // Pass instance ID for real-time updates
+            refreshTrigger={matchesRefreshTrigger} // Pass refresh trigger for real-time updates
           />
         )}
 
