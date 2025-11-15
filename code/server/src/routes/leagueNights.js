@@ -17,7 +17,8 @@ const {
 } = require('../controllers/leagueNightController');const {
   getMatches,
   createMatches,
-  submitMatchScore
+  submitMatchScore,
+  getQueue
 } = require('../controllers/matchController');
 
 // GET /api/leagues/:leagueId/nights/:nightId - Get league night details
@@ -31,6 +32,9 @@ router.get('/:leagueId/nights/:nightId/partnership-requests', getPartnershipRequ
 
 // GET /api/leagues/:leagueId/nights/:nightId/matches - Get all matches for league night
 router.get('/:leagueId/nights/:nightId/matches', getMatches);
+
+// GET /api/leagues/:leagueId/nights/:nightId/queue - Get queue information
+router.get('/:leagueId/nights/:nightId/queue', getQueue);
 
 // POST /api/leagues/:leagueId/nights/:nightId/checkin - Check in player
 router.post('/:leagueId/nights/:nightId/checkin', checkInPlayer);

@@ -6,6 +6,7 @@ import ScoreSubmission from './ScoreSubmission';
 interface Match {
   id: number;
   court_number: number;
+  court_label?: string;  // Added: actual court label from backend
   status: 'active' | 'completed' | 'cancelled';
   team1_score?: number;
   team2_score?: number;
@@ -272,7 +273,7 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
                     <div className="bg-blue-600 dark:bg-blue-500 text-white text-sm font-bold px-3 py-1 rounded-full">
-                      Court {match.court_number}
+                      {match.court_label || `Court ${match.court_number}`}
                     </div>
                     {isUserMatch && (
                       <div className="bg-green-600 dark:bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-full">
@@ -357,7 +358,7 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Court {match.court_number} • Completed
+                  {match.court_label || `Court ${match.court_number}`} • Completed
                 </div>
                 <div className="text-lg font-bold text-gray-900 dark:text-white">
                   {match.team1_score} - {match.team2_score}

@@ -8,8 +8,7 @@ import { Moon, Sun, Zap, Trophy, Users, MapPin, Calendar, Star, ArrowRight, Play
 // Skeleton component for loading league cards
 const LeagueCardSkeleton = ({ index }: { index: number }) => (
   <div 
-    className="group relative overflow-hidden rounded-3xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border border-slate-200/50 dark:border-slate-700/50 shadow-xl animate-pulse"
-    style={{ animationDelay: `${index * 100}ms` }}
+    className="group relative overflow-hidden rounded-3xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border border-slate-200/50 dark:border-slate-700/50 shadow-xl"
   >
     {/* Background Gradient */}
     <div className="absolute inset-0 opacity-5 bg-gradient-to-br from-slate-400 to-slate-600"></div>
@@ -24,35 +23,35 @@ const LeagueCardSkeleton = ({ index }: { index: number }) => (
       <div className="mb-4 sm:mb-6">
         {/* Title skeleton - adjusted width to avoid overlap with LIVE indicator */}
         <div className="mb-2 sm:mb-3">
-          <div className="h-7 sm:h-8 bg-slate-300 dark:bg-slate-600 rounded-lg mb-2 skeleton w-3/4"></div>
+          <div className="h-7 sm:h-8 bg-slate-300 dark:bg-slate-600 rounded-lg mb-2 w-3/4"></div>
         </div>
         
         {/* Description skeleton */}
         <div className="space-y-2 mb-4">
-          <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded skeleton"></div>
-          <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded w-3/4 skeleton"></div>
+          <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded"></div>
+          <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded w-3/4"></div>
         </div>
         
         {/* Details skeleton */}
         <div className="space-y-3 text-sm">
           <div className="flex items-center">
-            <div className="h-4 w-4 bg-slate-300 dark:bg-slate-600 rounded mr-3 skeleton"></div>
-            <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded flex-1 skeleton"></div>
+            <div className="h-4 w-4 bg-slate-300 dark:bg-slate-600 rounded mr-3"></div>
+            <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded flex-1"></div>
           </div>
           <div className="flex items-center">
-            <div className="h-4 w-4 bg-slate-300 dark:bg-slate-600 rounded mr-3 skeleton"></div>
-            <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded flex-1 skeleton"></div>
+            <div className="h-4 w-4 bg-slate-300 dark:bg-slate-600 rounded mr-3"></div>
+            <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded flex-1"></div>
           </div>
           <div className="flex items-center">
-            <div className="h-4 w-4 bg-slate-300 dark:bg-slate-600 rounded mr-3 skeleton"></div>
-            <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded w-2/3 skeleton"></div>
+            <div className="h-4 w-4 bg-slate-300 dark:bg-slate-600 rounded mr-3"></div>
+            <div className="h-4 bg-slate-300 dark:bg-slate-600 rounded w-2/3"></div>
           </div>
         </div>
       </div>
       
       {/* Button skeleton */}
       <div className="pt-6 border-t border-gray-200/50 dark:border-slate-600/50">
-        <div className="w-full h-12 bg-slate-300 dark:bg-slate-600 rounded-2xl skeleton"></div>
+        <div className="w-full h-12 bg-slate-300 dark:bg-slate-600 rounded-2xl"></div>
       </div>
     </div>
   </div>
@@ -179,18 +178,18 @@ function LeagueList() {
                 </span>
               </p>
 
-              {/* Stats skeleton */}
+              {/* Stats */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
                 <div className="text-center">
-                  <div className="h-8 w-16 bg-slate-300 dark:bg-slate-600 rounded mx-auto mb-2 skeleton"></div>
+                  <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">500+</div>
                   <div className="text-gray-600 dark:text-gray-300">Active Players</div>
                 </div>
                 <div className="text-center">
-                  <div className="h-8 w-12 bg-slate-300 dark:bg-slate-600 rounded mx-auto mb-2 skeleton"></div>
+                  <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">25+</div>
                   <div className="text-gray-600 dark:text-gray-300">Leagues</div>
                 </div>
                 <div className="text-center">
-                  <div className="h-8 w-16 bg-slate-300 dark:bg-slate-600 rounded mx-auto mb-2 skeleton"></div>
+                  <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">10K+</div>
                   <div className="text-gray-600 dark:text-gray-300">Matches Played</div>
                 </div>
               </div>
@@ -224,7 +223,7 @@ function LeagueList() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-rose-50 dark:from-slate-900 dark:via-red-900 dark:to-rose-900 flex items-center justify-center">
         <div className="text-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/50">
-          <div className="text-red-500 dark:text-red-400 text-6xl mb-4 animate-bounce">⚠️</div>
+          <div className="text-red-500 dark:text-red-400 text-6xl mb-4">⚠️</div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Connection Error</h2>
           <p className="text-gray-600 dark:text-gray-300 mb-4">Failed to connect to the server</p>
           <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg mb-4">{error}</p>

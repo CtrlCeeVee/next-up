@@ -45,10 +45,10 @@ const tryAutoAssignMatches = async (instanceId) => {
       return { success: true, message: 'Not enough partnerships', matches: [] };
     }
 
-    // Get match counts for each partnership tonight
-    const { data: matchCounts, error: matchCountsError } = await supabase
+    // Get ALL matches (including completed) to track pairings and game counts
+    const { data: allMatches, error: matchCountsError } = await supabase
       .from('matches')
-      .select('partnership1_id, partnership2_id')
+      .select('partnership1_id, partnership2_id, status')
       .eq('league_night_instance_id', instanceId);
 
     if (matchCountsError) {
@@ -56,23 +56,44 @@ const tryAutoAssignMatches = async (instanceId) => {
       return { success: false, error: matchCountsError.message };
     }
 
-    // Calculate games played for each partnership
+    // Calculate games played and track previous opponents for each partnership
+    // Also track partnerships currently in active matches
     const partnershipGameCounts = {};
+    const previousOpponents = {}; // Track who each partnership has played against
+    const currentlyPlaying = new Set(); // Track partnerships in active matches
+    
     partnerships.forEach(p => {
       partnershipGameCounts[p.id] = 0;
+      previousOpponents[p.id] = new Set();
     });
 
-    matchCounts?.forEach(match => {
+    allMatches?.forEach(match => {
+      // Track partnerships currently playing
+      if (match.status === 'active') {
+        currentlyPlaying.add(match.partnership1_id);
+        currentlyPlaying.add(match.partnership2_id);
+      }
+      
       if (partnershipGameCounts[match.partnership1_id] !== undefined) {
         partnershipGameCounts[match.partnership1_id]++;
+        previousOpponents[match.partnership1_id].add(match.partnership2_id);
       }
       if (partnershipGameCounts[match.partnership2_id] !== undefined) {
         partnershipGameCounts[match.partnership2_id]++;
+        previousOpponents[match.partnership2_id].add(match.partnership1_id);
       }
     });
 
+    // Filter out partnerships currently playing and enhance with game counts
+    const availablePartnerships = partnerships.filter(p => !currentlyPlaying.has(p.id));
+    
+    if (availablePartnerships.length < 2) {
+      console.log(`Not enough available partnerships (${availablePartnerships.length} free, ${currentlyPlaying.size} playing)`);
+      return { success: true, message: 'Not enough available partnerships', matches: [] };
+    }
+
     // Enhance partnerships with game counts and skill levels
-    const enhancedPartnerships = partnerships.map(partnership => {
+    const enhancedPartnerships = availablePartnerships.map(partnership => {
       const p1SkillLevel = partnership.p1?.skill_level === 'Advanced' ? 3 : 
                           partnership.p1?.skill_level === 'Intermediate' ? 2 : 1;
       const p2SkillLevel = partnership.p2?.skill_level === 'Advanced' ? 3 : 
@@ -133,22 +154,63 @@ const tryAutoAssignMatches = async (instanceId) => {
       return { success: true, message: 'Unable to create matches', matches: [] };
     }
 
-    // Create matches for available courts
+    // Create matches for available courts, avoiding repeat pairings
     const matchesToCreate = [];
     const courtsToUse = availableCourts.slice(0, matchesToCreateCount);
+    const usedPartnerships = new Set();
 
-    for (let i = 0; i < courtsToUse.length && (i * 2 + 1) < sortedPartnerships.length; i++) {
-      const partnership1 = sortedPartnerships[i * 2];
-      const partnership2 = sortedPartnerships[i * 2 + 1];
-      const court = courtsToUse[i];
-
-      matchesToCreate.push({
-        league_night_instance_id: instanceId,
-        partnership1_id: partnership1.partnership_id,
-        partnership2_id: partnership2.partnership_id,
-        court_number: court.court_number,
-        status: 'active'
-      });
+    for (const court of courtsToUse) {
+      // Find two partnerships that haven't played each other yet
+      let match = null;
+      
+      for (let i = 0; i < sortedPartnerships.length; i++) {
+        if (usedPartnerships.has(sortedPartnerships[i].partnership_id)) continue;
+        
+        for (let j = i + 1; j < sortedPartnerships.length; j++) {
+          if (usedPartnerships.has(sortedPartnerships[j].partnership_id)) continue;
+          
+          const p1 = sortedPartnerships[i];
+          const p2 = sortedPartnerships[j];
+          
+          // Check if they've played before
+          if (!previousOpponents[p1.partnership_id].has(p2.partnership_id)) {
+            match = { p1, p2, court };
+            usedPartnerships.add(p1.partnership_id);
+            usedPartnerships.add(p2.partnership_id);
+            break;
+          }
+        }
+        if (match) break;
+      }
+      
+      // If no new pairing found, allow repeat pairing (everyone has played everyone)
+      if (!match) {
+        for (let i = 0; i < sortedPartnerships.length; i++) {
+          if (usedPartnerships.has(sortedPartnerships[i].partnership_id)) continue;
+          
+          for (let j = i + 1; j < sortedPartnerships.length; j++) {
+            if (usedPartnerships.has(sortedPartnerships[j].partnership_id)) continue;
+            
+            const p1 = sortedPartnerships[i];
+            const p2 = sortedPartnerships[j];
+            match = { p1, p2, court };
+            usedPartnerships.add(p1.partnership_id);
+            usedPartnerships.add(p2.partnership_id);
+            break;
+          }
+          if (match) break;
+        }
+      }
+      
+      if (match) {
+        matchesToCreate.push({
+          league_night_instance_id: instanceId,
+          partnership1_id: match.p1.partnership_id,
+          partnership2_id: match.p2.partnership_id,
+          court_number: match.court.court_number,
+          status: 'active'
+        });
+      }
     }
 
     if (matchesToCreate.length === 0) {
@@ -363,9 +425,17 @@ const getMatches = async (req, res) => {
 
     if (error) throw error;
 
+    // Map court numbers to actual court labels
+    const courtLabels = instance.court_labels || [];
+    const matchesWithCourtLabels = (matches || []).map(match => ({
+      ...match,
+      court_label: courtLabels[match.court_number - 1] || `Court ${match.court_number}`
+    }));
+
     res.json({
       success: true,
-      data: matches || []
+      data: matchesWithCourtLabels,
+      courtLabels: courtLabels
     });
 
   } catch (error) {
@@ -420,10 +490,10 @@ const createMatches = async (req, res) => {
       });
     }
 
-    // Get match counts for each partnership tonight
+    // Get ALL matches (including completed) to track both game counts AND previous opponents
     const { data: matchCounts, error: matchCountsError } = await supabase
       .from('matches')
-      .select('partnership1_id, partnership2_id')
+      .select('partnership1_id, partnership2_id, status')
       .eq('league_night_instance_id', instance.id);
 
     if (matchCountsError) {
@@ -431,23 +501,48 @@ const createMatches = async (req, res) => {
       throw matchCountsError;
     }
 
-    // Calculate games played for each partnership
+    // Calculate games played for each partnership AND track who they've played against
+    // Also track partnerships currently in active matches
     const partnershipGameCounts = {};
+    const previousOpponents = {};
+    const currentlyPlaying = new Set();
+    
     partnershipsData.forEach(p => {
       partnershipGameCounts[p.id] = 0;
+      previousOpponents[p.id] = new Set();
     });
 
     matchCounts?.forEach(match => {
+      // Track partnerships currently playing
+      if (match.status === 'active') {
+        currentlyPlaying.add(match.partnership1_id);
+        currentlyPlaying.add(match.partnership2_id);
+      }
+      
       if (partnershipGameCounts[match.partnership1_id] !== undefined) {
         partnershipGameCounts[match.partnership1_id]++;
+        previousOpponents[match.partnership1_id].add(match.partnership2_id);
       }
       if (partnershipGameCounts[match.partnership2_id] !== undefined) {
         partnershipGameCounts[match.partnership2_id]++;
+        previousOpponents[match.partnership2_id].add(match.partnership1_id);
       }
     });
 
+    // Filter out partnerships currently playing
+    const availablePartnershipsData = partnershipsData.filter(p => !currentlyPlaying.has(p.id));
+    
+    if (availablePartnershipsData.length < 2) {
+      console.log(`Not enough available partnerships: ${availablePartnershipsData.length} free, ${currentlyPlaying.size} playing`);
+      return res.status(400).json({
+        success: false,
+        error: 'Need at least 2 available partnerships to create matches',
+        currentlyPlaying: currentlyPlaying.size
+      });
+    }
+
     // Enhance partnerships with game counts and skill levels
-    const partnerships = partnershipsData.map(partnership => {
+    const partnerships = availablePartnershipsData.map(partnership => {
       const p1SkillLevel = partnership.p1?.skill_level === 'Advanced' ? 3 : 
                           partnership.p1?.skill_level === 'Intermediate' ? 2 : 1;
       const p2SkillLevel = partnership.p2?.skill_level === 'Advanced' ? 3 : 
@@ -544,22 +639,67 @@ const createMatches = async (req, res) => {
       });
     }
 
-    // Create matches for available courts
+    // Create matches for available courts - prioritize new pairings
     const matchesToCreate = [];
     const courtsToUse = availableCourts.slice(0, matchesToCreateCount);
+    const usedPartnerships = new Set();
 
-    for (let i = 0; i < courtsToUse.length && (i * 2 + 1) < sortedPartnerships.length; i++) {
-      const partnership1 = sortedPartnerships[i * 2];
-      const partnership2 = sortedPartnerships[i * 2 + 1];
-      const court = courtsToUse[i];
+    // First, try to pair partnerships that haven't played each other
+    for (const court of courtsToUse) {
+      if (usedPartnerships.size >= sortedPartnerships.length) break;
 
-      matchesToCreate.push({
-        league_night_instance_id: instance.id,
-        partnership1_id: partnership1.partnership_id,
-        partnership2_id: partnership2.partnership_id,
-        court_number: court.court_number,
-        status: 'active'
-      });
+      let matchFound = false;
+
+      // Look for a pairing that hasn't played each other yet
+      for (let i = 0; i < sortedPartnerships.length && !matchFound; i++) {
+        const p1 = sortedPartnerships[i];
+        if (usedPartnerships.has(p1.partnership_id)) continue;
+
+        for (let j = i + 1; j < sortedPartnerships.length; j++) {
+          const p2 = sortedPartnerships[j];
+          if (usedPartnerships.has(p2.partnership_id)) continue;
+
+          // Check if they haven't played each other before
+          if (!previousOpponents[p1.partnership_id].has(p2.partnership_id)) {
+            matchesToCreate.push({
+              league_night_instance_id: instance.id,
+              partnership1_id: p1.partnership_id,
+              partnership2_id: p2.partnership_id,
+              court_number: court.court_number,
+              status: 'active'
+            });
+            usedPartnerships.add(p1.partnership_id);
+            usedPartnerships.add(p2.partnership_id);
+            matchFound = true;
+            break;
+          }
+        }
+      }
+
+      // If we can't find new pairings, fall back to any available pairing
+      if (!matchFound) {
+        for (let i = 0; i < sortedPartnerships.length && !matchFound; i++) {
+          const p1 = sortedPartnerships[i];
+          if (usedPartnerships.has(p1.partnership_id)) continue;
+
+          for (let j = i + 1; j < sortedPartnerships.length; j++) {
+            const p2 = sortedPartnerships[j];
+            if (usedPartnerships.has(p2.partnership_id)) continue;
+
+            matchesToCreate.push({
+              league_night_instance_id: instance.id,
+              partnership1_id: p1.partnership_id,
+              partnership2_id: p2.partnership_id,
+              court_number: court.court_number,
+              status: 'active'
+            });
+            usedPartnerships.add(p1.partnership_id);
+            usedPartnerships.add(p2.partnership_id);
+            matchFound = true;
+            break;
+          }
+        }
+      }
     }
 
     if (matchesToCreate.length === 0) {
@@ -869,9 +1009,121 @@ const updateSinglePlayerStats = async ({ user_id, league_id, points_scored, won 
   }
 };
 
+// GET /api/leagues/:leagueId/nights/:nightId/queue
+const getQueue = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    console.log('Getting queue for league:', leagueId, 'night:', nightId);
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Get all partnerships for this league night
+    const { data: partnershipsData, error: partnershipsError } = await supabase
+      .from('confirmed_partnerships')
+      .select(`
+        id,
+        player1_id,
+        player2_id,
+        p1:profiles!confirmed_partnerships_player1_id_fkey (
+          first_name,
+          last_name,
+          skill_level
+        ),
+        p2:profiles!confirmed_partnerships_player2_id_fkey (
+          first_name,
+          last_name,
+          skill_level
+        )
+      `)
+      .eq('league_night_instance_id', instance.id)
+      .eq('is_active', true);
+
+    if (partnershipsError) throw partnershipsError;
+
+    // Get all matches (to count games played)
+    const { data: matches, error: matchesError } = await supabase
+      .from('matches')
+      .select('partnership1_id, partnership2_id, status')
+      .eq('league_night_instance_id', instance.id);
+
+    if (matchesError) throw matchesError;
+
+    // Calculate games played for each partnership
+    const partnershipGameCounts = {};
+    const currentlyPlaying = new Set();
+    
+    partnershipsData.forEach(p => {
+      partnershipGameCounts[p.id] = 0;
+    });
+
+    matches?.forEach(match => {
+      if (match.status === 'active') {
+        currentlyPlaying.add(match.partnership1_id);
+        currentlyPlaying.add(match.partnership2_id);
+      }
+      if (partnershipGameCounts[match.partnership1_id] !== undefined) {
+        partnershipGameCounts[match.partnership1_id]++;
+      }
+      if (partnershipGameCounts[match.partnership2_id] !== undefined) {
+        partnershipGameCounts[match.partnership2_id]++;
+      }
+    });
+
+    // Build partnerships info with queue status
+    const partnerships = partnershipsData.map(p => ({
+      id: p.id,
+      player1Name: `${p.p1?.first_name || ''} ${p.p1?.last_name || ''}`.trim(),
+      player2Name: `${p.p2?.first_name || ''} ${p.p2?.last_name || ''}`.trim(),
+      gamesPlayed: partnershipGameCounts[p.id] || 0,
+      isCurrentlyPlaying: currentlyPlaying.has(p.id)
+    }));
+
+    // Filter to only waiting partnerships and sort by priority
+    const waitingPartnerships = partnerships
+      .filter(p => !p.isCurrentlyPlaying)
+      .sort((a, b) => a.gamesPlayed - b.gamesPlayed);
+
+    // Get court info
+    const { data: availableCourts } = await supabase
+      .rpc('get_available_courts', { instance_id: instance.id });
+
+    const { data: leagueNightData } = await supabase
+      .from('league_night_instances')
+      .select('courts_available')
+      .eq('id', instance.id)
+      .single();
+
+    const totalCourts = leagueNightData?.courts_available || 0;
+    const courtsAvailable = availableCourts?.length || 0;
+    
+    // Count courts in use by counting active matches
+    const activeMatchCount = matches?.filter(m => m.status === 'active').length || 0;
+    const courtsInUse = activeMatchCount;
+
+    res.json({
+      success: true,
+      data: {
+        waitingPartnerships,
+        currentlyPlaying: partnerships.filter(p => p.isCurrentlyPlaying),
+        courtsAvailable,
+        courtsInUse,
+        totalCourts
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching queue:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch queue information'
+    });
+  }
+};
+
 module.exports = {
   getMatches,
   createMatches,
   submitMatchScore,
-  tryAutoAssignMatches
+  tryAutoAssignMatches,
+  getQueue
 };

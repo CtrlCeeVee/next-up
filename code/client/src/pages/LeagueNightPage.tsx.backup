@@ -4,8 +4,9 @@ import { useAuth } from '../hooks/useAuth'
 import { useMembership } from '../hooks/useMembership'
 import { useTheme } from '../contexts/ThemeContext'
 import { leagueNightService, type CheckedInPlayer, type PartnershipRequest, type ConfirmedPartnership } from '../services/api/leagueNights'
-import MatchesDisplay from '../components/MatchesDisplay'
-import MatchQueue from '../components/MatchQueue'
+import MyStatusTab from '../components/league-night-tabs/MyStatusTab'
+import PlayersTab from '../components/league-night-tabs/PlayersTab'
+import MatchesTab from '../components/league-night-tabs/MatchesTab'
 import TestingPanel from '../components/admin/TestingPanel'
 
 import { useLeagueNightRealtime } from '../hooks/useLeagueNightRealtime'
@@ -20,15 +21,8 @@ import {
   Users, 
   Trophy,
   Target,
-  CheckCircle,
-  AlertCircle,
-  UserCheck,
-  UserPlus,
-  Heart,
-  UserMinus,
-  X,
-  Check,
-  Send
+  UserCircle,
+  Gamepad2
 } from 'lucide-react'
 
 interface LeagueNight {
@@ -905,34 +899,15 @@ const LeagueNightPage = () => {
 
         {/* Matches Display - Show for active league nights */}
         {(leagueNight.status === 'today' || leagueNight.backendStatus === 'active') && leagueId && nightId && (
-          <>
-            <MatchQueue
-              leagueId={leagueId}
-              nightId={nightId}
-            />
-            <MatchesDisplay
-              leagueId={leagueId}
-              nightId={nightId}
-              currentUserId={user?.id}
-              onCreateMatches={handleMatchesCreated}
-              isAdmin={isMember && membership?.role === 'admin'} // Check if user is admin of this league
-              leagueNightStatus={leagueNight.backendStatus || 'scheduled'} // Use actual backend status
-              leagueNightInstanceId={leagueNight.id} // Pass instance ID for real-time updates
-              refreshTrigger={matchesRefreshTrigger} // Pass refresh trigger for real-time updates
-            />
-          </>
-        )}
-
-        {/* Testing Panel - Only in Development */}
-        {import.meta.env.DEV && leagueNight && (
-          <TestingPanel
-            leagueNightId={leagueNight.id}
-            leagueId={parseInt(leagueId || '0')}
-            onRefresh={() => {
-              refreshCheckedInPlayers();
-              refreshPartnershipRequests();
-              fetchLeagueNight(); // Refresh league night data
-            }}
+          <MatchesDisplay
+            leagueId={leagueId}
+            nightId={nightId}
+            currentUserId={user?.id}
+            onCreateMatches={handleMatchesCreated}
+            isAdmin={isMember && membership?.role === 'admin'} // Check if user is admin of this league
+            leagueNightStatus={leagueNight.backendStatus || 'scheduled'} // Use actual backend status
+            leagueNightInstanceId={leagueNight.id} // Pass instance ID for real-time updates
+            refreshTrigger={matchesRefreshTrigger} // Pass refresh trigger for real-time updates
           />
         )}
 

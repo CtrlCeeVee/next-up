@@ -38,6 +38,12 @@ export function useLeagues() {
       try {
         setLoading(true)
         const data = await leaguesAPI.getAll()
+        
+        // Add delay on localhost to see loading effect
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          await new Promise(resolve => setTimeout(resolve, 3000)) // 2 second delay
+        }
+        
         setLeagues(data)
         setError(null)
       } catch (err) {
