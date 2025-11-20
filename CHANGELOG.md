@@ -1,5 +1,32 @@
 # 📝 Next-Up Changelog
 
+## Version 1.2.1 - UX Polish (November 2025)
+
+### UI/UX Improvements
+
+**Tab-based Navigation**
+- Implemented bottom navigation with 4 tabs: My Night, Matches, League Info, Admin
+- Reduced LeagueNightPage from 944 to 614 lines (35% code reduction)
+- Mobile-friendly tab system eliminates clutter when many players checked in
+- Badge notification on "My Night" tab for incoming partnership requests
+
+**My Night Tab Enhancements**
+- Search bar for filtering available partners by name or skill level
+- Redesigned accept/decline buttons - compact single-line layout
+- Contextual help text: "You're checked in! Find a partner to get started!"
+- Removed redundant quick stats cards (Expected/Planned/Winners)
+
+**Component Organization**
+- Created 5 focused tab components replacing monolithic page structure
+- Preserved all real-time functionality and existing handlers
+- Improved maintainability with clear separation of concerns
+
+### Bug Fixes
+- Fixed MatchQueue component receiving incorrect props (leagueNightInstanceId instead of leagueId/nightId)
+- Resolved "Failed to fetch queue information" errors on Matches tab
+
+---
+
 ## Version 1.2.0 - Real-time Revolution (October 2025)
 
 ### 🚀 Major Features

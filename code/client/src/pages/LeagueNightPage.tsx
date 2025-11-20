@@ -4,10 +4,6 @@ import { useAuth } from '../hooks/useAuth'
 import { useMembership } from '../hooks/useMembership'
 import { useTheme } from '../contexts/ThemeContext'
 import { leagueNightService, type CheckedInPlayer, type PartnershipRequest, type ConfirmedPartnership } from '../services/api/leagueNights'
-import MatchesDisplay from '../components/MatchesDisplay'
-import MatchQueue from '../components/MatchQueue'
-import TestingPanel from '../components/admin/TestingPanel'
-
 import { useLeagueNightRealtime } from '../hooks/useLeagueNightRealtime'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { 
@@ -18,18 +14,15 @@ import {
   Clock, 
   MapPin, 
   Users, 
-  Trophy,
-  Target,
-  CheckCircle,
-  AlertCircle,
-  UserCheck,
-  UserPlus,
-  Heart,
-  UserMinus,
-  X,
-  Check,
-  Send
+  AlertCircle
 } from 'lucide-react'
+
+// Import tab components
+import BottomNavBar from '../components/league-night-tabs/BottomNavBar'
+import MyNightTab from '../components/league-night-tabs/MyNightTab'
+import MatchesQueueTab from '../components/league-night-tabs/MatchesQueueTab'
+import LeagueInfoTab from '../components/league-night-tabs/LeagueInfoTab'
+import AdminTab from '../components/league-night-tabs/AdminTab'
 
 interface LeagueNight {
   id: number
@@ -75,6 +68,9 @@ const LeagueNightPage = () => {
   const [rejectingRequest, setRejectingRequest] = useState<number | null>(null);
   const [removingPartnership, setRemovingPartnership] = useState(false);
   const [startingLeague, setStartingLeague] = useState(false);
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState('my-night');
 
   // Redirect to auth if not authenticated
   useEffect(() => {
@@ -326,6 +322,13 @@ const LeagueNightPage = () => {
     };
   }, [confirmedPartnership, user?.id]);
 
+  // Check if user has pending partnership requests (for badge)
+  const hasPartnershipNotification = useMemo(() => {
+    return partnershipRequests.some(req => 
+      req.status === 'pending' && req.requested_id === user?.id
+    );
+  }, [partnershipRequests, user?.id]);
+
   // Real-time update callbacks
   const handleCheckinsUpdate = useCallback(() => {
     refreshCheckedInPlayers();
@@ -485,456 +488,68 @@ const LeagueNightPage = () => {
           </div>
         </section>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-10">
-          <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20 dark:border-slate-700/50 shadow-xl">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 sm:p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg sm:rounded-xl">
-                <Users className="h-5 sm:h-6 w-5 sm:w-6 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-                  {leagueNight.status === 'today' ? 'Checked In' : 'Expected'}
-                </p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                  {checkedInPlayers.length}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20 dark:border-slate-700/50 shadow-xl">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 sm:p-3 bg-green-100 dark:bg-green-900/30 rounded-lg sm:rounded-xl">
-                <Target className="h-5 sm:h-6 w-5 sm:w-6 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-                  {leagueNight.status === 'today' ? 'Games' : 'Planned'}
-                </p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-                  {leagueNight.possibleGames}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-white/20 dark:border-slate-700/50 shadow-xl">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 sm:p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg sm:rounded-xl">
-                <Trophy className="h-5 sm:h-6 w-5 sm:w-6 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-                  {leagueNight.status === 'today' ? 'Partnerships' : 'Winners'}
-                </p>
-                <p className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white truncate">
-                  {leagueNight.status === 'today'
-                    ? `${leagueNight.partnershipsCount} pairs`
-                    : 'Team R/C'
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Action Area */}
-        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 border border-white/20 dark:border-slate-700/50 shadow-2xl mb-10">
-          {(leagueNight.status === 'today' || leagueNight.backendStatus === 'active') ? (
-            <div className="space-y-8">
-              {/* Check-in Section */}
-              <div className="text-center">
-                <div className="mb-6">
-                  {isCheckedIn ? (
-                    <>
-                      <CheckCircle className="h-16 w-16 text-green-600 dark:text-green-400 mx-auto mb-4" />
-                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                        You're Checked In!
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-300">
-                        Great! You're ready for tonight's session.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="h-16 w-16 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-                      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                        Ready to Play?
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-300">
-                        Check in when you arrive at the courts to get matched with other players.
-                      </p>
-                    </>
-                  )}
-                </div>
-                
-                {!isCheckedIn ? (
-                  <button 
-                    onClick={handleCheckIn}
-                    disabled={checkingIn}
-                    className="w-full max-w-md bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-green-400 disabled:to-emerald-400 text-white font-bold py-4 px-8 rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
-                  >
-                    {checkingIn ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        <span>Checking In...</span>
-                      </>
-                    ) : (
-                      <>
-                        <UserCheck className="h-5 w-5" />
-                        <span>Check In - I'm Here!</span>
-                      </>
-                    )}
-                  </button>
-                ) : (
-                  <button 
-                    onClick={handleUncheck}
-                    disabled={unchecking}
-                    className="bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2"
-                  >
-                    {unchecking ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Unchecking...</span>
-                      </>
-                    ) : (
-                      <>
-                        <UserMinus className="h-4 w-4" />
-                        <span>Uncheck</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-
-              {/* Partner Selection Section - Only show if checked in */}
-              {isCheckedIn && (
-                <div className="border-t border-gray-200/50 dark:border-slate-600/50 pt-10 mt-10">
-                  <div className="text-center mb-8">
-                    <Users className="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-                    <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                      {currentPartner ? 'Your Game Partner' : 'Select Your Game Partner'}
-                    </h4>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      {currentPartner 
-                        ? 'You\'re paired up and ready for matches!'
-                        : 'Choose someone from the checked-in players to be your doubles partner.'
-                      }
-                    </p>
-                  </div>
-
-                  {currentPartner ? (
-                    <div className="space-y-4">
-                      <div className="bg-blue-50/80 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-700 rounded-2xl p-6 max-w-md mx-auto">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 bg-blue-200 dark:bg-blue-800 rounded-full flex items-center justify-center">
-                              <span className="text-blue-700 dark:text-blue-300 font-semibold text-lg">
-                                {currentPartner?.name?.charAt(0) || 'P'}
-                              </span>
-                            </div>
-                            <div>
-                              <p className="font-semibold text-gray-900 dark:text-white">
-                                {currentPartner?.name || 'Partner'}
-                              </p>
-                              <p className="text-sm text-gray-600 dark:text-gray-300">
-                                {currentPartner?.skillLevel || 'Intermediate'}
-                              </p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={handleRemovePartnership}
-                            disabled={removingPartnership}
-                            className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
-                            title="Remove partnership"
-                          >
-                            {removingPartnership ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                            ) : (
-                              <X className="h-4 w-4" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-6">
-                      {/* Incoming Partnership Requests */}
-                      {partnershipRequests.filter(req => req.requested_id === user?.id).length > 0 && (
-                        <div className="bg-yellow-50/80 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-2xl p-6">
-                          <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
-                            Partnership Requests
-                          </h5>
-                          <div className="space-y-3">
-                            {partnershipRequests
-                              .filter(req => req.requested_id === user?.id)
-                              .map((request) => (
-                                <div key={request.id} className="bg-white/80 dark:bg-slate-700/80 rounded-xl p-4 flex items-center justify-between">
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 bg-gray-200 dark:bg-slate-600 rounded-full flex items-center justify-center">
-                                      <span className="text-gray-700 dark:text-gray-300 font-semibold">
-                                        {request.requester?.first_name?.charAt(0) || 'P'}
-                                      </span>
-                                    </div>
-                                    <div>
-                                      <p className="font-semibold text-gray-900 dark:text-white">
-                                        {`${request.requester?.first_name || ''} ${request.requester?.last_name || ''}`.trim() || 'Unknown Player'}
-                                      </p>
-                                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                                        {request.requester.skill_level}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center space-x-2">
-                                    <button
-                                      onClick={() => handleAcceptPartnershipRequest(request.id)}
-                                      disabled={acceptingRequest === request.id}
-                                      className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50"
-                                      title="Accept request"
-                                    >
-                                      {acceptingRequest === request.id ? (
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                      ) : (
-                                        <Check className="h-4 w-4" />
-                                      )}
-                                    </button>
-                                    <button
-                                      onClick={() => handleRejectPartnershipRequest(request.id)}
-                                      disabled={rejectingRequest === request.id}
-                                      className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50"
-                                      title="Reject request"
-                                    >
-                                      {rejectingRequest === request.id ? (
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                      ) : (
-                                        <X className="h-4 w-4" />
-                                      )}
-                                    </button>
-                                  </div>
-                                </div>
-                              ))
-                            }
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Available Players to Request Partnership */}
-                      <div>
-                        <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
-                          Send Partnership Request
-                        </h5>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                          {checkedInPlayers
-                            .filter(player => {
-                              if (player.id === user?.id) return false;
-                              if (player.hasPartner) return false;
-                              
-                              // Don't show if current user already has a confirmed partnership
-                              if (currentPartner) return false;
-                              
-                              // Don't show if already sent a request to this player
-                              const hasPendingRequest = partnershipRequests.some(req => 
-                                (req.requester_id === user?.id && req.requested_id === player.id) ||
-                                (req.requested_id === user?.id && req.requester_id === player.id)
-                              );
-                              return !hasPendingRequest;
-                            })
-                            .map((player) => (
-                              <button
-                                key={player.id}
-                                onClick={() => handleSendPartnershipRequest(player.id)}
-                                disabled={sendingRequest === player.id}
-                                className="p-4 bg-white/80 dark:bg-slate-700/80 border-2 border-gray-200 dark:border-slate-600 hover:border-pink-300 dark:hover:border-pink-600 rounded-xl transition-all duration-200 hover:scale-105 disabled:opacity-50 flex items-center justify-between"
-                              >
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-10 h-10 bg-gray-200 dark:bg-slate-600 rounded-full flex items-center justify-center">
-                                    <span className="text-gray-700 dark:text-gray-300 font-semibold">
-                                      {player.name.charAt(0)}
-                                    </span>
-                                  </div>
-                                  <div className="text-left">
-                                    <p className="font-semibold text-gray-900 dark:text-white">{player.name}</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">{player.skillLevel}</p>
-                                  </div>
-                                </div>
-                                {sendingRequest === player.id ? (
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-pink-600"></div>
-                                ) : (
-                                  <Send className="h-4 w-4 text-pink-600" />
-                                )}
-                              </button>
-                            ))}
-                          
-                          {checkedInPlayers.filter(p => {
-                            if (p.id === user?.id) return false;
-                            if (p.hasPartner) return false;
-                            if (currentPartner) return false;
-                            const hasPendingRequest = partnershipRequests.some(req => 
-                              (req.requester_id === user?.id && req.requested_id === p.id) ||
-                              (req.requested_id === user?.id && req.requester_id === p.id)
-                            );
-                            return !hasPendingRequest;
-                          }).length === 0 && (
-                            <div className="col-span-full text-center py-8">
-                              <Users className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-                              <p className="text-gray-500 dark:text-gray-400">
-                                {checkedInPlayers.filter(p => p.id !== user?.id).length === 0
-                                  ? 'No other players checked in yet.'
-                                  : 'All available players already have partnership requests pending.'}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Outgoing Requests Status */}
-                      {partnershipRequests.filter(req => req.requester_id === user?.id).length > 0 && (
-                        <div className="bg-blue-50/80 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl p-6">
-                          <h5 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">
-                            Sent Requests
-                          </h5>
-                          <div className="space-y-3">
-                            {partnershipRequests
-                              .filter(req => req.requester_id === user?.id)
-                              .map((request) => (
-                                <div key={request.id} className="bg-white/80 dark:bg-slate-700/80 rounded-xl p-4 flex items-center justify-between">
-                                  <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 bg-gray-200 dark:bg-slate-600 rounded-full flex items-center justify-center">
-                                      <span className="text-gray-700 dark:text-gray-300 font-semibold">
-                                        {request.requested?.first_name?.charAt(0) || 'P'}
-                                      </span>
-                                    </div>
-                                    <div>
-                                      <p className="font-semibold text-gray-900 dark:text-white">
-                                        {`${request.requested?.first_name || ''} ${request.requested?.last_name || ''}`.trim() || 'Unknown Player'}
-                                      </p>
-                                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                                        {request.requested.skill_level}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div className="text-sm text-blue-600 dark:text-blue-400 font-medium">
-                                    Pending...
-                                  </div>
-                                </div>
-                              ))
-                            }
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Checked-in Players List */}
-              {checkedInPlayers.length > 0 && (
-                <div className="border-t border-gray-200/50 dark:border-slate-600/50 pt-10 mt-10">
-                  <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-                    Checked-in Players ({checkedInPlayers.length})
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-w-4xl mx-auto">
-                    {checkedInPlayers.map((player) => (
-                      <div
-                        key={player.id}
-                        className={`p-3 rounded-xl border text-center ${
-                          player.hasPartner 
-                            ? 'bg-green-50/80 dark:bg-green-900/20 border-green-200 dark:border-green-700'
-                            : 'bg-blue-50/80 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'
-                        }`}
-                      >
-                        <div className="w-8 h-8 bg-gray-200 dark:bg-slate-600 rounded-full flex items-center justify-center mx-auto mb-2">
-                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                            {player.name?.charAt(0) || 'P'}
-                          </span>
-                        </div>
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {player.name}
-                        </p>
-                        <p className="text-xs text-gray-600 dark:text-gray-300">
-                          {player.skillLevel}
-                        </p>
-                        {player.hasPartner && (
-                          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                            Paired
-                          </p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center">
-              <div className="mb-6">
-                <CheckCircle className="h-16 w-16 text-blue-600 dark:text-blue-400 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                  {leagueNight.backendStatus === 'scheduled' ? 'Coming Soon!' : 'League Night'}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto mb-6">
-                  This league night is scheduled for {leagueNight.nextDate}.
-                  {leagueNight.backendStatus === 'scheduled' && ' Check back on the day to participate.'}
-                </p>
-                
-                {/* Admin Start League Night Button */}
-                {isMember && membership?.role === 'admin' && leagueNight.backendStatus === 'scheduled' && (
-                  <button
-                    onClick={handleStartLeague}
-                    disabled={startingLeague}
-                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center space-x-2 mx-auto"
-                  >
-                    {startingLeague ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Starting League...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Target className="h-4 w-4" />
-                        <span>Start League Night (Admin)</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Matches Display - Show for active league nights */}
-        {(leagueNight.status === 'today' || leagueNight.backendStatus === 'active') && leagueId && nightId && (
-          <>
-            <MatchQueue
-              leagueId={leagueId}
-              nightId={nightId}
-            />
-            <MatchesDisplay
-              leagueId={leagueId}
-              nightId={nightId}
-              currentUserId={user?.id}
-              onCreateMatches={handleMatchesCreated}
-              isAdmin={isMember && membership?.role === 'admin'} // Check if user is admin of this league
-              leagueNightStatus={leagueNight.backendStatus || 'scheduled'} // Use actual backend status
-              leagueNightInstanceId={leagueNight.id} // Pass instance ID for real-time updates
-              refreshTrigger={matchesRefreshTrigger} // Pass refresh trigger for real-time updates
-            />
-          </>
+        {/* Tab Content */}
+        {activeTab === 'my-night' && (
+          <MyNightTab
+            user={user}
+            isCheckedIn={isCheckedIn}
+            checkedInPlayers={checkedInPlayers}
+            partnershipRequests={partnershipRequests}
+            confirmedPartnership={confirmedPartnership}
+            currentPartner={currentPartner}
+            checkingIn={checkingIn}
+            unchecking={unchecking}
+            sendingRequest={sendingRequest}
+            acceptingRequest={acceptingRequest}
+            rejectingRequest={rejectingRequest}
+            removingPartnership={removingPartnership}
+            onCheckIn={handleCheckIn}
+            onUncheck={handleUncheck}
+            onSendPartnershipRequest={handleSendPartnershipRequest}
+            onAcceptPartnershipRequest={handleAcceptPartnershipRequest}
+            onRejectPartnershipRequest={handleRejectPartnershipRequest}
+            onRemovePartnership={handleRemovePartnership}
+          />
         )}
 
-        {/* Testing Panel - Only in Development */}
-        {import.meta.env.DEV && leagueNight && (
-          <TestingPanel
-            leagueNightId={leagueNight.id}
-            leagueId={parseInt(leagueId || '0')}
+        {activeTab === 'matches' && leagueId && nightId && (
+          <MatchesQueueTab
+            leagueId={leagueId}
+            nightId={nightId}
+            leagueNightInstanceId={leagueNight.id}
+            matchesRefreshTrigger={matchesRefreshTrigger}
+            onMatchesCreated={handleMatchesCreated}
+          />
+        )}
+
+        {activeTab === 'league-info' && (
+          <LeagueInfoTab
+            checkedInPlayers={checkedInPlayers}
+            leagueNight={leagueNight}
+          />
+        )}
+
+        {activeTab === 'admin' && isMember && membership?.role === 'admin' && leagueId && (
+          <AdminTab
+            leagueNight={leagueNight}
+            leagueId={parseInt(leagueId)}
+            startingLeague={startingLeague}
+            onStartLeague={handleStartLeague}
             onRefresh={() => {
               refreshCheckedInPlayers();
               refreshPartnershipRequests();
-              fetchLeagueNight(); // Refresh league night data
+              fetchLeagueNight();
             }}
           />
         )}
+
+        {/* Bottom Navigation */}
+        <BottomNavBar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          hasNotification={hasPartnershipNotification}
+          isAdmin={isMember && membership?.role === 'admin'}
+        />
 
       </div>
     </div>

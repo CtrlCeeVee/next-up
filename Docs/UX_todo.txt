@@ -1,0 +1,71 @@
+Im going to compile a BUNCH of changes we need to do here, tick when done:
+[] 1. Clicking back on player profile doesnt redirect to the main page but the previous link rather (so if you clicked stats, etc its going to go back to overview)
+
+[] 2. when I start the night if we have less pairings than courts available, that left over courts will only get reassigned when a match finishes and it triggers re-assignment
+ - for e.g. 2 courts available, only 2 pairs when night starts. 
+ - the 2 pairs get placed on court 1.
+ - court 2 still open, new pairs check in but court 2 isn't autofilled when it can be.
+ - game on court 1 finished and score gets submitted = triggers auto-assign = both courts get filled. 
+ - proper behaviour should be that court 2 was filled when it couldve been as people joined. 
+
+[] 3. The league nights page UI is super cluttered when a lot of people are registered. (Top priority)
+ - You can see like 40 people checked in (on mobile only shows 2 at a time)
+ - you can see the full queue + whos already played
+ - very hard to find your own game when theres a ton of people on. 
+ - I think some sort of tab system would work really well here.
+
+
+[] 4. Finding your partner when there is a TON of people checked in can be a mission, some kind of search or ordering would be optimal
+ - I do think this goes with our UI changes for league night as part of the clean up
+
+[] 5. We need, need, need push notifications 
+ - currently people are constantly on their phones and dont even know when they get a game without
+   needing to constant pay attention. 
+ - I think it ties into needing to make it a progressive web app but idk how that all works
+ - If we can get it to a point where all they really need to do is check in + get their partner and then just get told when
+   their game is on + court number + who they are versing via a push notification it would be huge
+   - an extended stretch goal of this would then be that they can submit scores via a widget in the push notification
+   - I know some apps have this functionality but I have no clue how it works
+
+[] 6. Knowing who you are playing next
+ - A lot of people complained saying it would be more convenient to be able to see who they are playing next
+ - Allows them to pre-meet the people and mentally prepare
+
+[] 7. Queueing priorty bug?
+ - something strange was happening on the night where people who just finished a game that played later in a pool,
+   meaning they were one of the last to play for those who hadn't played - got immediately assigned their next game 
+   when their first one finished. 
+ - what's good is the system made sure everyone played an equal amount of games, but what we found is that those who got
+   a game early, had to wait quite long for their next game. Thus on contrary those who had to wait long for their first game
+   waited super short for their next game
+ - idk what we can do about this but some sort of priority queueing to try ensure people wait a consist amount of time will
+   help with user experience (even tho they all end up playing the same nubmer of games anyway - seems more of a mental thing)
+
+[] 8. Confirming scores between matches
+ - currently whichever team submitted the scores just got their scores saved without any kind of confirmation
+ - this results in some issues where people just submitted a score that was incorrect or when they just werent meant to 
+   submit a score
+ - we need implement a feature where, like the partnership request, when someone submits a score then the other team must 
+   confirm before the official score gets confirmed.
+
+[] 9. Caching of information
+ - Currently every single time we load the website it does the UI animation of loading the leagues, active players, 
+   matches played, etc etc. This is silly.
+ - Rather I think either we hardcode or cache the information. Since its a landing page I see no reason to pull any metrics
+   from anywhere or which leagues are available. Its easily hardcodable as they dont frequently change and I can just manually
+   change it when need be. 
+ - this issue extends across the website, not just the league
+
+[] 10. Player profiles
+ - We simply havent worked on the player profiles at all but we need to
+ - We do have some metrics there but theres no customisation and things like that.
+ - Also idk why there is this mock profile generated when we enter a profile which doesnt exist
+   - http://localhost:5173/profile/random_random!@ shows an account with user name random_random!@ to display (this account
+     does not exist nor has any data)
+
+[] 11. Ending the league night
+ - We need a way to "end" a league night
+ - What I mean is that it normally runs from 6:30-9pm but the app will just keep auto-assigning until people just stop playing
+ - Instead as an admin I would want to be able to stop the league night.
+ - It shouldnt immediately end everything but rather just stop the auto-assignment from running when a game is finished
+ - That way it will allow all the games currently being played to finish and thereafter prevent any more games from occuring.
