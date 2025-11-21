@@ -447,12 +447,12 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
           <div className="text-center py-8">
             <Users className="h-16 w-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {leagueNightStatus === 'scheduled' ? 'League Night Not Started' : 'No Matches Yet'}
+              {leagueNightStatus === 'scheduled' ? 'League Night Not Started' : 'Waiting for Partnerships'}
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
               {leagueNightStatus === 'scheduled' 
                 ? 'The league night will start automatically at the scheduled time, or an admin can start it manually.'
-                : 'Once partnerships are formed, matches will be created automatically.'
+                : 'Form partnerships and matches will be created automatically when courts are available.'
               }
             </p>
             {isAdmin && (

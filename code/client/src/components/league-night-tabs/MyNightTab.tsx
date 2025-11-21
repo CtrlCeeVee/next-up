@@ -13,15 +13,40 @@ import {
   X,
   Search
 } from 'lucide-react';
+import ScoreSubmission from '../ScoreSubmission';
 import type { CheckedInPlayer, PartnershipRequest, ConfirmedPartnership } from '../../services/api/leagueNights';
+
+interface Match {
+  id: number;
+  court_number: number;
+  court_label?: string;
+  status: 'active' | 'completed' | 'cancelled';
+  team1_score?: number;
+  team2_score?: number;
+  created_at: string;
+  completed_at?: string;
+  partnership1: {
+    id: number;
+    player1: { id: string; first_name: string; last_name: string; skill_level: string };
+    player2: { id: string; first_name: string; last_name: string; skill_level: string };
+  };
+  partnership2: {
+    id: number;
+    player1: { id: string; first_name: string; last_name: string; skill_level: string };
+    player2: { id: string; first_name: string; last_name: string; skill_level: string };
+  };
+}
 
 interface MyNightTabProps {
   user: any;
+  leagueId: string;
+  nightId: string;
   isCheckedIn: boolean;
   checkedInPlayers: CheckedInPlayer[];
   partnershipRequests: PartnershipRequest[];
   confirmedPartnership: ConfirmedPartnership | null;
   currentPartner: { id: string; name: string; skillLevel: string } | null;
+  currentMatch: Match | null;
   checkingIn: boolean;
   unchecking: boolean;
   sendingRequest: string | null;
@@ -34,15 +59,19 @@ interface MyNightTabProps {
   onAcceptPartnershipRequest: (requestId: number) => void;
   onRejectPartnershipRequest: (requestId: number) => void;
   onRemovePartnership: () => void;
+  onScoreSubmitted: () => void;
 }
 
 const MyNightTab: React.FC<MyNightTabProps> = ({
   user,
+  leagueId,
+  nightId,
   isCheckedIn,
   checkedInPlayers,
   partnershipRequests,
   confirmedPartnership,
   currentPartner,
+  currentMatch,
   checkingIn,
   unchecking,
   sendingRequest,
@@ -54,7 +83,8 @@ const MyNightTab: React.FC<MyNightTabProps> = ({
   onSendPartnershipRequest,
   onAcceptPartnershipRequest,
   onRejectPartnershipRequest,
-  onRemovePartnership
+  onRemovePartnership,
+  onScoreSubmitted
 }) => {
   const [partnerSearch, setPartnerSearch] = useState('');
 
@@ -333,20 +363,91 @@ const MyNightTab: React.FC<MyNightTabProps> = ({
             )}
           </div>
 
-          {/* Current Match Status - Placeholder for now */}
+          {/* Current Match Status */}
           <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <Trophy className="w-6 h-6 text-amber-600 dark:text-amber-400" />
               Your Match
             </h2>
-            <div className="text-center py-6">
-              <Clock className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-              <p className="text-slate-600 dark:text-slate-400">
-                {!currentPartner 
-                  ? "Find a partner to join the queue" 
-                  : "Waiting for match assignment..."}
-              </p>
-            </div>
+            
+            {currentMatch ? (
+              <div className="space-y-4">
+                {/* Match Info */}
+                <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="bg-emerald-600 text-white text-sm font-bold px-3 py-1 rounded-full">
+                      {currentMatch.court_label || `Court ${currentMatch.court_number}`}
+                    </div>
+                    <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 text-sm font-medium">
+                      <Clock className="w-4 h-4" />
+                      Active
+                    </div>
+                  </div>
+
+                  {/* Teams Display */}
+                  <div className="grid grid-cols-3 gap-3 items-center">
+                    {/* Your Team */}
+                    <div className="text-center bg-white dark:bg-slate-800 rounded-lg p-3">
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mb-1">YOUR TEAM</p>
+                      <p className="font-bold text-slate-900 dark:text-white text-sm">
+                        {`${currentMatch.partnership1.player1.first_name} ${currentMatch.partnership1.player1.last_name}`}
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        {currentMatch.partnership1.player1.skill_level}
+                      </p>
+                      <p className="font-bold text-slate-900 dark:text-white text-sm mt-1">
+                        {`${currentMatch.partnership1.player2.first_name} ${currentMatch.partnership1.player2.last_name}`}
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        {currentMatch.partnership1.player2.skill_level}
+                      </p>
+                    </div>
+
+                    {/* VS */}
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-slate-400 dark:text-slate-500">VS</p>
+                    </div>
+
+                    {/* Opponent Team */}
+                    <div className="text-center bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mb-1">OPPONENTS</p>
+                      <p className="font-bold text-slate-900 dark:text-white text-sm">
+                        {`${currentMatch.partnership2.player1.first_name} ${currentMatch.partnership2.player1.last_name}`}
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        {currentMatch.partnership2.player1.skill_level}
+                      </p>
+                      <p className="font-bold text-slate-900 dark:text-white text-sm mt-1">
+                        {`${currentMatch.partnership2.player2.first_name} ${currentMatch.partnership2.player2.last_name}`}
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        {currentMatch.partnership2.player2.skill_level}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Score Submission */}
+                <div>
+                  <ScoreSubmission
+                    match={currentMatch}
+                    currentUserId={user?.id || ''}
+                    leagueId={leagueId}
+                    nightId={nightId}
+                    onScoreSubmitted={onScoreSubmitted}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <Clock className="w-12 h-12 text-slate-400 mx-auto mb-3" />
+                <p className="text-slate-600 dark:text-slate-400">
+                  {!currentPartner 
+                    ? "Find a partner to join the queue" 
+                    : "Waiting for match assignment..."}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Tonight's Stats - Placeholder */}

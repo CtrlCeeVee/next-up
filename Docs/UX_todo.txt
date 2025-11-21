@@ -1,21 +1,21 @@
 Im going to compile a BUNCH of changes we need to do here, tick when done:
 [] 1. Clicking back on player profile doesnt redirect to the main page but the previous link rather (so if you clicked stats, etc its going to go back to overview)
 
-[] 2. when I start the night if we have less pairings than courts available, that left over courts will only get reassigned when a match finishes and it triggers re-assignment
+[x] 2. when I start the night if we have less pairings than courts available, that left over courts will only get reassigned when a match finishes and it triggers re-assignment
  - for e.g. 2 courts available, only 2 pairs when night starts. 
  - the 2 pairs get placed on court 1.
  - court 2 still open, new pairs check in but court 2 isn't autofilled when it can be.
  - game on court 1 finished and score gets submitted = triggers auto-assign = both courts get filled. 
  - proper behaviour should be that court 2 was filled when it couldve been as people joined. 
 
-[] 3. The league nights page UI is super cluttered when a lot of people are registered. (Top priority)
+[x] 3. The league nights page UI is super cluttered when a lot of people are registered. (Top priority)
  - You can see like 40 people checked in (on mobile only shows 2 at a time)
  - you can see the full queue + whos already played
  - very hard to find your own game when theres a ton of people on. 
  - I think some sort of tab system would work really well here.
 
 
-[] 4. Finding your partner when there is a TON of people checked in can be a mission, some kind of search or ordering would be optimal
+[DONE ✅] 4. Finding your partner when there is a TON of people checked in can be a mission, some kind of search or ordering would be optimal
  - I do think this goes with our UI changes for league night as part of the clean up
 
 [] 5. We need, need, need push notifications 

@@ -2,6 +2,7 @@
 // Handles all league night instance operations - check-ins, partnerships, etc.
 
 const { createClient } = require('@supabase/supabase-js');
+const { tryAutoAssignMatches } = require('./matchController');
 require('dotenv').config();
 
 const supabase = createClient(
@@ -478,6 +479,9 @@ const acceptPartnershipRequest = async (req, res) => {
       .eq('status', 'pending')
       .neq('id', request_id);
 
+    // Try to auto-assign matches if league night is active and courts are available
+    await tryAutoAssignMatches(instance.id);
+
     res.json({
       success: true,
       data: {
@@ -799,7 +803,6 @@ const startLeague = async (req, res) => {
     if (updateError) throw updateError;
 
     // Try to create initial matches if partnerships exist
-    const { tryAutoAssignMatches } = require('./matchController');
     console.log(`League night ${instance.id} manually started by admin ${user_id}`);
     const autoAssignResult = await tryAutoAssignMatches(instance.id);
     console.log('Auto-assignment after manual start:', autoAssignResult);

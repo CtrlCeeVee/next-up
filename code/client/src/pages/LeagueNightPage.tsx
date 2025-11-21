@@ -18,11 +18,12 @@ import {
 } from 'lucide-react'
 
 // Import tab components
-import BottomNavBar from '../components/league-night-tabs/BottomNavBar'
-import MyNightTab from '../components/league-night-tabs/MyNightTab'
-import MatchesQueueTab from '../components/league-night-tabs/MatchesQueueTab'
-import LeagueInfoTab from '../components/league-night-tabs/LeagueInfoTab'
-import AdminTab from '../components/league-night-tabs/AdminTab'
+import BottomNavBar from '../components/league-night-tabs/BottomNavBar';
+import MyNightTab from '../components/league-night-tabs/MyNightTab';
+import MatchesQueueTab from '../components/league-night-tabs/MatchesQueueTab';
+import LeagueInfoTab from '../components/league-night-tabs/LeagueInfoTab';
+import AdminTab from '../components/league-night-tabs/AdminTab';
+import { API_BASE_URL } from '../services/api/base';
 
 interface LeagueNight {
   id: number
@@ -63,6 +64,7 @@ const LeagueNightPage = () => {
   const [matchesRefreshTrigger, setMatchesRefreshTrigger] = useState(0);
   const [partnershipRequests, setPartnershipRequests] = useState<PartnershipRequest[]>([]);
   const [confirmedPartnership, setConfirmedPartnership] = useState<ConfirmedPartnership | null>(null);
+  const [currentMatch, setCurrentMatch] = useState<any | null>(null);
   const [sendingRequest, setSendingRequest] = useState<string | null>(null);
   const [acceptingRequest, setAcceptingRequest] = useState<number | null>(null);
   const [rejectingRequest, setRejectingRequest] = useState<number | null>(null);
@@ -268,7 +270,7 @@ const LeagueNightPage = () => {
   };
 
   // Helper functions for refreshing data
-  const refreshCheckedInPlayers = async () => {
+  const refreshCheckedInPlayers = useCallback(async () => {
     if (!leagueId || !nightId) return;
     
     try {
@@ -289,7 +291,7 @@ const LeagueNightPage = () => {
     } catch (error) {
       console.error('Error refreshing checked-in players:', error);
     }
-  };
+  }, [leagueId, nightId, user?.id]);
 
   const refreshPartnershipRequests = useCallback(async () => {
     if (!user || !leagueId || !nightId) return;
@@ -302,6 +304,35 @@ const LeagueNightPage = () => {
       console.error('Error refreshing partnership requests:', error);
     }
   }, [user, leagueId, nightId]);
+
+  // Fetch current active match for the user
+  const refreshCurrentMatch = useCallback(async () => {
+    if (!leagueId || !nightId || !user || !confirmedPartnership) {
+      setCurrentMatch(null);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/matches`,
+        { credentials: 'include' }
+      );
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        // Find the active match where user's partnership is playing
+        const userMatch = data.data.find((match: any) => 
+          match.status === 'active' && (
+            match.partnership1_id === confirmedPartnership.id ||
+            match.partnership2_id === confirmedPartnership.id
+          )
+        );
+        setCurrentMatch(userMatch || null);
+      }
+    } catch (error) {
+      console.error('Error fetching current match:', error);
+    }
+  }, [leagueId, nightId, user, confirmedPartnership]);
 
   // Compute current partner info from confirmed partnership
   const currentPartner = useMemo(() => {
@@ -336,23 +367,13 @@ const LeagueNightPage = () => {
 
   const handlePartnershipRequestsUpdate = useCallback(() => {
     refreshPartnershipRequests();
-  }, [refreshPartnershipRequests]);
+  }, []);
 
   const handleConfirmedPartnershipsUpdate = useCallback(() => {
     refreshPartnershipRequests();
-    // Also refresh checked-in players to update "Paired" status  
-    if (leagueId && nightId) {
-      leagueNightService.getCheckedInPlayers(parseInt(leagueId), nightId)
-        .then(players => {
-          setCheckedInPlayers(players);
-          if (user) {
-            const userCheckedIn = players.find(p => p.id === user.id);
-            setIsCheckedIn(!!userCheckedIn);
-          }
-        })
-        .catch(error => console.error('Error refreshing checked-in players:', error));
-    }
-  }, [refreshPartnershipRequests, leagueId, nightId, user]);
+    refreshCurrentMatch();
+    refreshCheckedInPlayers();
+  }, []);
 
   const handleLeagueNightStatusUpdate = useCallback(() => {
     fetchLeagueNight();
@@ -366,6 +387,7 @@ const LeagueNightPage = () => {
     onLeagueNightStatusUpdate: handleLeagueNightStatusUpdate,
     onMatchesUpdate: () => {
       setMatchesRefreshTrigger(prev => prev + 1);
+      refreshCurrentMatch();
     }
   });
 
@@ -376,8 +398,15 @@ const LeagueNightPage = () => {
     Promise.all([
       refreshCheckedInPlayers(),
       refreshPartnershipRequests()
-    ]);
-  }, [leagueNight, leagueId, nightId, user]);
+    ]).then(() => {
+      refreshCurrentMatch();
+    });
+  }, [leagueNight?.id, user?.id]); // Only depend on IDs, not the functions
+
+  // Refresh current match when partnership changes
+  useEffect(() => {
+    refreshCurrentMatch();
+  }, [confirmedPartnership?.id]); // Only depend on partnership ID
 
   if (loading || authLoading || nightLoading) {
     return (
@@ -492,11 +521,14 @@ const LeagueNightPage = () => {
         {activeTab === 'my-night' && (
           <MyNightTab
             user={user}
+            leagueId={leagueId || ''}
+            nightId={nightId || ''}
             isCheckedIn={isCheckedIn}
             checkedInPlayers={checkedInPlayers}
             partnershipRequests={partnershipRequests}
             confirmedPartnership={confirmedPartnership}
             currentPartner={currentPartner}
+            currentMatch={currentMatch}
             checkingIn={checkingIn}
             unchecking={unchecking}
             sendingRequest={sendingRequest}
@@ -509,6 +541,10 @@ const LeagueNightPage = () => {
             onAcceptPartnershipRequest={handleAcceptPartnershipRequest}
             onRejectPartnershipRequest={handleRejectPartnershipRequest}
             onRemovePartnership={handleRemovePartnership}
+            onScoreSubmitted={() => {
+              setMatchesRefreshTrigger(prev => prev + 1);
+              refreshCurrentMatch();
+            }}
           />
         )}
 
@@ -517,6 +553,8 @@ const LeagueNightPage = () => {
             leagueId={leagueId}
             nightId={nightId}
             leagueNightInstanceId={leagueNight.id}
+            leagueNightStatus={leagueNight.backendStatus || 'scheduled'}
+            userId={user?.id}
             matchesRefreshTrigger={matchesRefreshTrigger}
             onMatchesCreated={handleMatchesCreated}
           />
