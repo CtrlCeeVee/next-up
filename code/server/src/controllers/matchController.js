@@ -14,6 +14,30 @@ const tryAutoAssignMatches = async (instanceId) => {
   try {
     console.log(`Attempting auto-assignment for instance ${instanceId}`);
     
+    // Get league night instance to check status
+    const { data: instance, error: instanceError } = await supabase
+      .from('league_night_instances')
+      .select('status')
+      .eq('id', instanceId)
+      .single();
+
+    if (instanceError) {
+      console.error('Error fetching league night instance:', instanceError);
+      return { success: false, error: instanceError.message };
+    }
+
+    // Don't auto-assign if league night has been ended
+    if (instance.status === 'completed') {
+      console.log(`League night ${instanceId} is completed - no auto-assignment`);
+      return { success: true, message: 'League night has ended', matches: [] };
+    }
+
+    // Don't auto-assign if league night hasn't started yet
+    if (instance.status !== 'active') {
+      console.log(`League night ${instanceId} is not active - no auto-assignment`);
+      return { success: true, message: 'League night not active yet', matches: [] };
+    }
+    
     // Get partnerships with game counts using direct SQL (avoid RPC with outdated field names)
     const { data: partnerships, error: partnershipsError } = await supabase
       .from('confirmed_partnerships')

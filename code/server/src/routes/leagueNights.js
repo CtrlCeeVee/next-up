@@ -13,7 +13,9 @@ const {
   getPartnershipRequests,
   uncheckPlayer,
   removePartnership,
-  startLeague
+  startLeague,
+  endLeague,
+  updateCourts
 } = require('../controllers/leagueNightController');const {
   getMatches,
   createMatches,
@@ -56,6 +58,12 @@ router.post('/:leagueId/nights/:nightId/submit-score', submitMatchScore);
 
 // POST /api/leagues/:leagueId/nights/:nightId/start-league - Manually start league (admin only)
 router.post('/:leagueId/nights/:nightId/start-league', startLeague);
+
+// POST /api/leagues/:leagueId/nights/:nightId/end-league - End league night (admin only)
+router.post('/:leagueId/nights/:nightId/end-league', endLeague);
+
+// POST /api/leagues/:leagueId/nights/:nightId/update-courts - Update court configuration (admin only)
+router.post('/:leagueId/nights/:nightId/update-courts', updateCourts);
 
 // DELETE /api/leagues/:leagueId/nights/:nightId/checkin - Uncheck player
 router.delete('/:leagueId/nights/:nightId/checkin', uncheckPlayer);

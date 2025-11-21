@@ -255,6 +255,42 @@ class LeagueNightService {
 
     return response.json();
   }
+
+  // End league night (admin only)
+  async endLeague(leagueId: number, nightId: string, userId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/end-league`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_id: userId }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to end league night');
+    }
+
+    return response.json();
+  }
+
+  // Update court configuration (admin only)
+  async updateCourts(leagueId: number, nightId: string, userId: string, courtLabels: string[]): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/update-courts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_id: userId, court_labels: courtLabels }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update courts');
+    }
+
+    return response.json();
+  }
 }
 
 export const leagueNightService = new LeagueNightService();

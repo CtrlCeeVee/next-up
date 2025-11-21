@@ -125,6 +125,7 @@ const getLeagueNight = async (req, res) => {
       date: instance.date,
       status: instance.status,
       courtsAvailable: instance.courts_available,
+      courtLabels: instance.court_labels || [],
       checkedInCount: checkins.length,
       partnershipsCount: partnerships.length,
       possibleGames: Math.floor(partnerships.length / 2) * 2 // Each partnership can play against another
@@ -825,6 +826,157 @@ const startLeague = async (req, res) => {
   }
 };
 
+// POST /api/leagues/:leagueId/nights/:nightId/end-league - End league night (admin only)
+const endLeague = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    // Check if user is admin of this league
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || membership.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins can end the league night'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    if (instance.status === 'completed') {
+      return res.status(400).json({
+        success: false,
+        error: 'League night is already ended'
+      });
+    }
+
+    // Get count of active matches
+    const { data: activeMatches, error: matchesError } = await supabase
+      .from('matches')
+      .select('id')
+      .eq('league_night_instance_id', instance.id)
+      .eq('status', 'active');
+
+    if (matchesError) throw matchesError;
+
+    // End the league night - this will prevent new auto-assignments
+    const { data: updatedInstance, error: updateError } = await supabase
+      .from('league_night_instances')
+      .update({ 
+        status: 'completed',
+        ended_at: new Date().toISOString()
+      })
+      .eq('id', instance.id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    console.log(`League night ${instance.id} ended by admin ${user_id}`);
+
+    res.json({
+      success: true,
+      data: {
+        instance: updatedInstance,
+        activeMatchesRemaining: activeMatches?.length || 0,
+        message: activeMatches?.length > 0 
+          ? `League night ended. ${activeMatches.length} active match(es) can still finish.`
+          : 'League night ended successfully'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error ending league:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to end league night'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/update-courts
+const updateCourts = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { user_id, court_labels } = req.body;
+
+    if (!user_id || !court_labels || !Array.isArray(court_labels)) {
+      return res.status(400).json({
+        success: false,
+        error: 'user_id and court_labels array are required'
+      });
+    }
+
+    // Verify user is admin
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', user_id)
+      .single();
+
+    if (membershipError || !membership || membership.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins can update courts'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    const previousCourtCount = instance.courts_available;
+
+    // Update court configuration
+    const { data: updatedInstance, error: updateError } = await supabase
+      .from('league_night_instances')
+      .update({ 
+        court_labels: court_labels,
+        courts_available: court_labels.length
+      })
+      .eq('id', instance.id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    console.log(`Courts updated for league night ${instance.id} by admin ${user_id}:`, court_labels);
+
+    // If courts were added and league is active, try auto-assignment
+    let autoAssignResult = null;
+    if (court_labels.length > previousCourtCount && instance.status === 'active') {
+      console.log(`Courts increased from ${previousCourtCount} to ${court_labels.length}, triggering auto-assignment`);
+      autoAssignResult = await tryAutoAssignMatches(instance.id);
+    }
+
+    res.json({
+      success: true,
+      data: updatedInstance,
+      autoAssignment: autoAssignResult
+    });
+
+  } catch (error) {
+    console.error('Error updating courts:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update courts'
+    });
+  }
+};
+
 module.exports = {
   getLeagueNight,
   getCheckedInPlayers,
@@ -835,5 +987,7 @@ module.exports = {
   getPartnershipRequests,
   uncheckPlayer,
   removePartnership,
-  startLeague
+  startLeague,
+  endLeague,
+  updateCourts
 };

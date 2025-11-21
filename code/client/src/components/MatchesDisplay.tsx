@@ -217,37 +217,22 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header with Create Matches Button */}
-      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl p-6 border border-white/20 dark:border-slate-700/50 shadow-2xl">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Trophy className="h-6 w-6 text-green-600 dark:text-green-400" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Current Matches
-            </h2>
+      {/* League Ended Banner */}
+      {leagueNightStatus === 'completed' && (
+        <div className="bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-600 p-4 rounded-lg">
+          <div className="flex items-center">
+            <Trophy className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-3" />
+            <div>
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                League Night Has Ended
+              </p>
+              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                No new matches will be assigned. Active matches can still be completed.
+              </p>
+            </div>
           </div>
-          
-          {isAdmin && (
-            <button
-              onClick={handleCreateMatches}
-              disabled={creatingMatches}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:from-green-400 disabled:to-emerald-400 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 flex items-center space-x-2"
-            >
-              {creatingMatches ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Creating...</span>
-                </>
-              ) : (
-                <>
-                  <Users className="h-4 w-4" />
-                  <span>Create Matches</span>
-                </>
-              )}
-            </button>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Active Matches */}
       {activeMatches.length > 0 && (

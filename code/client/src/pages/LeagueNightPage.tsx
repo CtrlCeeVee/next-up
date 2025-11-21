@@ -14,7 +14,11 @@ import {
   Clock, 
   MapPin, 
   Users, 
-  AlertCircle
+  AlertCircle,
+  Trophy,
+  UserCheck,
+  Settings,
+  Info
 } from 'lucide-react'
 
 // Import tab components
@@ -34,6 +38,7 @@ interface LeagueNight {
   status: 'scheduled' | 'active' | 'completed' | 'today' // Add 'today' for local status
   backendStatus?: 'scheduled' | 'active' | 'completed' // The actual backend status
   courtsAvailable: number
+  courtLabels?: string[]
   checkedInCount: number
   partnershipsCount: number
   possibleGames: number
@@ -70,6 +75,7 @@ const LeagueNightPage = () => {
   const [rejectingRequest, setRejectingRequest] = useState<number | null>(null);
   const [removingPartnership, setRemovingPartnership] = useState(false);
   const [startingLeague, setStartingLeague] = useState(false);
+  const [endingLeague, setEndingLeague] = useState(false);
 
   // Tab state
   const [activeTab, setActiveTab] = useState('my-night');
@@ -101,6 +107,7 @@ const LeagueNightPage = () => {
         status: isToday ? 'today' : nightData.status,
         backendStatus: nightData.status,
         courtsAvailable: nightData.courtsAvailable,
+        courtLabels: nightData.courtLabels || [],
         checkedInCount: nightData.checkedInCount,
         partnershipsCount: nightData.partnershipsCount,
         possibleGames: nightData.possibleGames
@@ -266,6 +273,24 @@ const LeagueNightPage = () => {
       console.error('Error starting league:', error);
     } finally {
       setStartingLeague(false);
+    }
+  };
+
+  // Handle ending league night (admin only)
+  const handleEndLeague = async () => {
+    if (!user || !leagueId || !nightId || endingLeague) return;
+
+    setEndingLeague(true);
+    try {
+      await leagueNightService.endLeague(parseInt(leagueId), nightId, user.id);
+      
+      // Refresh league night data to show new status
+      await fetchLeagueNight();
+      
+    } catch (error) {
+      console.error('Error ending league:', error);
+    } finally {
+      setEndingLeague(false);
     }
   };
 
@@ -475,46 +500,86 @@ const LeagueNightPage = () => {
           </button>
         </div>
 
-        {/* League Night Status */}
-        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 border border-white/20 dark:border-slate-700/50 shadow-2xl mb-8 sm:mb-10">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-start sm:items-center space-x-4 sm:space-x-6">
-              <div className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl ${
-                leagueNight.status === 'today'
-                  ? 'bg-green-100 dark:bg-green-900/30'
-                  : 'bg-blue-100 dark:bg-blue-900/30'
-              }`}>
-                <Calendar className={`h-6 sm:h-7 md:h-8 w-6 sm:w-7 md:w-8 ${
-                  leagueNight.status === 'today'
-                    ? 'text-green-600 dark:text-green-400'
-                    : 'text-blue-600 dark:text-blue-400'
-                }`} />
+        {/* Tab-Specific Banner */}
+        <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/20 dark:border-slate-700/50 shadow-2xl mb-6 sm:mb-8">
+          {activeTab === 'my-night' && (
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 sm:p-3 rounded-xl bg-green-100 dark:bg-green-900/30">
+                <UserCheck className="h-5 sm:h-6 w-5 sm:w-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="flex-1">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
-                  {leagueNight.status === 'today' ? 'Tonight\'s Session' : 'Upcoming Session'}
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+                  My Night
                 </h2>
-                <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-1 sm:mt-2 text-xs sm:text-sm text-gray-600 dark:text-gray-300">
-                  <div className="flex items-center space-x-1">
-                    <Clock className="h-3 sm:h-4 w-3 sm:w-4" />
-                    <span>{leagueNight.time}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <MapPin className="h-3 sm:h-4 w-3 sm:w-4" />
-                    <span>{leagueNight.courtsAvailable} courts</span>
-                  </div>
-                </div>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  {isCheckedIn 
+                    ? confirmedPartnership 
+                      ? 'Ready to play • Waiting for match assignment'
+                      : 'Checked in • Find a partner to get started'
+                    : 'Check in and find a partner to play tonight'
+                  }
+                </p>
               </div>
             </div>
+          )}
 
-            <div className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl text-sm sm:text-base font-semibold whitespace-nowrap ${
-              leagueNight.status === 'today'
-                ? 'bg-green-600 text-white'
-                : 'bg-blue-600 text-white'
-            }`}>
-              {leagueNight.status === 'today' ? 'LIVE' : 'UPCOMING'}
+          {activeTab === 'matches' && (
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 sm:p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                <Trophy className="h-5 sm:h-6 w-5 sm:w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+                  Matches & Queue
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  {leagueNight.backendStatus === 'completed'
+                    ? 'League night ended • View final results'
+                    : leagueNight.backendStatus === 'active'
+                    ? 'Live matches and upcoming queue'
+                    : 'Matches start when league night begins'
+                  }
+                </p>
+              </div>
             </div>
-          </div>
+          )}
+
+          {activeTab === 'league-info' && (
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 sm:p-3 rounded-xl bg-purple-100 dark:bg-purple-900/30">
+                <Info className="h-5 sm:h-6 w-5 sm:w-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+                  League Info
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  {leagueNight.checkedInCount} player{leagueNight.checkedInCount !== 1 ? 's' : ''} checked in • {leagueNight.partnershipsCount} partnership{leagueNight.partnershipsCount !== 1 ? 's' : ''} formed
+                </p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'admin' && (
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 sm:p-3 rounded-xl bg-indigo-100 dark:bg-indigo-900/30">
+                <Settings className="h-5 sm:h-6 w-5 sm:w-6 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
+                  Admin Controls
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  {leagueNight.backendStatus === 'completed'
+                    ? 'League night ended • View session summary'
+                    : leagueNight.backendStatus === 'active'
+                    ? 'League active • Manage courts and matches'
+                    : 'Start league night when ready'
+                  }
+                </p>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Tab Content */}
@@ -571,8 +636,12 @@ const LeagueNightPage = () => {
           <AdminTab
             leagueNight={leagueNight}
             leagueId={parseInt(leagueId)}
+            nightId={nightId || ''}
+            userId={user?.id}
             startingLeague={startingLeague}
+            endingLeague={endingLeague}
             onStartLeague={handleStartLeague}
+            onEndLeague={handleEndLeague}
             onRefresh={() => {
               refreshCheckedInPlayers();
               refreshPartnershipRequests();
