@@ -1,14 +1,14 @@
 Im going to compile a BUNCH of changes we need to do here, tick when done:
 [DONE ✅] 1. Clicking back on player profile doesnt redirect to the main page but the previous link rather (so if you clicked stats, etc its going to go back to overview)
 
-[x] 2. when I start the night if we have less pairings than courts available, that left over courts will only get reassigned when a match finishes and it triggers re-assignment
+[DONE ✅] 2. when I start the night if we have less pairings than courts available, that left over courts will only get reassigned when a match finishes and it triggers re-assignment
  - for e.g. 2 courts available, only 2 pairs when night starts. 
  - the 2 pairs get placed on court 1.
  - court 2 still open, new pairs check in but court 2 isn't autofilled when it can be.
  - game on court 1 finished and score gets submitted = triggers auto-assign = both courts get filled. 
  - proper behaviour should be that court 2 was filled when it couldve been as people joined. 
 
-[x] 3. The league nights page UI is super cluttered when a lot of people are registered. (Top priority)
+[DONE ✅] 3. The league nights page UI is super cluttered when a lot of people are registered. (Top priority)
  - You can see like 40 people checked in (on mobile only shows 2 at a time)
  - you can see the full queue + whos already played
  - very hard to find your own game when theres a ton of people on. 
@@ -69,3 +69,14 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
  - Instead as an admin I would want to be able to stop the league night.
  - It shouldnt immediately end everything but rather just stop the auto-assignment from running when a game is finished
  - That way it will allow all the games currently being played to finish and thereafter prevent any more games from occuring.
+
+ [] 12. Admin functionality
+  - set number of courts
+  - manual games
+  - change scores
+  - reassign court, etc, etc
+
+[] 13. Redesign tabs
+ - tabs functionally are prefect
+ - I just currently dont like the segmented card designs 
+ - No idea what I want but not that.
