@@ -27,11 +27,13 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
    - an extended stretch goal of this would then be that they can submit scores via a widget in the push notification
    - I know some apps have this functionality but I have no clue how it works
 
-[] 6. Knowing who you are playing next
+[DEFER - needs matchmaking redesign] 6. Knowing who you are playing next
  - A lot of people complained saying it would be more convenient to be able to see who they are playing next
  - Allows them to pre-meet the people and mentally prepare
+ - NOTE: Not deterministic with current system - next opponent depends on who finishes current matches and when, 
+   plus algorithm avoids repeat pairings. Would need complete matchmaking overhaul to predict reliably.
 
-[] 7. Queueing priorty bug?
+[DEFER - working as intended] 7. Queueing priorty bug?
  - something strange was happening on the night where people who just finished a game that played later in a pool,
    meaning they were one of the last to play for those who hadn't played - got immediately assigned their next game 
    when their first one finished. 
@@ -40,6 +42,9 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
    waited super short for their next game
  - idk what we can do about this but some sort of priority queueing to try ensure people wait a consist amount of time will
    help with user experience (even tho they all end up playing the same nubmer of games anyway - seems more of a mental thing)
+ - NOTE: Adding time-based priority creates player pools (early players only play each other, late players cluster). 
+   Current system ensures equal games played for everyone - this is the actual goal. Perception issue, not fairness issue.
+   Requires full matchmaking redesign to solve properly.
 
 [] 8. Confirming scores between matches
  - currently whichever team submitted the scores just got their scores saved without any kind of confirmation
