@@ -14,6 +14,7 @@ import {
   Search
 } from 'lucide-react';
 import ScoreSubmission from '../ScoreSubmission';
+import ScoreConfirmation from '../ScoreConfirmation';
 import type { CheckedInPlayer, PartnershipRequest, ConfirmedPartnership } from '../../services/api/leagueNights';
 
 interface Match {
@@ -23,6 +24,10 @@ interface Match {
   status: 'active' | 'completed' | 'cancelled';
   team1_score?: number;
   team2_score?: number;
+  pending_team1_score?: number;
+  pending_team2_score?: number;
+  pending_submitted_by_partnership_id?: number;
+  score_status?: 'none' | 'pending' | 'confirmed' | 'disputed';
   created_at: string;
   completed_at?: string;
   partnership1: {
@@ -378,64 +383,116 @@ const MyNightTab: React.FC<MyNightTabProps> = ({
                     <div className="bg-emerald-600 text-white text-sm font-bold px-3 py-1 rounded-full">
                       {currentMatch.court_label || `Court ${currentMatch.court_number}`}
                     </div>
-                    <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 text-sm font-medium">
-                      <Clock className="w-4 h-4" />
-                      Active
+                    <div className="flex items-center gap-2">
+                      {currentMatch.score_status === 'pending' && (
+                        <div className="bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                          Score Pending
+                        </div>
+                      )}
+                      {currentMatch.score_status === 'disputed' && (
+                        <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                          Disputed
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 text-sm font-medium">
+                        <Clock className="w-4 h-4" />
+                        Active
+                      </div>
                     </div>
                   </div>
 
                   {/* Teams Display */}
-                  <div className="grid grid-cols-3 gap-3 items-center">
-                    {/* Your Team */}
-                    <div className="text-center bg-white dark:bg-slate-800 rounded-lg p-3">
-                      <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mb-1">YOUR TEAM</p>
-                      <p className="font-bold text-slate-900 dark:text-white text-sm">
-                        {`${currentMatch.partnership1.player1.first_name} ${currentMatch.partnership1.player1.last_name}`}
-                      </p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
-                        {currentMatch.partnership1.player1.skill_level}
-                      </p>
-                      <p className="font-bold text-slate-900 dark:text-white text-sm mt-1">
-                        {`${currentMatch.partnership1.player2.first_name} ${currentMatch.partnership1.player2.last_name}`}
-                      </p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
-                        {currentMatch.partnership1.player2.skill_level}
-                      </p>
-                    </div>
+                  {(() => {
+                    // Determine which team the user is on
+                    const isUserInTeam1 = 
+                      currentMatch.partnership1.player1.id === user?.id ||
+                      currentMatch.partnership1.player2.id === user?.id;
 
-                    {/* VS */}
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-slate-400 dark:text-slate-500">VS</p>
-                    </div>
+                    return (
+                      <div className="grid grid-cols-3 gap-3 items-center">
+                        {/* Team 1 */}
+                        <div className="text-center bg-white dark:bg-slate-800 rounded-lg p-3">
+                          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mb-1">
+                            {isUserInTeam1 ? 'YOUR TEAM' : 'OPPONENTS'}
+                          </p>
+                          <p className="font-bold text-slate-900 dark:text-white text-sm">
+                            {`${currentMatch.partnership1.player1.first_name} ${currentMatch.partnership1.player1.last_name}`}
+                          </p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400">
+                            {currentMatch.partnership1.player1.skill_level}
+                          </p>
+                          <p className="font-bold text-slate-900 dark:text-white text-sm mt-1">
+                            {`${currentMatch.partnership1.player2.first_name} ${currentMatch.partnership1.player2.last_name}`}
+                          </p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400">
+                            {currentMatch.partnership1.player2.skill_level}
+                          </p>
+                        </div>
 
-                    {/* Opponent Team */}
-                    <div className="text-center bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mb-1">OPPONENTS</p>
-                      <p className="font-bold text-slate-900 dark:text-white text-sm">
-                        {`${currentMatch.partnership2.player1.first_name} ${currentMatch.partnership2.player1.last_name}`}
-                      </p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
-                        {currentMatch.partnership2.player1.skill_level}
-                      </p>
-                      <p className="font-bold text-slate-900 dark:text-white text-sm mt-1">
-                        {`${currentMatch.partnership2.player2.first_name} ${currentMatch.partnership2.player2.last_name}`}
-                      </p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
-                        {currentMatch.partnership2.player2.skill_level}
-                      </p>
-                    </div>
-                  </div>
+                        {/* VS */}
+                        <div className="text-center">
+                          <p className="text-2xl font-bold text-slate-400 dark:text-slate-500">VS</p>
+                        </div>
+
+                        {/* Team 2 */}
+                        <div className="text-center bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
+                          <p className={`text-xs font-semibold mb-1 ${isUserInTeam1 ? 'text-slate-500 dark:text-slate-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                            {isUserInTeam1 ? 'OPPONENTS' : 'YOUR TEAM'}
+                          </p>
+                          <p className="font-bold text-slate-900 dark:text-white text-sm">
+                            {`${currentMatch.partnership2.player1.first_name} ${currentMatch.partnership2.player1.last_name}`}
+                          </p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400">
+                            {currentMatch.partnership2.player1.skill_level}
+                          </p>
+                          <p className="font-bold text-slate-900 dark:text-white text-sm mt-1">
+                            {`${currentMatch.partnership2.player2.first_name} ${currentMatch.partnership2.player2.last_name}`}
+                          </p>
+                          <p className="text-xs text-slate-600 dark:text-slate-400">
+                            {currentMatch.partnership2.player2.skill_level}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
-                {/* Score Submission */}
+                {/* Score Confirmation or Submission */}
                 <div>
-                  <ScoreSubmission
-                    match={currentMatch}
-                    currentUserId={user?.id || ''}
-                    leagueId={leagueId}
-                    nightId={nightId}
-                    onScoreSubmitted={onScoreSubmitted}
-                  />
+                  {(() => {
+                    // Determine if current user submitted the pending score
+                    const isUserInTeam1 = 
+                      currentMatch.partnership1.player1.id === user?.id ||
+                      currentMatch.partnership1.player2.id === user?.id;
+                    const userPartnershipId = isUserInTeam1 ? currentMatch.partnership1?.id : currentMatch.partnership2?.id;
+                    const didUserSubmitScore = currentMatch.score_status === 'pending' && 
+                      currentMatch.pending_submitted_by_partnership_id === userPartnershipId;
+
+                    // If pending and opponent submitted, show confirmation component
+                    // Otherwise (no pending OR user submitted), show submission component
+                    if (currentMatch.score_status === 'pending' && !didUserSubmitScore) {
+                      return (
+                        <ScoreConfirmation
+                          match={currentMatch}
+                          currentUserId={user?.id || ''}
+                          leagueId={parseInt(leagueId)}
+                          nightId={nightId}
+                          onConfirmed={onScoreSubmitted}
+                          onDisputed={onScoreSubmitted}
+                        />
+                      );
+                    } else {
+                      return (
+                        <ScoreSubmission
+                          match={currentMatch}
+                          currentUserId={user?.id || ''}
+                          leagueId={leagueId}
+                          nightId={nightId}
+                          onScoreSubmitted={onScoreSubmitted}
+                        />
+                      );
+                    }
+                  })()}
                 </div>
               </div>
             ) : (

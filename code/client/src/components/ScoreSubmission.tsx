@@ -48,6 +48,10 @@ interface Match {
   status: 'active' | 'completed' | 'cancelled';
   team1_score?: number;
   team2_score?: number;
+  pending_team1_score?: number;
+  pending_team2_score?: number;
+  pending_submitted_by_partnership_id?: number;
+  score_status?: 'none' | 'pending' | 'confirmed' | 'disputed';
   partnership1: {
     id: number;
     player1: { id: string; first_name: string; last_name: string; skill_level: string };
@@ -78,6 +82,7 @@ const ScoreSubmission: React.FC<ScoreSubmissionProps> = ({
   const [team1Score, setTeam1Score] = useState<string>('');
   const [team2Score, setTeam2Score] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
 
@@ -157,8 +162,94 @@ const ScoreSubmission: React.FC<ScoreSubmissionProps> = ({
     setError(null);
   };
 
+  const handleCancelSubmission = async () => {
+    setCancelling(true);
+    setError(null);
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/cancel-score`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          match_id: match.id,
+          user_id: currentUserId
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to cancel score');
+      }
+
+      onScoreSubmitted(); // Refresh match data
+      
+    } catch (err) {
+      console.error('Error cancelling score:', err);
+      setError(err instanceof Error ? err.message : 'Failed to cancel score');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   if (!isUserInMatch) {
     return null; // Don't show score submission if user isn't in this match
+  }
+
+  // Check if user submitted the pending score
+  const userPartnershipId = isUserTeam1 ? match.partnership1?.id : match.partnership2?.id;
+  const didUserSubmitScore = match.score_status === 'pending' && 
+    match.pending_submitted_by_partnership_id === userPartnershipId;
+
+  // Show persistent waiting message if user submitted pending score
+  if (didUserSubmitScore) {
+    return (
+      <div className="mt-4 space-y-3">
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+          <div className="flex items-start space-x-2">
+            <CheckCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm text-blue-800 dark:text-blue-300 font-medium">
+                Score submitted!
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                Waiting for opponent confirmation
+              </p>
+              <div className="mt-2 text-xs text-blue-700 dark:text-blue-300">
+                <p>Submitted score: <span className="font-bold">{match.pending_team1_score} - {match.pending_team2_score}</span></p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {error && (
+          <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-700">
+            <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+          </div>
+        )}
+        
+        <button
+          onClick={handleCancelSubmission}
+          disabled={cancelling}
+          className="w-full px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {cancelling ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-700 dark:border-slate-200"></div>
+              Cancelling...
+            </>
+          ) : (
+            <>
+              <X className="h-4 w-4" />
+              Cancel Score Submission
+            </>
+          )}
+        </button>
+      </div>
+    );
   }
 
   if (!showForm) {

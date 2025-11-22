@@ -85,3 +85,8 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
  - tabs functionally are prefect
  - I just currently dont like the segmented card designs 
  - No idea what I want but not that.
+
+[] 14. Time gated score confirmation
+ - score should be auto confirmed after a certain amount of time has passed.
+ - prevents users just leaving and not confirming a score resulting in stuck courts
+ 

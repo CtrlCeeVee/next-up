@@ -243,6 +243,32 @@ channel.on('postgres_changes', {
 - Verify Supabase real-time is enabled for tables in Supabase Dashboard
 - Check browser console for subscription errors
 
+### Hot Reload & WebSocket Issues
+
+**Problem**: Vite's hot module replacement (HMR) can break WebSocket connections when multiple file changes occur rapidly.
+
+**Symptoms**:
+- Real-time updates stop working after code changes
+- Features work initially but break after auto-refresh
+- WebSocket shows disconnected in browser DevTools
+
+**Solution**: Restart the development server
+```bash
+# Stop server (Ctrl+C)
+# Start again
+cd code/client && npm run dev
+```
+
+**Why this happens**:
+- HMR refreshes the page multiple times for rapid file changes
+- WebSocket connections don't always reconnect properly
+- Supabase real-time client gets into inconsistent state
+
+**Best practice during development**:
+- Restart dev server after making multiple related changes
+- If real-time stops working, restart server before debugging code
+- This is a dev-only issue - production builds don't have this problem
+
 ## Known Limitations
 
 1. **Mock data remaining**:

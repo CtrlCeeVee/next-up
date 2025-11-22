@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Trophy, Users, Clock, Target } from 'lucide-react';
+import { Trophy, Users, Clock, Target, AlertCircle } from 'lucide-react';
 import ScoreSubmission from './ScoreSubmission';
+import ScoreConfirmation from './ScoreConfirmation';
 
 
 interface Match {
@@ -10,6 +11,10 @@ interface Match {
   status: 'active' | 'completed' | 'cancelled';
   team1_score?: number;
   team2_score?: number;
+  pending_team1_score?: number;
+  pending_team2_score?: number;
+  pending_submitted_by_partnership_id?: number;
+  score_status?: 'none' | 'pending' | 'confirmed' | 'disputed';
   created_at: string;
   completed_at?: string;
   partnership1: {
@@ -265,6 +270,18 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
                         Your Match
                       </div>
                     )}
+                    {match.score_status === 'pending' && (
+                      <div className="bg-yellow-600 dark:bg-yellow-500 text-white text-sm font-bold px-3 py-1 rounded-full flex items-center space-x-1">
+                        <AlertCircle className="h-3 w-3" />
+                        <span>Score Pending</span>
+                      </div>
+                    )}
+                    {match.score_status === 'disputed' && (
+                      <div className="bg-red-600 dark:bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full flex items-center space-x-1">
+                        <AlertCircle className="h-3 w-3" />
+                        <span>Disputed</span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
                     <Clock className="h-4 w-4" />
@@ -313,15 +330,40 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
                   </div>
                 </div>
 
-                {isUserMatch && (
-                  <ScoreSubmission
-                    match={match}
-                    currentUserId={currentUserId!}
-                    leagueId={leagueId}
-                    nightId={nightId}
-                    onScoreSubmitted={fetchMatches}
-                  />
-                )}
+                {isUserMatch && (() => {
+                  // Determine if current user submitted the pending score
+                  const isUserInTeam1 = 
+                    match.partnership1.player1.id === currentUserId ||
+                    match.partnership1.player2.id === currentUserId;
+                  const userPartnershipId = isUserInTeam1 ? match.partnership1?.id : match.partnership2?.id;
+                  const didUserSubmitScore = match.score_status === 'pending' && 
+                    match.pending_submitted_by_partnership_id === userPartnershipId;
+
+                  // If pending and opponent submitted, show confirmation component
+                  // Otherwise (no pending OR user submitted), show submission component
+                  if (match.score_status === 'pending' && !didUserSubmitScore) {
+                    return (
+                      <ScoreConfirmation
+                        match={match}
+                        currentUserId={currentUserId!}
+                        leagueId={parseInt(leagueId)}
+                        nightId={nightId}
+                        onConfirmed={fetchMatches}
+                        onDisputed={fetchMatches}
+                      />
+                    );
+                  } else {
+                    return (
+                      <ScoreSubmission
+                        match={match}
+                        currentUserId={currentUserId!}
+                        leagueId={leagueId}
+                        nightId={nightId}
+                        onScoreSubmitted={fetchMatches}
+                      />
+                    );
+                  }
+                })()}
               </div>
             );
           })}

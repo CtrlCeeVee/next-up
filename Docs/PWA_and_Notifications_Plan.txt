@@ -34,25 +34,29 @@ DECISION: Build #8 (Score Confirmation) first, then #5 (Push Notifications)
 ## Phase 1: Score Confirmation System (Build First)
 
 ### Database Changes
+Add fields to existing matches table (simpler approach):
 ```sql
-CREATE TABLE pending_scores (
-  id SERIAL PRIMARY KEY,
-  match_id INTEGER REFERENCES matches(id),
-  submitted_by_partnership_id INTEGER REFERENCES confirmed_partnerships(id),
-  team1_score INTEGER NOT NULL,
-  team2_score INTEGER NOT NULL,
-  status TEXT DEFAULT 'pending', -- 'pending', 'confirmed', 'disputed'
-  submitted_at TIMESTAMPTZ DEFAULT NOW(),
-  confirmed_at TIMESTAMPTZ,
-  confirmed_by_partnership_id INTEGER REFERENCES confirmed_partnerships(id),
-  CHECK (team1_score >= 0),
-  CHECK (team2_score >= 0)
-);
+ALTER TABLE matches 
+  ADD COLUMN pending_team1_score INTEGER CHECK (pending_team1_score >= 0),
+  ADD COLUMN pending_team2_score INTEGER CHECK (pending_team2_score >= 0),
+  ADD COLUMN pending_submitted_by_partnership_id INTEGER REFERENCES confirmed_partnerships(id),
+  ADD COLUMN pending_submitted_at TIMESTAMPTZ,
+  ADD COLUMN score_status TEXT DEFAULT 'none' CHECK (score_status IN ('none', 'pending', 'confirmed', 'disputed'));
 
--- Index for faster lookups
-CREATE INDEX idx_pending_scores_match ON pending_scores(match_id);
-CREATE INDEX idx_pending_scores_status ON pending_scores(status);
+-- Add constraint: pending scores must be submitted together
+ALTER TABLE matches 
+  ADD CONSTRAINT matches_pending_scores_together CHECK (
+    (pending_team1_score IS NULL AND pending_team2_score IS NULL AND pending_submitted_by_partnership_id IS NULL) OR 
+    (pending_team1_score IS NOT NULL AND pending_team2_score IS NOT NULL AND pending_submitted_by_partnership_id IS NOT NULL)
+  );
 ```
+
+**Benefits of this approach:**
+- No separate table to manage
+- No JOINs needed for queries
+- Easier real-time subscriptions (already subscribed to matches)
+- Clear lifecycle: pending → confirmed (copies to team1/2_score)
+- Simpler cleanup (pending fields NULL out when confirmed)
 
 ### Backend Endpoints (code/server/src/controllers/matchController.js)
 1. POST /api/leagues/:leagueId/nights/:nightId/submit-score

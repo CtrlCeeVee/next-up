@@ -20,6 +20,9 @@ const {
   getMatches,
   createMatches,
   submitMatchScore,
+  confirmMatchScore,
+  disputeMatchScore,
+  cancelMatchScore,
   getQueue
 } = require('../controllers/matchController');
 
@@ -55,6 +58,15 @@ router.post('/:leagueId/nights/:nightId/create-matches', createMatches);
 
 // POST /api/leagues/:leagueId/nights/:nightId/submit-score - Submit match score
 router.post('/:leagueId/nights/:nightId/submit-score', submitMatchScore);
+
+// POST /api/leagues/:leagueId/nights/:nightId/confirm-score - Confirm opponent's submitted score
+router.post('/:leagueId/nights/:nightId/confirm-score', confirmMatchScore);
+
+// POST /api/leagues/:leagueId/nights/:nightId/dispute-score - Dispute opponent's submitted score
+router.post('/:leagueId/nights/:nightId/dispute-score', disputeMatchScore);
+
+// POST /api/leagues/:leagueId/nights/:nightId/cancel-score - Cancel your own score submission
+router.post('/:leagueId/nights/:nightId/cancel-score', cancelMatchScore);
 
 // POST /api/leagues/:leagueId/nights/:nightId/start-league - Manually start league (admin only)
 router.post('/:leagueId/nights/:nightId/start-league', startLeague);
