@@ -1452,6 +1452,111 @@ const getQueue = async (req, res) => {
   }
 };
 
+// GET /api/leagues/:leagueId/nights/:nightId/my-stats
+const getMyNightStats = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Get all completed matches for this league night where user participated
+    const { data: completedMatches, error: matchesError } = await supabase
+      .from('matches')
+      .select(`
+        *,
+        partnership1:confirmed_partnerships!partnership1_id (
+          id,
+          player1_id,
+          player2_id,
+          player1:profiles!player1_id (id, first_name, last_name, skill_level),
+          player2:profiles!player2_id (id, first_name, last_name, skill_level)
+        ),
+        partnership2:confirmed_partnerships!partnership2_id (
+          id,
+          player1_id,
+          player2_id,
+          player1:profiles!player1_id (id, first_name, last_name, skill_level),
+          player2:profiles!player2_id (id, first_name, last_name, skill_level)
+        )
+      `)
+      .eq('league_night_instance_id', instance.id)
+      .eq('status', 'completed')
+      .order('completed_at', { ascending: false });
+
+    if (matchesError) throw matchesError;
+
+    // Filter matches where user participated
+    const userMatches = (completedMatches || []).filter(match => {
+      return match.partnership1.player1_id === userId ||
+             match.partnership1.player2_id === userId ||
+             match.partnership2.player1_id === userId ||
+             match.partnership2.player2_id === userId;
+    });
+
+    // Calculate stats
+    let gamesPlayed = 0;
+    let gamesWon = 0;
+    let totalPoints = 0;
+
+    userMatches.forEach(match => {
+      gamesPlayed++;
+      
+      // Determine if user was in team 1 or team 2
+      const isUserInTeam1 = 
+        match.partnership1.player1_id === userId ||
+        match.partnership1.player2_id === userId;
+      
+      if (isUserInTeam1) {
+        totalPoints += match.team1_score || 0;
+        if (match.team1_score > match.team2_score) {
+          gamesWon++;
+        }
+      } else {
+        totalPoints += match.team2_score || 0;
+        if (match.team2_score > match.team1_score) {
+          gamesWon++;
+        }
+      }
+    });
+
+    // Map court labels
+    const courtLabels = instance.court_labels || [];
+    const matchesWithLabels = userMatches.map(match => ({
+      ...match,
+      court_label: courtLabels[match.court_number - 1] || `Court ${match.court_number}`
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        stats: {
+          gamesPlayed,
+          gamesWon,
+          gamesLost: gamesPlayed - gamesWon,
+          totalPoints,
+          averagePoints: gamesPlayed > 0 ? Math.round((totalPoints / gamesPlayed) * 10) / 10 : 0
+        },
+        completedMatches: matchesWithLabels
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching tonight stats:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch tonight stats'
+    });
+  }
+};
+
 module.exports = {
   getMatches,
   createMatches,
@@ -1460,5 +1565,6 @@ module.exports = {
   disputeMatchScore,
   cancelMatchScore,
   tryAutoAssignMatches,
-  getQueue
+  getQueue,
+  getMyNightStats
 };

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { 
   UserCheck, 
   UserPlus, 
@@ -40,6 +40,14 @@ interface Match {
     player1: { id: string; first_name: string; last_name: string; skill_level: string };
     player2: { id: string; first_name: string; last_name: string; skill_level: string };
   };
+}
+
+interface TonightStats {
+  gamesPlayed: number;
+  gamesWon: number;
+  gamesLost: number;
+  totalPoints: number;
+  averagePoints: number;
 }
 
 interface MyNightTabProps {
@@ -92,6 +100,36 @@ const MyNightTab: React.FC<MyNightTabProps> = ({
   onScoreSubmitted
 }) => {
   const [partnerSearch, setPartnerSearch] = useState('');
+  const [tonightStats, setTonightStats] = useState<TonightStats | null>(null);
+  const [completedMatches, setCompletedMatches] = useState<Match[]>([]);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  // Fetch tonight's stats
+  useEffect(() => {
+    const fetchTonightStats = async () => {
+      if (!user?.id || !isCheckedIn) return;
+
+      setLoadingStats(true);
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+        const response = await fetch(
+          `${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/my-stats?userId=${user.id}`
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          setTonightStats(data.data.stats);
+          setCompletedMatches(data.data.completedMatches);
+        }
+      } catch (error) {
+        console.error('Error fetching tonight stats:', error);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    fetchTonightStats();
+  }, [user?.id, leagueId, nightId, isCheckedIn, currentMatch]); // Re-fetch when match changes (score confirmed)
 
   // Get available partners (checked in + no partner)
   const availablePartners = useMemo(() => {
@@ -507,37 +545,156 @@ const MyNightTab: React.FC<MyNightTabProps> = ({
             )}
           </div>
 
-          {/* Tonight's Stats - Placeholder */}
+          {/* Tonight's Stats */}
           <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
               <Target className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               Tonight's Stats
             </h2>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">0</p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Games</p>
+            {loadingStats ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">0</p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Wins</p>
+            ) : tonightStats ? (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{tonightStats.gamesPlayed}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Games</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{tonightStats.gamesWon}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Wins</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">{tonightStats.totalPoints}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Points</p>
+                </div>
               </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-slate-900 dark:text-white">0</p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">Points</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">0</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Games</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">0</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Wins</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">0</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Points</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
-          {/* Completed Matches - Placeholder */}
+          {/* Completed Matches */}
           <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-              Your Completed Matches
+            <h2 className="text-base font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+              Match History
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-4">
-              No matches completed yet tonight
-            </p>
+            {completedMatches.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-8">
+                No matches completed yet tonight
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {completedMatches.map((match) => {
+                  const isUserInTeam1 = 
+                    match.partnership1.player1.id === user?.id ||
+                    match.partnership1.player2.id === user?.id;
+                  const userWon = isUserInTeam1 
+                    ? (match.team1_score || 0) > (match.team2_score || 0)
+                    : (match.team2_score || 0) > (match.team1_score || 0);
+
+                  return (
+                    <div
+                      key={match.id}
+                      className="group bg-white dark:bg-slate-800/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-200"
+                    >
+                      {/* Header Row */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 tracking-wide">
+                            {match.court_label}
+                          </div>
+                          <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+                          <div className={`text-[11px] font-medium tracking-wide ${
+                            userWon 
+                              ? 'text-emerald-600 dark:text-emerald-400' 
+                              : 'text-rose-600 dark:text-rose-400'
+                          }`}>
+                            {userWon ? 'Victory' : 'Defeat'}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className={`w-1.5 h-1.5 rounded-full ${
+                            userWon ? 'bg-emerald-500' : 'bg-rose-500'
+                          }`}></div>
+                        </div>
+                      </div>
+
+                      {/* Match Details */}
+                      <div className="flex items-center justify-between gap-4">
+                        {/* Your Team */}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">
+                            {isUserInTeam1 ? 'You' : 'Opponents'}
+                          </div>
+                          <div className="space-y-0.5">
+                            <div className={`text-xs leading-snug truncate ${
+                              isUserInTeam1 
+                                ? 'font-medium text-slate-900 dark:text-white' 
+                                : 'text-slate-600 dark:text-slate-400'
+                            }`}>
+                              {match.partnership1.player1.first_name} {match.partnership1.player1.last_name}
+                            </div>
+                            <div className={`text-xs leading-snug truncate ${
+                              isUserInTeam1 
+                                ? 'font-medium text-slate-900 dark:text-white' 
+                                : 'text-slate-600 dark:text-slate-400'
+                            }`}>
+                              {match.partnership1.player2.first_name} {match.partnership1.player2.last_name}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Score */}
+                        <div className="flex-shrink-0 text-center px-3">
+                          <div className="text-lg font-semibold tabular-nums text-slate-900 dark:text-white">
+                            {match.team1_score} - {match.team2_score}
+                          </div>
+                        </div>
+
+                        {/* Opponent Team */}
+                        <div className="flex-1 min-w-0 text-right">
+                          <div className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">
+                            {!isUserInTeam1 ? 'You' : 'Opponents'}
+                          </div>
+                          <div className="space-y-0.5">
+                            <div className={`text-xs leading-snug truncate ${
+                              !isUserInTeam1 
+                                ? 'font-medium text-slate-900 dark:text-white' 
+                                : 'text-slate-600 dark:text-slate-400'
+                            }`}>
+                              {match.partnership2.player1.first_name} {match.partnership2.player1.last_name}
+                            </div>
+                            <div className={`text-xs leading-snug truncate ${
+                              !isUserInTeam1 
+                                ? 'font-medium text-slate-900 dark:text-white' 
+                                : 'text-slate-600 dark:text-slate-400'
+                            }`}>
+                              {match.partnership2.player2.first_name} {match.partnership2.player2.last_name}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </>
       )}

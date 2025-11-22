@@ -23,7 +23,8 @@ const {
   confirmMatchScore,
   disputeMatchScore,
   cancelMatchScore,
-  getQueue
+  getQueue,
+  getMyNightStats
 } = require('../controllers/matchController');
 
 // GET /api/leagues/:leagueId/nights/:nightId - Get league night details
@@ -40,6 +41,9 @@ router.get('/:leagueId/nights/:nightId/matches', getMatches);
 
 // GET /api/leagues/:leagueId/nights/:nightId/queue - Get queue information
 router.get('/:leagueId/nights/:nightId/queue', getQueue);
+
+// GET /api/leagues/:leagueId/nights/:nightId/my-stats - Get user's stats for tonight
+router.get('/:leagueId/nights/:nightId/my-stats', getMyNightStats);
 
 // POST /api/leagues/:leagueId/nights/:nightId/checkin - Check in player
 router.post('/:leagueId/nights/:nightId/checkin', checkInPlayer);
