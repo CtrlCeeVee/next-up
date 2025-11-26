@@ -1,0 +1,453 @@
+# PWA & Push Notifications Implementation Plan
+Date: November 22, 2025
+Status: Planning Phase
+
+## Strategic Decision Needed
+
+QUESTION: Should we build score confirmation (#8) FIRST before push notifications?
+
+ANSWER: YES - Build score confirmation first.
+
+REASONING:
+1. Score confirmation establishes the data model & flow
+   - pending_scores table structure
+   - confirmation/dispute workflow
+   - Real-time updates for score status changes
+   
+2. Push notifications will layer on top of existing features
+   - Notifications trigger when score submitted (already built)
+   - Notification actions call existing confirm/dispute endpoints
+   - No rework needed - just add notification layer
+
+3. Cleaner development path:
+   Build → Score Confirmation (backend + frontend)
+   Then → Add push notification triggers to existing endpoints
+   Then → Add notification action handlers
+
+4. You can test score confirmation immediately without PWA complexity
+   Once working, notifications are just "another way to interact"
+
+DECISION: Build #8 (Score Confirmation) first, then #5 (Push Notifications)
+
+---
+
+## Phase 1: Score Confirmation System (Build First)
+
+### Database Changes
+Add fields to existing matches table (simpler approach):
+```sql
+ALTER TABLE matches 
+  ADD COLUMN pending_team1_score INTEGER CHECK (pending_team1_score >= 0),
+  ADD COLUMN pending_team2_score INTEGER CHECK (pending_team2_score >= 0),
+  ADD COLUMN pending_submitted_by_partnership_id INTEGER REFERENCES confirmed_partnerships(id),
+  ADD COLUMN pending_submitted_at TIMESTAMPTZ,
+  ADD COLUMN score_status TEXT DEFAULT 'none' CHECK (score_status IN ('none', 'pending', 'confirmed', 'disputed'));
+
+-- Add constraint: pending scores must be submitted together
+ALTER TABLE matches 
+  ADD CONSTRAINT matches_pending_scores_together CHECK (
+    (pending_team1_score IS NULL AND pending_team2_score IS NULL AND pending_submitted_by_partnership_id IS NULL) OR 
+    (pending_team1_score IS NOT NULL AND pending_team2_score IS NOT NULL AND pending_submitted_by_partnership_id IS NOT NULL)
+  );
+```
+
+**Benefits of this approach:**
+- No separate table to manage
+- No JOINs needed for queries
+- Easier real-time subscriptions (already subscribed to matches)
+- Clear lifecycle: pending → confirmed (copies to team1/2_score)
+- Simpler cleanup (pending fields NULL out when confirmed)
+
+### Backend Endpoints (code/server/src/controllers/matchController.js)
+1. POST /api/leagues/:leagueId/nights/:nightId/submit-score
+   - Change behavior: Create pending_score instead of updating match
+   - Return pending_score record
+   
+2. POST /api/leagues/:leagueId/nights/:nightId/confirm-score
+   - Verify user is in opposing partnership
+   - Update match with final scores
+   - Set pending_score.status = 'confirmed'
+   - Trigger auto-assignment
+   - Update player stats
+
+3. POST /api/leagues/:leagueId/nights/:nightId/dispute-score
+   - Set pending_score.status = 'disputed'
+   - Notify admin (future: push notification)
+   - Match remains 'active' until resolved
+
+4. GET /api/leagues/:leagueId/nights/:nightId/pending-scores
+   - Return pending scores for user's partnership
+   - Used to show "Opponent submitted 15-12, confirm?" UI
+
+### Frontend Changes
+1. Modify ScoreSubmission component
+   - Show "Score submitted, waiting for opponent confirmation" after submit
+   - Don't navigate away immediately
+
+2. Add ScoreConfirmation component (similar to partnership requests)
+   - Shows when opponent submits score
+   - "Luke & Matt submitted 15-12. Confirm or dispute?"
+   - [Confirm Score] [Dispute] buttons
+
+3. Update MatchesDisplay
+   - Show pending score indicator on match card
+   - "Score pending confirmation" badge
+
+4. Add to MyNightTab
+   - Show pending score confirmations in notifications area
+   - Similar to partnership request flow
+
+5. Real-time subscription
+   - Add pending_scores table to useLeagueNightRealtime
+   - Trigger refresh when new pending score created
+
+### Similar to Partnership Request Pattern
+Partnership flow:
+1. User sends request → Creates partnership_request (pending)
+2. Other player sees notification → Accepts/rejects
+3. On accept → Creates confirmed_partnership
+4. Both players see real-time update
+
+Score confirmation flow:
+1. User submits score → Creates pending_score (pending)
+2. Opponent sees notification → Confirms/disputes
+3. On confirm → Updates match, triggers auto-assignment
+4. Both players see real-time update
+
+---
+
+## Phase 2: PWA Foundation (Build After Score Confirmation)
+
+### 1. Web Manifest (code/client/public/manifest.json)
+```json
+{
+  "name": "Next-Up Pickleball",
+  "short_name": "Next-Up",
+  "description": "Real-time pickleball league management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#10b981",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+```
+
+### 2. Service Worker (code/client/public/service-worker.js)
+Features:
+- Cache static assets for offline support
+- Listen for push notifications
+- Handle notification click events
+- Background sync for score submissions
+
+### 3. Install Prompt UI
+- Show "Install App" banner on first visit
+- Detect iOS vs Android
+- Custom install instructions for iOS (Add to Home Screen)
+
+---
+
+## Phase 3: Web Push Infrastructure
+
+### Database: Push Subscriptions
+```sql
+CREATE TABLE push_subscriptions (
+  id SERIAL PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id),
+  endpoint TEXT NOT NULL,
+  p256dh_key TEXT NOT NULL,
+  auth_key TEXT NOT NULL,
+  device_info JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  last_used_at TIMESTAMPTZ DEFAULT NOW(),
+  is_active BOOLEAN DEFAULT true,
+  UNIQUE(user_id, endpoint)
+);
+```
+
+### Backend Dependencies
+```bash
+cd code/server
+npm install web-push
+```
+
+### Backend: Notification Service (code/server/src/services/pushNotificationService.js)
+```javascript
+const webpush = require('web-push');
+
+// Generate VAPID keys once: webpush.generateVAPIDKeys()
+// Store in .env: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY
+
+class PushNotificationService {
+  async sendNotification(userId, payload) {
+    // Get user's subscriptions from database
+    // Send via web-push library
+    // Handle errors (expired subscriptions, etc.)
+  }
+  
+  async notifyMatchAssigned(matchId, partnershipIds) {
+    // Query match details
+    // Get user IDs from partnerships
+    // Send "Match Ready!" notification
+  }
+  
+  async notifyScoreSubmitted(pendingScoreId) {
+    // Get opposing partnership user IDs
+    // Send notification with confirm/dispute actions
+  }
+  
+  async notifyPartnershipRequest(requestId) {
+    // Existing feature, add push notification
+  }
+}
+```
+
+### Backend Endpoints
+1. POST /api/push/subscribe
+   - Store push subscription for user
+   
+2. POST /api/push/unsubscribe
+   - Deactivate subscription
+
+3. POST /api/push/test (admin only)
+   - Send test notification
+
+### Frontend: Push Subscription Manager
+1. Request notification permission
+2. Subscribe to push notifications (get endpoint from browser)
+3. Send subscription to backend
+4. Handle subscription errors
+
+---
+
+## Phase 4: Notification Triggers & Actions
+
+### Notification Events
+1. Match Assigned
+   ```javascript
+   {
+     title: "Match Ready! 🏓",
+     body: "Court 3 vs Scott Gilbert & David Wilke",
+     icon: "/icon-192.png",
+     badge: "/badge-96.png",
+     tag: "match-123",
+     requireInteraction: true, // Stays until user interacts
+     actions: [
+       { action: 'view', title: 'View Match', icon: '/icons/view.png' },
+       { action: 'acknowledge', title: 'Got it!', icon: '/icons/check.png' }
+     ],
+     data: {
+       type: 'match-assigned',
+       matchId: 123,
+       url: '/league/1/night/night-1?tab=matches'
+     }
+   }
+   ```
+
+2. Score Submitted (Needs Confirmation)
+   ```javascript
+   {
+     title: "Score Submitted",
+     body: "Luke & Matt: 15-12. Confirm?",
+     actions: [
+       { action: 'confirm-score', title: '✓ Confirm' },
+       { action: 'dispute-score', title: '✗ Dispute' },
+       { action: 'view', title: 'View Details' }
+     ],
+     data: {
+       type: 'score-pending',
+       pendingScoreId: 456,
+       matchId: 123
+     }
+   }
+   ```
+
+3. Partnership Request
+   ```javascript
+   {
+     title: "Partnership Request",
+     body: "Luke Renton wants to partner with you",
+     actions: [
+       { action: 'accept-partner', title: '✓ Accept' },
+       { action: 'reject-partner', title: '✗ Decline' }
+     ],
+     data: {
+       type: 'partnership-request',
+       requestId: 789
+     }
+   }
+   ```
+
+### Service Worker: Action Handlers
+```javascript
+self.addEventListener('notificationclick', (event) => {
+  const { action, notification } = event;
+  const { type, matchId, pendingScoreId, requestId } = notification.data;
+  
+  if (action === 'confirm-score') {
+    // Call confirm-score API endpoint
+    // Close notification
+    // Show success notification
+  }
+  
+  if (action === 'dispute-score') {
+    // Call dispute-score API endpoint
+    // Open app to match details
+  }
+  
+  if (action === 'view' || !action) {
+    // Open app to relevant page
+    clients.openWindow(notification.data.url);
+  }
+  
+  notification.close();
+});
+```
+
+### Persistent Notification (Active Match)
+While user has active match:
+- Show ongoing notification with current score (if available)
+- Update notification when score submitted
+- Dismiss when match completed
+- Tap to open match details
+
+---
+
+## Phase 5: Settings & Preferences
+
+### Notification Settings Page
+User can toggle:
+- [ ] Match assigned
+- [ ] Score submitted (needs confirmation)
+- [ ] Partnership requests
+- [ ] League night started
+- [ ] League night ended
+
+Store preferences in database:
+```sql
+CREATE TABLE notification_preferences (
+  user_id UUID PRIMARY KEY REFERENCES profiles(id),
+  match_assigned BOOLEAN DEFAULT true,
+  score_submitted BOOLEAN DEFAULT true,
+  partnership_requests BOOLEAN DEFAULT true,
+  league_started BOOLEAN DEFAULT false,
+  league_ended BOOLEAN DEFAULT false
+);
+```
+
+---
+
+## Implementation Order (FINAL PLAN)
+
+### Step 1: Score Confirmation (Do This First)
+- Database: pending_scores table
+- Backend: submit/confirm/dispute endpoints
+- Frontend: ScoreConfirmation component
+- Real-time: Add pending_scores subscription
+- Test thoroughly with multiple users
+
+### Step 2: PWA Foundation
+- Create manifest.json
+- Create service-worker.js
+- Add install prompt UI
+- Test installability on iOS/Android
+
+### Step 3: Push Infrastructure
+- Database: push_subscriptions table
+- Backend: web-push setup + VAPID keys
+- Backend: PushNotificationService class
+- Frontend: Subscribe/unsubscribe UI
+- Test basic push notifications
+
+### Step 4: Notification Triggers
+- Add push notification to match assignment
+- Add push notification to score submission
+- Add push notification to partnership requests
+- Test all notification types
+
+### Step 5: Notification Actions
+- Implement action handlers in service worker
+- Test confirm/dispute from notification
+- Test view/acknowledge actions
+- Test persistent notifications
+
+### Step 6: Settings & Polish
+- Build notification preferences page
+- Add preference checks to notification sending
+- Test preference toggles
+- Final testing on real devices
+
+---
+
+## What You Need to Provide
+
+1. App Logo/Icon
+   - 512x512 PNG (high resolution)
+   - Transparent or solid background
+   - Or use placeholder initially
+
+2. Color Scheme Decisions
+   - Background color (default: #0f172a - dark slate)
+   - Theme color (default: #10b981 - green)
+   - Confirm or change
+
+3. Notification Preferences
+   - Which events should default to ON?
+   - Which should be optional?
+
+4. Testing Devices
+   - iOS device for testing (Safari)
+   - Android device for testing (Chrome)
+
+---
+
+## Technical Notes
+
+### Browser Support
+- Chrome/Edge: Full support (notifications + install)
+- Firefox: Full support
+- Safari iOS 16.4+: PWA support, limited notification actions
+- Safari macOS: Full support
+
+### Limitations
+- iOS: No Live Activities (native apps only)
+- iOS: Notifications require app to be installed
+- iOS: Limited notification action support
+- All: User must grant permission
+
+### Alternatives for iOS Live Activities
+- Persistent notification (stays on lock screen)
+- Badge count on app icon
+- In-app live updates (already have this via real-time)
+
+---
+
+## Questions for Next Session
+
+1. Confirm: Build score confirmation first? YES
+2. App name/branding: "Next-Up" or "Next-Up Pickleball"?
+3. Logo: Have one ready or use placeholder?
+4. Default notification preferences?
+5. Timeline: How many sessions to complete both features?
+
+---
+
+## Current Status
+- [PLANNING] Score confirmation system design complete
+- [PLANNING] PWA architecture defined
+- [PLANNING] Push notification system mapped out
+- [READY] Can start implementation when you return
+
+Next action: Build score confirmation feature (#8) first
+Then: Add PWA + push notifications (#5)

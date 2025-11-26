@@ -1,11 +1,33 @@
-import { useLeagues } from '../hooks/useLeagues'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../contexts/ThemeContext'
 import { useNavigate } from 'react-router-dom'
 import { getCurrentUserProfileUrl } from '../utils/profileUtils'
 import { Moon, Sun, Zap, Trophy, Users, MapPin, Calendar, Star, ArrowRight, Play, User } from 'lucide-react'
 
-// Skeleton component for loading league cards
+// Hardcoded leagues data - update manually when leagues change
+const LEAGUES = [
+  {
+    id: 2,
+    name: "Northcliff Eagles",
+    description: "Premier pickleball league at Northcliff Country Club featuring competitive play for passionate players of all skill levels",
+    location: "Northcliff Country Club",
+    address: "271 Pendoring Rd, Northcliff, Randburg, 2115",
+    leagueDays: ["Monday", "Wednesday"],
+    startTime: "18:30",
+    totalPlayers: 42,
+    isActive: true
+  },
+  // Add more leagues here as needed
+];
+
+// Stats - update these manually based on your actual numbers
+const STATS = {
+  activePlayers: 50,  // Total unique players across all leagues
+  totalLeagues: 1,     // Number of active leagues
+  matchesPlayed: 100   // Total matches played to date
+};
+
+// Skeleton component for loading league cards (kept for potential future use)
 const LeagueCardSkeleton = ({ index }: { index: number }) => (
   <div 
     className="group relative overflow-hidden rounded-3xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border border-slate-200/50 dark:border-slate-700/50 shadow-xl"
@@ -58,7 +80,6 @@ const LeagueCardSkeleton = ({ index }: { index: number }) => (
 )
 
 function LeagueList() {
-  const { leagues, loading, error } = useLeagues();
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -80,10 +101,8 @@ function LeagueList() {
     }
   };
 
-  // Create skeleton leagues for loading state
-  const skeletonLeagues = Array.from({ length: 6 }, (_, i) => ({ id: `skeleton-${i}` }));
-
-  if (loading) {
+  // No loading state needed - data is hardcoded
+  if (false) {
     // Show full page layout with skeleton cards instead of spinner
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900 transition-all duration-500">
@@ -210,36 +229,16 @@ function LeagueList() {
 
           {/* Skeleton League Cards */}
           <div className="grid gap-4 sm:gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-            {skeletonLeagues.map((_, index) => (
+            {/* {skeletonLeagues.map((_, index) => (
               <LeagueCardSkeleton key={`skeleton-${index}`} index={index} />
-            ))}
+            ))} */}
           </div>
         </section>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-rose-50 dark:from-slate-900 dark:via-red-900 dark:to-rose-900 flex items-center justify-center">
-        <div className="text-center bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/50">
-          <div className="text-red-500 dark:text-red-400 text-6xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Connection Error</h2>
-          <p className="text-gray-600 dark:text-gray-300 mb-4">Failed to connect to the server</p>
-          <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg mb-4">{error}</p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-          >
-            <div className="flex items-center space-x-2">
-              <span>Retry</span>
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // No error state needed - data is hardcoded
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900 transition-all duration-500">
@@ -358,15 +357,15 @@ function LeagueList() {
             {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">500+</div>
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">{STATS.activePlayers}+</div>
                 <div className="text-gray-600 dark:text-gray-300">Active Players</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">25+</div>
-                <div className="text-gray-600 dark:text-gray-300">Leagues</div>
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">{STATS.totalLeagues}</div>
+                <div className="text-gray-600 dark:text-gray-300">{STATS.totalLeagues === 1 ? 'League' : 'Leagues'}</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">10K+</div>
+                <div className="text-3xl font-bold text-green-600 dark:text-green-400 mb-2">{STATS.matchesPlayed}+</div>
                 <div className="text-gray-600 dark:text-gray-300">Matches Played</div>
               </div>
             </div>
@@ -387,7 +386,7 @@ function LeagueList() {
 
         {/* League Cards */}
         <div className="grid gap-4 sm:gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-          {leagues.map((league, index) => (
+          {LEAGUES.map((league, index) => (
             <div 
               key={league.id}
               className={`group relative overflow-hidden rounded-3xl transition-all duration-500 transform hover:scale-105 ${

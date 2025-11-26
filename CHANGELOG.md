@@ -15,6 +15,8 @@
 - Redesigned accept/decline buttons - compact single-line layout
 - Contextual help text: "You're checked in! Find a partner to get started!"
 - Removed redundant quick stats cards (Expected/Planned/Winners)
+- **Current match display with live score submission** - see your active match and submit scores directly from My Night tab
+- Real-time match updates when assigned to court
 
 **Component Organization**
 - Created 5 focused tab components replacing monolithic page structure
@@ -24,6 +26,12 @@
 ### Bug Fixes
 - Fixed MatchQueue component receiving incorrect props (leagueNightInstanceId instead of leagueId/nightId)
 - Resolved "Failed to fetch queue information" errors on Matches tab
+- **Auto-assignment now triggers when partnerships are confirmed** - courts fill immediately when partnerships form (not just on league start or score submission)
+- **Auto-assignment triggers from admin "Start League Night" button** - fixed duplicate require causing silent failure
+- **Auto-assignment triggers from testing panel "Auto-Pair All Players"** - dev tool now creates matches immediately
+- Fixed UI showing "League Night Not Started" when league is active but no matches assigned yet - now shows "Waiting for Partnerships"
+- **League night status properly syncs to UI** - real-time updates reflect when admin starts the league
+- **Fixed infinite request loop** - eliminated useEffect dependency chains causing 1000+ API requests per minute; now only fetches on genuine data changes
 
 ---
 

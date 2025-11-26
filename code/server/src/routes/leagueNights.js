@@ -13,12 +13,18 @@ const {
   getPartnershipRequests,
   uncheckPlayer,
   removePartnership,
-  startLeague
+  startLeague,
+  endLeague,
+  updateCourts
 } = require('../controllers/leagueNightController');const {
   getMatches,
   createMatches,
   submitMatchScore,
-  getQueue
+  confirmMatchScore,
+  disputeMatchScore,
+  cancelMatchScore,
+  getQueue,
+  getMyNightStats
 } = require('../controllers/matchController');
 
 // GET /api/leagues/:leagueId/nights/:nightId - Get league night details
@@ -35,6 +41,9 @@ router.get('/:leagueId/nights/:nightId/matches', getMatches);
 
 // GET /api/leagues/:leagueId/nights/:nightId/queue - Get queue information
 router.get('/:leagueId/nights/:nightId/queue', getQueue);
+
+// GET /api/leagues/:leagueId/nights/:nightId/my-stats - Get user's stats for tonight
+router.get('/:leagueId/nights/:nightId/my-stats', getMyNightStats);
 
 // POST /api/leagues/:leagueId/nights/:nightId/checkin - Check in player
 router.post('/:leagueId/nights/:nightId/checkin', checkInPlayer);
@@ -54,8 +63,23 @@ router.post('/:leagueId/nights/:nightId/create-matches', createMatches);
 // POST /api/leagues/:leagueId/nights/:nightId/submit-score - Submit match score
 router.post('/:leagueId/nights/:nightId/submit-score', submitMatchScore);
 
+// POST /api/leagues/:leagueId/nights/:nightId/confirm-score - Confirm opponent's submitted score
+router.post('/:leagueId/nights/:nightId/confirm-score', confirmMatchScore);
+
+// POST /api/leagues/:leagueId/nights/:nightId/dispute-score - Dispute opponent's submitted score
+router.post('/:leagueId/nights/:nightId/dispute-score', disputeMatchScore);
+
+// POST /api/leagues/:leagueId/nights/:nightId/cancel-score - Cancel your own score submission
+router.post('/:leagueId/nights/:nightId/cancel-score', cancelMatchScore);
+
 // POST /api/leagues/:leagueId/nights/:nightId/start-league - Manually start league (admin only)
 router.post('/:leagueId/nights/:nightId/start-league', startLeague);
+
+// POST /api/leagues/:leagueId/nights/:nightId/end-league - End league night (admin only)
+router.post('/:leagueId/nights/:nightId/end-league', endLeague);
+
+// POST /api/leagues/:leagueId/nights/:nightId/update-courts - Update court configuration (admin only)
+router.post('/:leagueId/nights/:nightId/update-courts', updateCourts);
 
 // DELETE /api/leagues/:leagueId/nights/:nightId/checkin - Uncheck player
 router.delete('/:leagueId/nights/:nightId/checkin', uncheckPlayer);

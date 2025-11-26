@@ -14,6 +14,30 @@ const tryAutoAssignMatches = async (instanceId) => {
   try {
     console.log(`Attempting auto-assignment for instance ${instanceId}`);
     
+    // Get league night instance to check status
+    const { data: instance, error: instanceError } = await supabase
+      .from('league_night_instances')
+      .select('status')
+      .eq('id', instanceId)
+      .single();
+
+    if (instanceError) {
+      console.error('Error fetching league night instance:', instanceError);
+      return { success: false, error: instanceError.message };
+    }
+
+    // Don't auto-assign if league night has been ended
+    if (instance.status === 'completed') {
+      console.log(`League night ${instanceId} is completed - no auto-assignment`);
+      return { success: true, message: 'League night has ended', matches: [] };
+    }
+
+    // Don't auto-assign if league night hasn't started yet
+    if (instance.status !== 'active') {
+      console.log(`League night ${instanceId} is not active - no auto-assignment`);
+      return { success: true, message: 'League night not active yet', matches: [] };
+    }
+    
     // Get partnerships with game counts using direct SQL (avoid RPC with outdated field names)
     const { data: partnerships, error: partnershipsError } = await supabase
       .from('confirmed_partnerships')
@@ -266,6 +290,11 @@ const getOrCreateLeagueNightInstance = async (leagueId, nightId) => {
         // Check if league night should auto-start
         const updatedInstance = await checkAndAutoStartLeagueNight(instance);
         return updatedInstance;
+      }
+      
+      // If numeric ID lookup failed, throw error instead of falling through
+      if (error) {
+        throw new Error(`League night instance not found: ${nightId}`);
       }
     }
 
@@ -780,8 +809,8 @@ const submitMatchScore = async (req, res) => {
       .from('matches')
       .select(`
         *,
-        partnership1:confirmed_partnerships!partnership1_id (player1_id, player2_id),
-        partnership2:confirmed_partnerships!partnership2_id (player1_id, player2_id)
+        partnership1:confirmed_partnerships!partnership1_id (id, player1_id, player2_id),
+        partnership2:confirmed_partnerships!partnership2_id (id, player1_id, player2_id)
       `)
       .eq('id', match_id)
       .eq('league_night_instance_id', instance.id)
@@ -795,14 +824,20 @@ const submitMatchScore = async (req, res) => {
       });
     }
 
-    // Verify user is part of this match
-    const isPlayerInMatch = 
+    // Verify user is part of this match and get their partnership
+    let userPartnershipId;
+    const isInPartnership1 = 
       match.partnership1.player1_id === user_id ||
-      match.partnership1.player2_id === user_id ||
+      match.partnership1.player2_id === user_id;
+    const isInPartnership2 = 
       match.partnership2.player1_id === user_id ||
       match.partnership2.player2_id === user_id;
 
-    if (!isPlayerInMatch) {
+    if (isInPartnership1) {
+      userPartnershipId = match.partnership1.id;
+    } else if (isInPartnership2) {
+      userPartnershipId = match.partnership2.id;
+    } else {
       return res.status(403).json({
         success: false,
         error: 'User is not part of this match'
@@ -829,18 +864,15 @@ const submitMatchScore = async (req, res) => {
       });
     }
 
-    // Determine winning team
-    const team1Won = score1 > score2;
-    const team2Won = score2 > score1;
-
-    // Update match with scores and mark as completed
+    // Create pending score (awaiting opponent confirmation)
     const { data: updatedMatch, error: updateError } = await supabase
       .from('matches')
       .update({
-        team1_score: score1,
-        team2_score: score2,
-        status: 'completed',
-        completed_at: new Date().toISOString()
+        pending_team1_score: score1,
+        pending_team2_score: score2,
+        pending_submitted_by_partnership_id: userPartnershipId,
+        pending_submitted_at: new Date().toISOString(),
+        score_status: 'pending'
       })
       .eq('id', match_id)
       .select()
@@ -848,20 +880,11 @@ const submitMatchScore = async (req, res) => {
 
     if (updateError) throw updateError;
 
-    // Update player statistics
-    await updatePlayerStats(instance.league_id, match, score1, score2, team1Won);
-
-    // Try to create new matches now that a court is available (continuous flow)
-    console.log(`Match ${match_id} completed, checking for new matches...`);
-    const autoAssignResult = await tryAutoAssignMatches(instance.id);
-    console.log('Auto-assignment after match completion:', autoAssignResult);
-
     res.json({
       success: true,
       data: {
         match: updatedMatch,
-        message: 'Match score submitted successfully',
-        autoAssignment: autoAssignResult
+        message: 'Score submitted, waiting for opponent confirmation'
       }
     });
 
@@ -870,6 +893,315 @@ const submitMatchScore = async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to submit match score'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/confirm-score
+const confirmMatchScore = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { match_id, user_id } = req.body;
+
+    if (!match_id || !user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Match ID and user ID are required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Get the match with pending score
+    const { data: match, error: matchError } = await supabase
+      .from('matches')
+      .select(`
+        *,
+        partnership1:confirmed_partnerships!partnership1_id (id, player1_id, player2_id),
+        partnership2:confirmed_partnerships!partnership2_id (id, player1_id, player2_id)
+      `)
+      .eq('id', match_id)
+      .eq('league_night_instance_id', instance.id)
+      .eq('status', 'active')
+      .eq('score_status', 'pending')
+      .single();
+
+    if (matchError || !match) {
+      return res.status(404).json({
+        success: false,
+        error: 'Match not found or no pending score'
+      });
+    }
+
+    // Verify user is in the opposing partnership (not the one who submitted)
+    let userPartnershipId;
+    const isInPartnership1 = 
+      match.partnership1.player1_id === user_id ||
+      match.partnership1.player2_id === user_id;
+    const isInPartnership2 = 
+      match.partnership2.player1_id === user_id ||
+      match.partnership2.player2_id === user_id;
+
+    if (isInPartnership1) {
+      userPartnershipId = match.partnership1.id;
+    } else if (isInPartnership2) {
+      userPartnershipId = match.partnership2.id;
+    } else {
+      return res.status(403).json({
+        success: false,
+        error: 'User is not part of this match'
+      });
+    }
+
+    // Verify user is NOT the one who submitted the score
+    if (userPartnershipId === match.pending_submitted_by_partnership_id) {
+      return res.status(403).json({
+        success: false,
+        error: 'Cannot confirm your own score submission'
+      });
+    }
+
+    // Finalize the match with confirmed scores
+    const team1Won = match.pending_team1_score > match.pending_team2_score;
+
+    const { data: updatedMatch, error: updateError } = await supabase
+      .from('matches')
+      .update({
+        team1_score: match.pending_team1_score,
+        team2_score: match.pending_team2_score,
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        score_status: 'confirmed',
+        // Clear pending fields
+        pending_team1_score: null,
+        pending_team2_score: null,
+        pending_submitted_by_partnership_id: null,
+        pending_submitted_at: null
+      })
+      .eq('id', match_id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Update player statistics
+    await updatePlayerStats(
+      instance.league_id,
+      match,
+      match.pending_team1_score,
+      match.pending_team2_score,
+      team1Won
+    );
+
+    // Try to create new matches now that a court is available
+    console.log(`Match ${match_id} confirmed, checking for new matches...`);
+    const autoAssignResult = await tryAutoAssignMatches(instance.id);
+    console.log('Auto-assignment after match confirmation:', autoAssignResult);
+
+    res.json({
+      success: true,
+      data: {
+        match: updatedMatch,
+        message: 'Score confirmed successfully',
+        autoAssignment: autoAssignResult
+      }
+    });
+
+  } catch (error) {
+    console.error('Error confirming match score:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to confirm match score'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/dispute-score
+const disputeMatchScore = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { match_id, user_id } = req.body;
+
+    if (!match_id || !user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Match ID and user ID are required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Get the match with pending score
+    const { data: match, error: matchError } = await supabase
+      .from('matches')
+      .select(`
+        *,
+        partnership1:confirmed_partnerships!partnership1_id (id, player1_id, player2_id),
+        partnership2:confirmed_partnerships!partnership2_id (id, player1_id, player2_id)
+      `)
+      .eq('id', match_id)
+      .eq('league_night_instance_id', instance.id)
+      .eq('status', 'active')
+      .eq('score_status', 'pending')
+      .single();
+
+    if (matchError || !match) {
+      return res.status(404).json({
+        success: false,
+        error: 'Match not found or no pending score'
+      });
+    }
+
+    // Verify user is in the opposing partnership
+    let userPartnershipId;
+    const isInPartnership1 = 
+      match.partnership1.player1_id === user_id ||
+      match.partnership1.player2_id === user_id;
+    const isInPartnership2 = 
+      match.partnership2.player1_id === user_id ||
+      match.partnership2.player2_id === user_id;
+
+    if (isInPartnership1) {
+      userPartnershipId = match.partnership1.id;
+    } else if (isInPartnership2) {
+      userPartnershipId = match.partnership2.id;
+    } else {
+      return res.status(403).json({
+        success: false,
+        error: 'User is not part of this match'
+      });
+    }
+
+    // Verify user is NOT the one who submitted the score
+    if (userPartnershipId === match.pending_submitted_by_partnership_id) {
+      return res.status(403).json({
+        success: false,
+        error: 'Cannot dispute your own score submission'
+      });
+    }
+
+    // Mark score as disputed (admin will need to resolve)
+    const { data: updatedMatch, error: updateError } = await supabase
+      .from('matches')
+      .update({
+        score_status: 'disputed'
+      })
+      .eq('id', match_id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    res.json({
+      success: true,
+      data: {
+        match: updatedMatch,
+        message: 'Score disputed - admin will review'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error disputing match score:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to dispute match score'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/cancel-score
+const cancelMatchScore = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { match_id, user_id } = req.body;
+
+    if (!match_id || !user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Match ID and user ID are required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Get the match with pending score
+    const { data: match, error: matchError } = await supabase
+      .from('matches')
+      .select(`
+        *,
+        partnership1:confirmed_partnerships!partnership1_id (id, player1_id, player2_id),
+        partnership2:confirmed_partnerships!partnership2_id (id, player1_id, player2_id)
+      `)
+      .eq('id', match_id)
+      .eq('league_night_instance_id', instance.id)
+      .eq('status', 'active')
+      .eq('score_status', 'pending')
+      .single();
+
+    if (matchError || !match) {
+      return res.status(404).json({
+        success: false,
+        error: 'Match not found or no pending score'
+      });
+    }
+
+    // Verify user is the one who submitted the score
+    let userPartnershipId;
+    const isInPartnership1 = 
+      match.partnership1.player1_id === user_id ||
+      match.partnership1.player2_id === user_id;
+    const isInPartnership2 = 
+      match.partnership2.player1_id === user_id ||
+      match.partnership2.player2_id === user_id;
+
+    if (isInPartnership1) {
+      userPartnershipId = match.partnership1.id;
+    } else if (isInPartnership2) {
+      userPartnershipId = match.partnership2.id;
+    } else {
+      return res.status(403).json({
+        success: false,
+        error: 'User is not part of this match'
+      });
+    }
+
+    // Verify user IS the one who submitted the score
+    if (userPartnershipId !== match.pending_submitted_by_partnership_id) {
+      return res.status(403).json({
+        success: false,
+        error: 'Can only cancel your own score submission'
+      });
+    }
+
+    // Clear pending score
+    const { data: updatedMatch, error: updateError } = await supabase
+      .from('matches')
+      .update({
+        pending_team1_score: null,
+        pending_team2_score: null,
+        pending_submitted_by_partnership_id: null,
+        pending_submitted_at: null,
+        score_status: 'none'
+      })
+      .eq('id', match_id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    res.json({
+      success: true,
+      data: {
+        match: updatedMatch,
+        message: 'Score submission cancelled'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error cancelling match score:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to cancel match score'
     });
   }
 };
@@ -1120,10 +1452,119 @@ const getQueue = async (req, res) => {
   }
 };
 
+// GET /api/leagues/:leagueId/nights/:nightId/my-stats
+const getMyNightStats = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { userId } = req.query;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Get all completed matches for this league night where user participated
+    const { data: completedMatches, error: matchesError } = await supabase
+      .from('matches')
+      .select(`
+        *,
+        partnership1:confirmed_partnerships!partnership1_id (
+          id,
+          player1_id,
+          player2_id,
+          player1:profiles!player1_id (id, first_name, last_name, skill_level),
+          player2:profiles!player2_id (id, first_name, last_name, skill_level)
+        ),
+        partnership2:confirmed_partnerships!partnership2_id (
+          id,
+          player1_id,
+          player2_id,
+          player1:profiles!player1_id (id, first_name, last_name, skill_level),
+          player2:profiles!player2_id (id, first_name, last_name, skill_level)
+        )
+      `)
+      .eq('league_night_instance_id', instance.id)
+      .eq('status', 'completed')
+      .order('completed_at', { ascending: false });
+
+    if (matchesError) throw matchesError;
+
+    // Filter matches where user participated
+    const userMatches = (completedMatches || []).filter(match => {
+      return match.partnership1.player1_id === userId ||
+             match.partnership1.player2_id === userId ||
+             match.partnership2.player1_id === userId ||
+             match.partnership2.player2_id === userId;
+    });
+
+    // Calculate stats
+    let gamesPlayed = 0;
+    let gamesWon = 0;
+    let totalPoints = 0;
+
+    userMatches.forEach(match => {
+      gamesPlayed++;
+      
+      // Determine if user was in team 1 or team 2
+      const isUserInTeam1 = 
+        match.partnership1.player1_id === userId ||
+        match.partnership1.player2_id === userId;
+      
+      if (isUserInTeam1) {
+        totalPoints += match.team1_score || 0;
+        if (match.team1_score > match.team2_score) {
+          gamesWon++;
+        }
+      } else {
+        totalPoints += match.team2_score || 0;
+        if (match.team2_score > match.team1_score) {
+          gamesWon++;
+        }
+      }
+    });
+
+    // Map court labels
+    const courtLabels = instance.court_labels || [];
+    const matchesWithLabels = userMatches.map(match => ({
+      ...match,
+      court_label: courtLabels[match.court_number - 1] || `Court ${match.court_number}`
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        stats: {
+          gamesPlayed,
+          gamesWon,
+          gamesLost: gamesPlayed - gamesWon,
+          totalPoints,
+          averagePoints: gamesPlayed > 0 ? Math.round((totalPoints / gamesPlayed) * 10) / 10 : 0
+        },
+        completedMatches: matchesWithLabels
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching tonight stats:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch tonight stats'
+    });
+  }
+};
+
 module.exports = {
   getMatches,
   createMatches,
   submitMatchScore,
+  confirmMatchScore,
+  disputeMatchScore,
+  cancelMatchScore,
   tryAutoAssignMatches,
-  getQueue
+  getQueue,
+  getMyNightStats
 };

@@ -7,6 +7,8 @@ interface MatchesQueueTabProps {
   leagueId: string;
   nightId: string;
   leagueNightInstanceId: number;
+  leagueNightStatus: 'scheduled' | 'active' | 'completed';
+  userId?: string;
   matchesRefreshTrigger: number;
   onMatchesCreated: () => void;
 }
@@ -15,6 +17,8 @@ const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
   leagueId,
   nightId,
   leagueNightInstanceId,
+  leagueNightStatus,
+  userId,
   matchesRefreshTrigger,
   onMatchesCreated
 }) => {
@@ -31,8 +35,10 @@ const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
           <MatchesDisplay 
             leagueId={leagueId}
             nightId={nightId}
+            currentUserId={userId}
+            leagueNightStatus={leagueNightStatus}
             refreshTrigger={matchesRefreshTrigger}
-            onMatchesCreated={onMatchesCreated}
+            onCreateMatches={onMatchesCreated}
           />
         </div>
 

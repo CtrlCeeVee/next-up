@@ -1,21 +1,21 @@
 Im going to compile a BUNCH of changes we need to do here, tick when done:
-[] 1. Clicking back on player profile doesnt redirect to the main page but the previous link rather (so if you clicked stats, etc its going to go back to overview)
+[DONE ✅] 1. Clicking back on player profile doesnt redirect to the main page but the previous link rather (so if you clicked stats, etc its going to go back to overview)
 
-[] 2. when I start the night if we have less pairings than courts available, that left over courts will only get reassigned when a match finishes and it triggers re-assignment
+[DONE ✅] 2. when I start the night if we have less pairings than courts available, that left over courts will only get reassigned when a match finishes and it triggers re-assignment
  - for e.g. 2 courts available, only 2 pairs when night starts. 
  - the 2 pairs get placed on court 1.
  - court 2 still open, new pairs check in but court 2 isn't autofilled when it can be.
  - game on court 1 finished and score gets submitted = triggers auto-assign = both courts get filled. 
  - proper behaviour should be that court 2 was filled when it couldve been as people joined. 
 
-[] 3. The league nights page UI is super cluttered when a lot of people are registered. (Top priority)
+[DONE ✅] 3. The league nights page UI is super cluttered when a lot of people are registered. (Top priority)
  - You can see like 40 people checked in (on mobile only shows 2 at a time)
  - you can see the full queue + whos already played
  - very hard to find your own game when theres a ton of people on. 
  - I think some sort of tab system would work really well here.
 
 
-[] 4. Finding your partner when there is a TON of people checked in can be a mission, some kind of search or ordering would be optimal
+[DONE ✅] 4. Finding your partner when there is a TON of people checked in can be a mission, some kind of search or ordering would be optimal
  - I do think this goes with our UI changes for league night as part of the clean up
 
 [] 5. We need, need, need push notifications 
@@ -27,11 +27,13 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
    - an extended stretch goal of this would then be that they can submit scores via a widget in the push notification
    - I know some apps have this functionality but I have no clue how it works
 
-[] 6. Knowing who you are playing next
+[DEFER - needs matchmaking redesign] 6. Knowing who you are playing next
  - A lot of people complained saying it would be more convenient to be able to see who they are playing next
  - Allows them to pre-meet the people and mentally prepare
+ - NOTE: Not deterministic with current system - next opponent depends on who finishes current matches and when, 
+   plus algorithm avoids repeat pairings. Would need complete matchmaking overhaul to predict reliably.
 
-[] 7. Queueing priorty bug?
+[DEFER - working as intended] 7. Queueing priorty bug?
  - something strange was happening on the night where people who just finished a game that played later in a pool,
    meaning they were one of the last to play for those who hadn't played - got immediately assigned their next game 
    when their first one finished. 
@@ -40,6 +42,9 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
    waited super short for their next game
  - idk what we can do about this but some sort of priority queueing to try ensure people wait a consist amount of time will
    help with user experience (even tho they all end up playing the same nubmer of games anyway - seems more of a mental thing)
+ - NOTE: Adding time-based priority creates player pools (early players only play each other, late players cluster). 
+   Current system ensures equal games played for everyone - this is the actual goal. Perception issue, not fairness issue.
+   Requires full matchmaking redesign to solve properly.
 
 [] 8. Confirming scores between matches
  - currently whichever team submitted the scores just got their scores saved without any kind of confirmation
@@ -48,7 +53,7 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
  - we need implement a feature where, like the partnership request, when someone submits a score then the other team must 
    confirm before the official score gets confirmed.
 
-[] 9. Caching of information
+[x - did landing page] 9. Caching of information
  - Currently every single time we load the website it does the UI animation of loading the leagues, active players, 
    matches played, etc etc. This is silly.
  - Rather I think either we hardcode or cache the information. Since its a landing page I see no reason to pull any metrics
@@ -63,9 +68,25 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
    - http://localhost:5173/profile/random_random!@ shows an account with user name random_random!@ to display (this account
      does not exist nor has any data)
 
-[] 11. Ending the league night
+[DONE ✅] 11. Ending the league night
  - We need a way to "end" a league night
  - What I mean is that it normally runs from 6:30-9pm but the app will just keep auto-assigning until people just stop playing
  - Instead as an admin I would want to be able to stop the league night.
  - It shouldnt immediately end everything but rather just stop the auto-assignment from running when a game is finished
  - That way it will allow all the games currently being played to finish and thereafter prevent any more games from occuring.
+
+ [] 12. Admin functionality
+  - set number of courts
+  - manual games
+  - change scores
+  - reassign court, etc, etc
+
+[] 13. Redesign tabs
+ - tabs functionally are prefect
+ - I just currently dont like the segmented card designs 
+ - No idea what I want but not that.
+
+[] 14. Time gated score confirmation
+ - score should be auto confirmed after a certain amount of time has passed.
+ - prevents users just leaving and not confirming a score resulting in stuck courts
+ 

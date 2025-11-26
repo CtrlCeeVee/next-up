@@ -3,6 +3,7 @@
 // Provides simulation and cleanup endpoints for testing
 
 const { createClient } = require('@supabase/supabase-js');
+const { tryAutoAssignMatches } = require('./matchController');
 require('dotenv').config();
 
 const supabase = createClient(
@@ -132,10 +133,15 @@ const simulatePartnerships = async (req, res) => {
       partnerships.push(partnership);
     }
 
+    // Try to auto-assign matches now that partnerships are created
+    const autoAssignResult = await tryAutoAssignMatches(leagueNightId);
+    console.log('Auto-assignment after simulating partnerships:', autoAssignResult);
+
     res.json({ 
       success: true, 
       partnerships: partnerships.length,
-      message: `Created ${partnerships.length} partnerships` 
+      message: `Created ${partnerships.length} partnerships`,
+      autoAssignment: autoAssignResult
     });
   } catch (error) {
     console.error('Error simulating partnerships:', error);

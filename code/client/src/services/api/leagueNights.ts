@@ -8,6 +8,7 @@ export interface LeagueNightInstance {
   date: string;
   status: 'scheduled' | 'active' | 'completed';
   courtsAvailable: number;
+  courtLabels?: string[];
   checkedInCount: number;
   partnershipsCount: number;
   possibleGames: number;
@@ -251,6 +252,107 @@ class LeagueNightService {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to start league night');
+    }
+
+    return response.json();
+  }
+
+  // End league night (admin only)
+  async endLeague(leagueId: number, nightId: string, userId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/end-league`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_id: userId }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to end league night');
+    }
+
+    return response.json();
+  }
+
+  // Update court configuration (admin only)
+  async updateCourts(leagueId: number, nightId: string, userId: string, courtLabels: string[]): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/update-courts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ user_id: userId, court_labels: courtLabels }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update courts');
+    }
+
+    return response.json();
+  }
+
+  // Submit match score (creates pending score)
+  async submitMatchScore(leagueId: number, nightId: string, matchId: number, team1Score: number, team2Score: number, userId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/submit-score`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        match_id: matchId, 
+        team1_score: team1Score, 
+        team2_score: team2Score, 
+        user_id: userId 
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to submit match score');
+    }
+
+    return response.json();
+  }
+
+  // Confirm opponent's submitted score
+  async confirmMatchScore(leagueId: number, nightId: string, matchId: number, userId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/confirm-score`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        match_id: matchId, 
+        user_id: userId 
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to confirm match score');
+    }
+
+    return response.json();
+  }
+
+  // Dispute opponent's submitted score
+  async disputeMatchScore(leagueId: number, nightId: string, matchId: number, userId: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/dispute-score`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        match_id: matchId, 
+        user_id: userId 
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to dispute match score');
     }
 
     return response.json();

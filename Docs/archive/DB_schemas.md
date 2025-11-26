@@ -102,6 +102,7 @@ status TEXT ('scheduled', 'active', 'completed') DEFAULT 'scheduled'
 courts_available INTEGER DEFAULT 1
 court_labels TEXT[]
 auto_started_at TIMESTAMPTZ -- Auto-set when start_time is reached
+ended_at TIMESTAMPTZ -- Set when admin ends the league night
 created_at TIMESTAMPTZ
 UNIQUE(league_id, date)
 ```

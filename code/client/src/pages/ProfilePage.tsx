@@ -182,7 +182,7 @@ const ProfilePage = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate(-1)}
+                onClick={() => navigate('/')}
                 className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 <ArrowLeft className="h-5 w-5" />
