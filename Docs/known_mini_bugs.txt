@@ -1,5 +1,7 @@
 1. You can play in a league you havent registered for
-2. If you send a request to someone who accepts someone elses request their request will just be stuck there forever.
-3. Users have to manually referesh the website for most updates (e.g. when getting a partnership request, when accepting one the other users needs to refresh, things like that)
+[FIXED] 2. If you send a request to someone who accepts someone elses request their request will just be stuck there forever.
+[FIXED] 3. Users have to manually referesh the website for most updates (e.g. when getting a partnership request, when accepting one the other users needs to refresh, things like that)
 4. There seems to be no caching of any data, everytime you go to a page it auto resyncs the ENTIRE page.
 5. You can game the seeding by unchecking in then rechecking in - results in you having played "0" matches allowing you to get top priortity each time.
+[FIXED] 6. It says "your team" for the incorrect team on my night if you are the second team.
+[FIXED] 7. My night does show the pending scores status / request
