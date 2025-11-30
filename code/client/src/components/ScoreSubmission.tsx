@@ -255,9 +255,9 @@ const ScoreSubmission: React.FC<ScoreSubmissionProps> = ({
   if (!showForm) {
     return (
       <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-700">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col min-[375px]:flex-row min-[375px]:items-center min-[375px]:justify-between gap-2">
           <div>
-            <p className="text-sm text-green-800 dark:text-green-300 font-medium">
+            <p className="text-xs min-[375px]:text-sm text-green-800 dark:text-green-300 font-medium">
               🏓 This is your match!
             </p>
             <p className="text-xs text-green-600 dark:text-green-400 mt-1">
@@ -266,7 +266,7 @@ const ScoreSubmission: React.FC<ScoreSubmissionProps> = ({
           </div>
           <button
             onClick={() => setShowForm(true)}
-            className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+            className="bg-green-600 hover:bg-green-700 text-white text-xs min-[375px]:text-sm font-medium py-2 px-3 min-[375px]:px-4 rounded-lg transition-colors duration-200 whitespace-nowrap"
           >
             Submit Score
           </button>
@@ -276,17 +276,17 @@ const ScoreSubmission: React.FC<ScoreSubmissionProps> = ({
   }
 
   return (
-    <div className="mt-4 p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 shadow-lg">
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
-          <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-          <span>Submit Match Score</span>
+    <div className="mt-4 p-3 min-[375px]:p-4 bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 shadow-lg">
+      <div className="flex items-center justify-between gap-2 mb-4">
+        <h4 className="text-xs min-[375px]:text-sm sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-1 min-[375px]:gap-2 min-w-0">
+          <Trophy className="h-3 w-3 min-[375px]:h-4 min-[375px]:w-4 sm:h-5 sm:w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+          <span className="truncate">Submit Match Score</span>
         </h4>
         <button
           onClick={handleCancel}
-          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 -mr-1"
         >
-          <X className="h-5 w-5" />
+          <X className="h-4 w-4 min-[375px]:h-5 min-[375px]:w-5" />
         </button>
       </div>
 
@@ -298,15 +298,15 @@ const ScoreSubmission: React.FC<ScoreSubmissionProps> = ({
 
       <div className="space-y-4">
         {/* Team 1 Score */}
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs min-[375px]:text-sm font-medium text-gray-900 dark:text-white truncate min-[375px]:whitespace-normal">
               {`${match.partnership1.player1.first_name} ${match.partnership1.player1.last_name}`} & {`${match.partnership1.player2.first_name} ${match.partnership1.player2.last_name}`}
-              {isUserTeam1 && <span className="text-green-600 dark:text-green-400 ml-2">(Your Team)</span>}
+              {isUserTeam1 && <span className="text-green-600 dark:text-green-400 ml-1 min-[375px]:ml-2">(Your Team)</span>}
             </p>
           </div>
-          <div className="ml-4 flex flex-col items-center gap-1">
-            <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <div className="flex flex-col items-center gap-1 flex-shrink-0">
+            <label className="text-[9px] min-[375px]:text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Score
             </label>
             <input
@@ -314,7 +314,7 @@ const ScoreSubmission: React.FC<ScoreSubmissionProps> = ({
               min="0"
               value={team1Score}
               onChange={(e) => setTeam1Score(e.target.value)}
-              className="w-20 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white text-center font-semibold text-lg"
+              className="w-16 min-[375px]:w-20 px-2 min-[375px]:px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white text-center font-semibold text-base min-[375px]:text-lg"
             />
           </div>
         </div>
@@ -325,15 +325,15 @@ const ScoreSubmission: React.FC<ScoreSubmissionProps> = ({
         </div>
 
         {/* Team 2 Score */}
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {`${match.partnership2.player1.first_name} ${match.partnership2.player1.last_name}`} & {`${match.partnership2.player2.first_name} ${match.partnership2.player2.last_name}`}
-              {!isUserTeam1 && <span className="text-green-600 dark:text-green-400 ml-2">(Your Team)</span>}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs min-[375px]:text-sm font-medium text-gray-900 dark:text-white truncate min-[375px]:whitespace-normal">
+              {`${match.partnership2.player1.first_name} ${match.partnership2.player2.last_name}`} & {`${match.partnership2.player2.first_name} ${match.partnership2.player2.last_name}`}
+              {!isUserTeam1 && <span className="text-green-600 dark:text-green-400 ml-1 min-[375px]:ml-2">(Your Team)</span>}
             </p>
           </div>
-          <div className="ml-4 flex flex-col items-center gap-1">
-            <label className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <div className="flex flex-col items-center gap-1 flex-shrink-0">
+            <label className="text-[9px] min-[375px]:text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               Score
             </label>
             <input
@@ -341,17 +341,17 @@ const ScoreSubmission: React.FC<ScoreSubmissionProps> = ({
               min="0"
               value={team2Score}
               onChange={(e) => setTeam2Score(e.target.value)}
-              className="w-20 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white text-center font-semibold text-lg"
+              className="w-16 min-[375px]:w-20 px-2 min-[375px]:px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white text-center font-semibold text-base min-[375px]:text-lg"
             />
           </div>
         </div>
 
         {/* Scoring Rules Info */}
-        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700/50">
-          <h5 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
+        <div className="mt-4 p-2 min-[375px]:p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700/50">
+          <h5 className="text-xs min-[375px]:text-sm font-medium text-blue-900 dark:text-blue-200 mb-1 min-[375px]:mb-2">
             📏 Pickleball Scoring Rules
           </h5>
-          <ul className="text-xs text-blue-800 dark:text-blue-300 space-y-1">
+          <ul className="text-[10px] min-[375px]:text-xs text-blue-800 dark:text-blue-300 space-y-1">
             <li>• First to 15 points wins</li>
             <li>• Must win by at least 2 points</li>
             <li>• Game cannot end in a tie</li>
@@ -359,17 +359,17 @@ const ScoreSubmission: React.FC<ScoreSubmissionProps> = ({
         </div>
 
         {/* Submit Button */}
-        <div className="flex space-x-3 pt-4">
+        <div className="flex flex-col min-[375px]:flex-row gap-2 min-[375px]:gap-3 pt-4">
           <button
             onClick={handleSubmitScore}
             disabled={submitting || !team1Score || !team2Score}
-            className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+            className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
           >
             {submitting ? (
               <span>Submitting...</span>
             ) : (
               <>
-                <CheckCircle className="h-4 w-4" />
+                <CheckCircle className="h-4 w-4 flex-shrink-0" />
                 <span>Submit Score</span>
               </>
             )}

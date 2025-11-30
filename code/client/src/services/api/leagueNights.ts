@@ -9,6 +9,7 @@ export interface LeagueNightInstance {
   status: 'scheduled' | 'active' | 'completed';
   courtsAvailable: number;
   courtLabels?: string[];
+  autoAssignmentEnabled?: boolean;
   checkedInCount: number;
   partnershipsCount: number;
   possibleGames: number;

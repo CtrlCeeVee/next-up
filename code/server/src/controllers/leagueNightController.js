@@ -126,6 +126,7 @@ const getLeagueNight = async (req, res) => {
       status: instance.status,
       courtsAvailable: instance.courts_available,
       courtLabels: instance.court_labels || [],
+      autoAssignmentEnabled: instance.auto_assignment_enabled !== false,
       checkedInCount: checkins.length,
       partnershipsCount: partnerships.length,
       possibleGames: Math.floor(partnerships.length / 2) * 2 // Each partnership can play against another
@@ -977,6 +978,74 @@ const updateCourts = async (req, res) => {
   }
 };
 
+// POST /api/leagues/:leagueId/nights/:nightId/toggle-auto-assignment
+const toggleAutoAssignment = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { user_id, enabled } = req.body;
+
+    if (!user_id || typeof enabled !== 'boolean') {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID and enabled status are required'
+      });
+    }
+
+    // Check if user is admin/organizer
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', user_id)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized - admin/organizer access required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Update auto_assignment_enabled
+    const { data: updatedInstance, error: updateError } = await supabase
+      .from('league_night_instances')
+      .update({ auto_assignment_enabled: enabled })
+      .eq('id', instance.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Error toggling auto-assignment:', updateError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to update auto-assignment setting'
+      });
+    }
+
+    // If turning auto-assignment ON, trigger it immediately
+    if (enabled && instance.status === 'active') {
+      const { tryAutoAssignMatches } = require('./matchController');
+      const autoAssignResult = await tryAutoAssignMatches(instance.id);
+      console.log('Auto-assignment triggered after enabling:', autoAssignResult);
+    }
+
+    res.json({
+      success: true,
+      message: `Auto-assignment ${enabled ? 'enabled' : 'disabled'}`,
+      instance: updatedInstance
+    });
+
+  } catch (error) {
+    console.error('Error toggling auto-assignment:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to toggle auto-assignment'
+    });
+  }
+};
+
 module.exports = {
   getLeagueNight,
   getCheckedInPlayers,
@@ -989,5 +1058,6 @@ module.exports = {
   removePartnership,
   startLeague,
   endLeague,
-  updateCourts
+  updateCourts,
+  toggleAutoAssignment
 };

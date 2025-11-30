@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Settings, Play, StopCircle, Edit, Users, BarChart, Plus, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Settings, Play, StopCircle, Edit, Users, BarChart, Plus, X, Trophy, AlertTriangle } from 'lucide-react';
 import TestingPanel from '../admin/TestingPanel';
 import { leagueNightService } from '../../services/api/leagueNights';
 
@@ -10,6 +10,7 @@ interface AdminTabProps {
     backendStatus?: string;
     courtsAvailable?: number;
     courtLabels?: string[];
+    autoAssignmentEnabled?: boolean;
   };
   leagueId: number;
   nightId: string;
@@ -40,6 +41,30 @@ const AdminTab: React.FC<AdminTabProps> = ({
   const [newCourtName, setNewCourtName] = useState('');
   const [savingCourts, setSavingCourts] = useState(false);
   const [courtError, setCourtError] = useState<string | null>(null);
+
+  // Match management state
+  const [activeMatches, setActiveMatches] = useState<any[]>([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<any | null>(null);
+  const [overrideTeam1Score, setOverrideTeam1Score] = useState('');
+  const [overrideTeam2Score, setOverrideTeam2Score] = useState('');
+  const [overriding, setOverriding] = useState(false);
+  const [overrideError, setOverrideError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<number | null>(null);
+
+  // Manual assignment state
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [waitingPartnerships, setWaitingPartnerships] = useState<any[]>([]);
+  const [selectedPartnership1, setSelectedPartnership1] = useState('');
+  const [selectedPartnership2, setSelectedPartnership2] = useState('');
+  const [selectedCourt, setSelectedCourt] = useState('');
+  const [assigning, setAssigning] = useState(false);
+  const [assignError, setAssignError] = useState<string | null>(null);
+
+  // Auto-assignment toggle state
+  const [autoAssignmentEnabled, setAutoAssignmentEnabled] = useState(leagueNight.autoAssignmentEnabled !== false);
+  const [togglingAutoAssignment, setTogglingAutoAssignment] = useState(false);
 
   const handleAddCourt = () => {
     if (!newCourtName.trim()) {
@@ -84,6 +109,229 @@ const AdminTab: React.FC<AdminTabProps> = ({
   };
 
   const hasChanges = JSON.stringify(courts) !== JSON.stringify(leagueNight.courtLabels || []);
+
+  // Fetch active matches
+  const fetchActiveMatches = async () => {
+    try {
+      setLoadingMatches(true);
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/matches`);
+      const data = await response.json();
+      if (data.success) {
+        setActiveMatches(data.data.filter((m: any) => m.status === 'active'));
+      }
+    } catch (error) {
+      console.error('Error fetching matches:', error);
+    } finally {
+      setLoadingMatches(false);
+    }
+  };
+
+  // Open override modal
+  const handleOpenOverride = (match: any) => {
+    setSelectedMatch(match);
+    setOverrideTeam1Score(match.team1_score?.toString() || match.pending_team1_score?.toString() || '');
+    setOverrideTeam2Score(match.team2_score?.toString() || match.pending_team2_score?.toString() || '');
+    setOverrideError(null);
+    setShowOverrideModal(true);
+  };
+
+  // Override match score
+  const handleOverrideScore = async () => {
+    if (!selectedMatch || !userId) return;
+
+    const team1Score = parseInt(overrideTeam1Score);
+    const team2Score = parseInt(overrideTeam2Score);
+
+    if (isNaN(team1Score) || isNaN(team2Score)) {
+      setOverrideError('Please enter valid scores');
+      return;
+    }
+
+    if (team1Score < 0 || team2Score < 0) {
+      setOverrideError('Scores cannot be negative');
+      return;
+    }
+
+    try {
+      setOverriding(true);
+      setOverrideError(null);
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(
+        `${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/matches/${selectedMatch.id}/override-score`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: userId,
+            team1_score: team1Score,
+            team2_score: team2Score
+          })
+        }
+      );
+
+      const data = await response.json();
+      if (data.success) {
+        setShowOverrideModal(false);
+        setSelectedMatch(null);
+        onRefresh();
+        fetchActiveMatches();
+      } else {
+        setOverrideError(data.error || 'Failed to override score');
+      }
+    } catch (error) {
+      setOverrideError(error instanceof Error ? error.message : 'Failed to override score');
+    } finally {
+      setOverriding(false);
+    }
+  };
+
+  // Cancel active match
+  const handleCancelMatch = async (matchId: number) => {
+    if (!userId || !confirm('Are you sure you want to cancel this match? The partnerships will return to the queue.')) {
+      return;
+    }
+
+    try {
+      setCancelling(matchId);
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(
+        `${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/matches/${matchId}/cancel`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId })
+        }
+      );
+
+      const data = await response.json();
+      if (data.success) {
+        onRefresh();
+        fetchActiveMatches();
+        fetchWaitingPartnerships();
+      } else {
+        alert(data.error || 'Failed to cancel match');
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to cancel match');
+    } finally {
+      setCancelling(null);
+    }
+  };
+
+  // Fetch waiting partnerships for manual assignment
+  const fetchWaitingPartnerships = async () => {
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/queue`);
+      const data = await response.json();
+      if (data.success && data.data.queue) {
+        setWaitingPartnerships(data.data.queue);
+      }
+    } catch (error) {
+      console.error('Error fetching waiting partnerships:', error);
+    }
+  };
+
+  // Open manual assignment modal
+  const handleOpenAssignment = () => {
+    fetchWaitingPartnerships();
+    setAssignError(null);
+    setSelectedPartnership1('');
+    setSelectedPartnership2('');
+    setSelectedCourt('');
+    setShowAssignModal(true);
+  };
+
+  // Manual court assignment
+  const handleAssignMatch = async () => {
+    if (!userId || !selectedPartnership1 || !selectedPartnership2 || !selectedCourt) {
+      setAssignError('Please select both partnerships and a court');
+      return;
+    }
+
+    if (selectedPartnership1 === selectedPartnership2) {
+      setAssignError('Cannot assign a partnership to play against itself');
+      return;
+    }
+
+    try {
+      setAssigning(true);
+      setAssignError(null);
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(
+        `${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/matches/assign`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: userId,
+            partnership1_id: parseInt(selectedPartnership1),
+            partnership2_id: parseInt(selectedPartnership2),
+            court_number: parseInt(selectedCourt)
+          })
+        }
+      );
+
+      const data = await response.json();
+      if (data.success) {
+        setShowAssignModal(false);
+        onRefresh();
+        fetchActiveMatches();
+        fetchWaitingPartnerships();
+      } else {
+        setAssignError(data.error || 'Failed to assign match');
+      }
+    } catch (error) {
+      setAssignError(error instanceof Error ? error.message : 'Failed to assign match');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  // Load matches when component mounts or when showing override section
+  useEffect(() => {
+    if (isActive) {
+      fetchActiveMatches();
+    }
+  }, [isActive, leagueId, nightId]);
+
+  // Toggle auto-assignment
+  const handleToggleAutoAssignment = async () => {
+    if (!userId) return;
+
+    try {
+      setTogglingAutoAssignment(true);
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(
+        `${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/toggle-auto-assignment`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: userId,
+            enabled: !autoAssignmentEnabled
+          })
+        }
+      );
+
+      const data = await response.json();
+      if (data.success) {
+        setAutoAssignmentEnabled(!autoAssignmentEnabled);
+        onRefresh();
+        if (!autoAssignmentEnabled) {
+          // If turning on, refresh matches to show new auto-assignments
+          fetchActiveMatches();
+        }
+      } else {
+        alert(data.error || 'Failed to toggle auto-assignment');
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to toggle auto-assignment');
+    } finally {
+      setTogglingAutoAssignment(false);
+    }
+  };
 
   return (
     <div className="space-y-6 pb-24">
@@ -204,14 +452,14 @@ const AdminTab: React.FC<AdminTabProps> = ({
               onChange={(e) => setNewCourtName(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAddCourt()}
               placeholder="Court name (e.g., Court 5)"
-              className="flex-1 px-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-400"
+              className="flex-1 min-w-0 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-400 text-sm"
             />
             <button
               onClick={handleAddCourt}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 whitespace-nowrap flex-shrink-0"
             >
-              <Plus className="w-4 h-4" />
-              Add
+              <Plus className="w-4 h-4 flex-shrink-0" />
+              <span className="text-sm">Add</span>
             </button>
           </div>
 
@@ -252,27 +500,190 @@ const AdminTab: React.FC<AdminTabProps> = ({
           <Edit className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           Match Management
         </h3>
-        <div className="space-y-3">
+        
+        <div className="space-y-4">
+          {/* Auto-Assignment Toggle */}
+          {isActive && (
+            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="font-medium text-slate-900 dark:text-white mb-1">Auto-Assignment</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    {autoAssignmentEnabled 
+                      ? 'Matches are automatically created when partnerships and courts are available' 
+                      : 'Manual assignment only - use the button below to create matches'}
+                  </p>
+                </div>
+                <button
+                  onClick={handleToggleAutoAssignment}
+                  disabled={togglingAutoAssignment}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    autoAssignmentEnabled ? 'bg-emerald-600' : 'bg-slate-300 dark:bg-slate-600'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      autoAssignmentEnabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Active Matches List */}
+          {loadingMatches ? (
+            <div className="text-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            </div>
+          ) : activeMatches.length > 0 ? (
+            <div className="space-y-2">
+              <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
+                {activeMatches.length} active {activeMatches.length === 1 ? 'match' : 'matches'}
+              </p>
+              {activeMatches.map((match) => (
+                <div
+                  key={match.id}
+                  className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3 flex items-center justify-between gap-2"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">
+                      {match.court_label || `Court ${match.court_number}`}
+                    </p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
+                      {match.partnership1.player1.first_name} & {match.partnership1.player2.first_name} vs {match.partnership2.player1.first_name} & {match.partnership2.player2.first_name}
+                    </p>
+                    {(match.team1_score !== null || match.pending_team1_score !== null) && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Score: {match.team1_score ?? match.pending_team1_score} - {match.team2_score ?? match.pending_team2_score}
+                        {match.score_status === 'pending' && ' (Pending)'}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => handleOpenOverride(match)}
+                      className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      Override Score
+                    </button>
+                    <button
+                      onClick={() => handleCancelMatch(match.id)}
+                      disabled={cancelling === match.id}
+                      className="px-3 py-1.5 bg-red-600 hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed dark:disabled:bg-slate-600 text-white disabled:text-slate-500 text-xs rounded-lg transition-colors whitespace-nowrap"
+                    >
+                      {cancelling === match.id ? 'Cancelling...' : 'Cancel'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6 text-slate-500 dark:text-slate-400">
+              No active matches
+            </div>
+          )}
+          
           <button
-            disabled
-            className="w-full px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg opacity-50 cursor-not-allowed font-medium text-left"
+            onClick={fetchActiveMatches}
+            className="w-full px-4 py-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors font-medium text-sm"
           >
-            Override Match Scores (Coming Soon)
+            Refresh Matches
           </button>
-          <button
-            disabled
-            className="w-full px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg opacity-50 cursor-not-allowed font-medium text-left"
-          >
-            Manual Match Assignment (Coming Soon)
-          </button>
-          <button
-            disabled
-            className="w-full px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg opacity-50 cursor-not-allowed font-medium text-left"
-          >
-            Reassign Court (Coming Soon)
-          </button>
+
+          {/* Manual Court Assignment Button */}
+          {isActive && (
+            <button
+              onClick={handleOpenAssignment}
+              className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-lg transition-all font-medium text-sm shadow-md"
+            >
+              Manual Court Assignment
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Override Score Modal */}
+      {showOverrideModal && selectedMatch && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                Override Match Score
+              </h3>
+              <button
+                onClick={() => setShowOverrideModal(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-700">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                <p className="text-xs text-yellow-800 dark:text-yellow-300">
+                  Admin override will finalize the match with these scores and trigger auto-assignment.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Team 1 */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  {selectedMatch.partnership1.player1.first_name} & {selectedMatch.partnership1.player2.first_name}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={overrideTeam1Score}
+                  onChange={(e) => setOverrideTeam1Score(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                />
+              </div>
+
+              {/* Team 2 */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  {selectedMatch.partnership2.player1.first_name} & {selectedMatch.partnership2.player2.first_name}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={overrideTeam2Score}
+                  onChange={(e) => setOverrideTeam2Score(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                />
+              </div>
+
+              {overrideError && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-700">
+                  <p className="text-sm text-red-800 dark:text-red-300">{overrideError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={handleOverrideScore}
+                  disabled={overriding}
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors font-medium"
+                >
+                  {overriding ? 'Overriding...' : 'Override Score'}
+                </button>
+                <button
+                  onClick={() => setShowOverrideModal(false)}
+                  disabled={overriding}
+                  className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Player Management */}
       <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
@@ -329,6 +740,110 @@ const AdminTab: React.FC<AdminTabProps> = ({
           onRefresh={onRefresh}
         />
       </div>
+
+      {/* Manual Court Assignment Modal */}
+      {showAssignModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                Manual Court Assignment
+              </h3>
+              <button
+                onClick={() => setShowAssignModal(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Partnership 1 */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Partnership 1
+                </label>
+                <select
+                  value={selectedPartnership1}
+                  onChange={(e) => setSelectedPartnership1(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                >
+                  <option value="">Select partnership...</option>
+                  {waitingPartnerships.map((p) => (
+                    <option key={p.partnership_id} value={p.partnership_id}>
+                      {p.p1_full_name} & {p.p2_full_name} ({p.games_played_tonight} games)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Partnership 2 */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Partnership 2
+                </label>
+                <select
+                  value={selectedPartnership2}
+                  onChange={(e) => setSelectedPartnership2(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                >
+                  <option value="">Select partnership...</option>
+                  {waitingPartnerships.map((p) => (
+                    <option key={p.partnership_id} value={p.partnership_id}>
+                      {p.p1_full_name} & {p.p2_full_name} ({p.games_played_tonight} games)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Court Selection */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                  Court
+                </label>
+                <select
+                  value={selectedCourt}
+                  onChange={(e) => setSelectedCourt(e.target.value)}
+                  className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                >
+                  <option value="">Select court...</option>
+                  {Array.from({ length: leagueNight.courtsAvailable || 4 }, (_, i) => i + 1).map((courtNum) => (
+                    <option key={courtNum} value={courtNum}>
+                      {leagueNight.courtLabels?.[courtNum - 1] || `Court ${courtNum}`}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Error Display */}
+              {assignError && (
+                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                  <p className="text-sm text-red-600 dark:text-red-400">{assignError}</p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => setShowAssignModal(false)}
+                  disabled={assigning}
+                  className="flex-1 px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors font-medium disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAssignMatch}
+                  disabled={assigning}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:from-slate-400 disabled:to-slate-500 text-white rounded-lg transition-all font-medium shadow-md disabled:cursor-not-allowed"
+                >
+                  {assigning ? 'Assigning...' : 'Assign Match'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

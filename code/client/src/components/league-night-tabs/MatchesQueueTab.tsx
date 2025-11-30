@@ -25,9 +25,9 @@ const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
   return (
     <div className="space-y-6 pb-24">
       <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Trophy className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-          Active Matches & Queue
+        <h2 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+          <span className="truncate">Active Matches & Queue</span>
         </h2>
         
         {/* Matches Display */}

@@ -39,6 +39,7 @@ interface LeagueNight {
   backendStatus?: 'scheduled' | 'active' | 'completed' // The actual backend status
   courtsAvailable: number
   courtLabels?: string[]
+  autoAssignmentEnabled?: boolean
   checkedInCount: number
   partnershipsCount: number
   possibleGames: number
@@ -108,6 +109,7 @@ const LeagueNightPage = () => {
         backendStatus: nightData.status,
         courtsAvailable: nightData.courtsAvailable,
         courtLabels: nightData.courtLabels || [],
+        autoAssignmentEnabled: nightData.autoAssignmentEnabled,
         checkedInCount: nightData.checkedInCount,
         partnershipsCount: nightData.partnershipsCount,
         possibleGames: nightData.possibleGames

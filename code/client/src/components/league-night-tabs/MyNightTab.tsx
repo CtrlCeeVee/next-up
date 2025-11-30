@@ -408,33 +408,33 @@ const MyNightTab: React.FC<MyNightTabProps> = ({
 
           {/* Current Match Status */}
           <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-              <Trophy className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-              Your Match
+            <h2 className="text-base sm:text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <Trophy className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+              <span className="truncate">Your Match</span>
             </h2>
             
             {currentMatch ? (
               <div className="space-y-4">
                 {/* Match Info */}
                 <div className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 border-2 border-emerald-200 dark:border-emerald-800 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="bg-emerald-600 text-white text-sm font-bold px-3 py-1 rounded-full">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                    <div className="bg-emerald-600 text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 rounded-full whitespace-nowrap w-fit">
                       {currentMatch.court_label || `Court ${currentMatch.court_number}`}
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center flex-wrap gap-2">
                       {currentMatch.score_status === 'pending' && (
-                        <div className="bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        <div className="bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
                           Score Pending
                         </div>
                       )}
                       {currentMatch.score_status === 'disputed' && (
-                        <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        <div className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">
                           Disputed
                         </div>
                       )}
-                      <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 text-sm font-medium">
-                        <Clock className="w-4 h-4" />
-                        Active
+                      <div className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300 text-xs sm:text-sm font-medium">
+                        <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                        <span>Active</span>
                       </div>
                     </div>
                   </div>
@@ -447,9 +447,9 @@ const MyNightTab: React.FC<MyNightTabProps> = ({
                       currentMatch.partnership1.player2.id === user?.id;
 
                     return (
-                      <div className="grid grid-cols-3 gap-3 items-center">
+                      <div className="flex flex-col sm:grid sm:grid-cols-3 gap-3 items-center">
                         {/* Team 1 */}
-                        <div className="text-center bg-white dark:bg-slate-800 rounded-lg p-3">
+                        <div className="w-full text-center bg-white dark:bg-slate-800 rounded-lg p-3">
                           <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold mb-1">
                             {isUserInTeam1 ? 'YOUR TEAM' : 'OPPONENTS'}
                           </p>
@@ -469,11 +469,11 @@ const MyNightTab: React.FC<MyNightTabProps> = ({
 
                         {/* VS */}
                         <div className="text-center">
-                          <p className="text-2xl font-bold text-slate-400 dark:text-slate-500">VS</p>
+                          <p className="text-xl sm:text-2xl font-bold text-slate-400 dark:text-slate-500">VS</p>
                         </div>
 
                         {/* Team 2 */}
-                        <div className="text-center bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
+                        <div className="w-full text-center bg-slate-50 dark:bg-slate-700/50 rounded-lg p-3">
                           <p className={`text-xs font-semibold mb-1 ${isUserInTeam1 ? 'text-slate-500 dark:text-slate-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
                             {isUserInTeam1 ? 'OPPONENTS' : 'YOUR TEAM'}
                           </p>
@@ -481,7 +481,7 @@ const MyNightTab: React.FC<MyNightTabProps> = ({
                             {`${currentMatch.partnership2.player1.first_name} ${currentMatch.partnership2.player1.last_name}`}
                           </p>
                           <p className="text-xs text-slate-600 dark:text-slate-400">
-                            {currentMatch.partnership2.player1.skill_level}
+                            {currentMatch.partnership2.player2.skill_level}
                           </p>
                           <p className="font-bold text-slate-900 dark:text-white text-sm mt-1">
                             {`${currentMatch.partnership2.player2.first_name} ${currentMatch.partnership2.player2.last_name}`}

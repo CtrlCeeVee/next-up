@@ -15,7 +15,8 @@ const {
   removePartnership,
   startLeague,
   endLeague,
-  updateCourts
+  updateCourts,
+  toggleAutoAssignment
 } = require('../controllers/leagueNightController');const {
   getMatches,
   createMatches,
@@ -24,7 +25,10 @@ const {
   disputeMatchScore,
   cancelMatchScore,
   getQueue,
-  getMyNightStats
+  getMyNightStats,
+  overrideMatchScore,
+  cancelActiveMatch,
+  manualCourtAssignment
 } = require('../controllers/matchController');
 
 // GET /api/leagues/:leagueId/nights/:nightId - Get league night details
@@ -80,6 +84,18 @@ router.post('/:leagueId/nights/:nightId/end-league', endLeague);
 
 // POST /api/leagues/:leagueId/nights/:nightId/update-courts - Update court configuration (admin only)
 router.post('/:leagueId/nights/:nightId/update-courts', updateCourts);
+
+// POST /api/leagues/:leagueId/nights/:nightId/toggle-auto-assignment - Toggle auto-assignment (admin only)
+router.post('/:leagueId/nights/:nightId/toggle-auto-assignment', toggleAutoAssignment);
+
+// POST /api/leagues/:leagueId/nights/:nightId/matches/:matchId/override-score - Admin override match score
+router.post('/:leagueId/nights/:nightId/matches/:matchId/override-score', overrideMatchScore);
+
+// POST /api/leagues/:leagueId/nights/:nightId/matches/:matchId/cancel - Admin cancel active match
+router.post('/:leagueId/nights/:nightId/matches/:matchId/cancel', cancelActiveMatch);
+
+// POST /api/leagues/:leagueId/nights/:nightId/matches/assign - Admin manual court assignment
+router.post('/:leagueId/nights/:nightId/matches/assign', manualCourtAssignment);
 
 // DELETE /api/leagues/:leagueId/nights/:nightId/checkin - Uncheck player
 router.delete('/:leagueId/nights/:nightId/checkin', uncheckPlayer);

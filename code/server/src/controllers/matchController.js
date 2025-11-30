@@ -14,10 +14,10 @@ const tryAutoAssignMatches = async (instanceId) => {
   try {
     console.log(`Attempting auto-assignment for instance ${instanceId}`);
     
-    // Get league night instance to check status
+    // Get league night instance to check status and auto-assignment setting
     const { data: instance, error: instanceError } = await supabase
       .from('league_night_instances')
-      .select('status')
+      .select('status, auto_assignment_enabled')
       .eq('id', instanceId)
       .single();
 
@@ -36,6 +36,12 @@ const tryAutoAssignMatches = async (instanceId) => {
     if (instance.status !== 'active') {
       console.log(`League night ${instanceId} is not active - no auto-assignment`);
       return { success: true, message: 'League night not active yet', matches: [] };
+    }
+
+    // Check if auto-assignment is enabled
+    if (instance.auto_assignment_enabled === false) {
+      console.log('Auto-assignment is disabled for this instance');
+      return { success: true, message: 'Auto-assignment disabled', matches: [] };
     }
     
     // Get partnerships with game counts using direct SQL (avoid RPC with outdated field names)
@@ -69,11 +75,23 @@ const tryAutoAssignMatches = async (instanceId) => {
       return { success: true, message: 'Not enough partnerships', matches: [] };
     }
 
-    // Get ALL matches (including completed) to track pairings and game counts
-    const { data: allMatches, error: matchCountsError } = await supabase
+    // Get ALL matches for opponent tracking (including cancelled to prevent immediate re-pairing)
+    const { data: allMatchesForOpponents, error: opponentsError } = await supabase
       .from('matches')
       .select('partnership1_id, partnership2_id, status')
       .eq('league_night_instance_id', instanceId);
+
+    if (opponentsError) {
+      console.error('Error fetching matches for opponent tracking:', opponentsError);
+      return { success: false, error: opponentsError.message };
+    }
+
+    // Get only completed matches for game counts (exclude cancelled and active)
+    const { data: completedMatches, error: matchCountsError } = await supabase
+      .from('matches')
+      .select('partnership1_id, partnership2_id')
+      .eq('league_night_instance_id', instanceId)
+      .eq('status', 'completed');
 
     if (matchCountsError) {
       console.error('Error fetching match counts for auto-assignment:', matchCountsError);
@@ -83,7 +101,7 @@ const tryAutoAssignMatches = async (instanceId) => {
     // Calculate games played and track previous opponents for each partnership
     // Also track partnerships currently in active matches
     const partnershipGameCounts = {};
-    const previousOpponents = {}; // Track who each partnership has played against
+    const previousOpponents = {}; // Track who each partnership has played against (including cancelled)
     const currentlyPlaying = new Set(); // Track partnerships in active matches
     
     partnerships.forEach(p => {
@@ -91,20 +109,30 @@ const tryAutoAssignMatches = async (instanceId) => {
       previousOpponents[p.id] = new Set();
     });
 
-    allMatches?.forEach(match => {
+    // Build opponent history from ALL matches (including cancelled) to prevent immediate re-pairing
+    allMatchesForOpponents?.forEach(match => {
       // Track partnerships currently playing
       if (match.status === 'active') {
         currentlyPlaying.add(match.partnership1_id);
         currentlyPlaying.add(match.partnership2_id);
       }
       
+      // Track who has played who (including cancelled matches)
+      if (previousOpponents[match.partnership1_id] !== undefined) {
+        previousOpponents[match.partnership1_id].add(match.partnership2_id);
+      }
+      if (previousOpponents[match.partnership2_id] !== undefined) {
+        previousOpponents[match.partnership2_id].add(match.partnership1_id);
+      }
+    });
+
+    // Count only completed games (exclude cancelled and active)
+    completedMatches?.forEach(match => {
       if (partnershipGameCounts[match.partnership1_id] !== undefined) {
         partnershipGameCounts[match.partnership1_id]++;
-        previousOpponents[match.partnership1_id].add(match.partnership2_id);
       }
       if (partnershipGameCounts[match.partnership2_id] !== undefined) {
         partnershipGameCounts[match.partnership2_id]++;
-        previousOpponents[match.partnership2_id].add(match.partnership1_id);
       }
     });
 
@@ -1380,7 +1408,7 @@ const getQueue = async (req, res) => {
 
     if (matchesError) throw matchesError;
 
-    // Calculate games played for each partnership
+    // Calculate games played for each partnership (only count completed matches)
     const partnershipGameCounts = {};
     const currentlyPlaying = new Set();
     
@@ -1393,11 +1421,14 @@ const getQueue = async (req, res) => {
         currentlyPlaying.add(match.partnership1_id);
         currentlyPlaying.add(match.partnership2_id);
       }
-      if (partnershipGameCounts[match.partnership1_id] !== undefined) {
-        partnershipGameCounts[match.partnership1_id]++;
-      }
-      if (partnershipGameCounts[match.partnership2_id] !== undefined) {
-        partnershipGameCounts[match.partnership2_id]++;
+      // Only count completed games, not cancelled or active
+      if (match.status === 'completed') {
+        if (partnershipGameCounts[match.partnership1_id] !== undefined) {
+          partnershipGameCounts[match.partnership1_id]++;
+        }
+        if (partnershipGameCounts[match.partnership2_id] !== undefined) {
+          partnershipGameCounts[match.partnership2_id]++;
+        }
       }
     });
 
@@ -1414,6 +1445,14 @@ const getQueue = async (req, res) => {
     const waitingPartnerships = partnerships
       .filter(p => !p.isCurrentlyPlaying)
       .sort((a, b) => a.gamesPlayed - b.gamesPlayed);
+
+    // Format for manual assignment dropdown (add full names and ID)
+    const queue = waitingPartnerships.map(p => ({
+      partnership_id: p.id,
+      p1_full_name: p.player1Name,
+      p2_full_name: p.player2Name,
+      games_played_tonight: p.gamesPlayed
+    }));
 
     // Get court info
     const { data: availableCourts } = await supabase
@@ -1435,6 +1474,7 @@ const getQueue = async (req, res) => {
     res.json({
       success: true,
       data: {
+        queue,
         waitingPartnerships,
         currentlyPlaying: partnerships.filter(p => p.isCurrentlyPlaying),
         courtsAvailable,
@@ -1557,6 +1597,385 @@ const getMyNightStats = async (req, res) => {
   }
 };
 
+// Admin: Override match score
+const overrideMatchScore = async (req, res) => {
+  const { leagueId, nightId, matchId } = req.params;
+  const { user_id, team1_score, team2_score } = req.body;
+
+  console.log('Override score request:', { leagueId, nightId, matchId, user_id, team1_score, team2_score });
+
+  try {
+    // Verify user is admin/organizer
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', user_id)
+      .single();
+
+    console.log('Membership check:', { membership, membershipError });
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized - admin/organizer access required'
+      });
+    }
+
+    // Get match details
+    const { data: match, error: matchError } = await supabase
+      .from('matches')
+      .select(`
+        id,
+        league_night_instance_id,
+        status,
+        partnership1:confirmed_partnerships!matches_partnership1_id_fkey (
+          id,
+          player1_id,
+          player2_id
+        ),
+        partnership2:confirmed_partnerships!matches_partnership2_id_fkey (
+          id,
+          player1_id,
+          player2_id
+        )
+      `)
+      .eq('id', matchId)
+      .single();
+
+    if (matchError || !match) {
+      return res.status(404).json({
+        success: false,
+        error: 'Match not found'
+      });
+    }
+
+    if (match.status !== 'active') {
+      return res.status(400).json({
+        success: false,
+        error: 'Can only override active matches'
+      });
+    }
+
+    // Validate scores
+    if (typeof team1_score !== 'number' || typeof team2_score !== 'number' || 
+        team1_score < 0 || team2_score < 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid scores'
+      });
+    }
+
+    // Determine winner (for stats, not stored in DB)
+    const team1Won = team1_score > team2_score;
+
+    // Update match with admin override (no winner column - matches existing pattern)
+    const { error: updateError } = await supabase
+      .from('matches')
+      .update({
+        team1_score,
+        team2_score,
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        score_status: 'confirmed',
+        pending_team1_score: null,
+        pending_team2_score: null,
+        pending_submitted_by_partnership_id: null
+      })
+      .eq('id', matchId);
+
+    if (updateError) {
+      console.error('Error updating match:', updateError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to update match'
+      });
+    }
+
+    // Update player statistics (matches existing confirmMatchScore pattern)
+    await updatePlayerStats(
+      match.league_night_instance.league_id,
+      match,
+      team1_score,
+      team2_score,
+      team1Won
+    );
+
+    // Trigger auto-assignment
+    const autoAssignResult = await tryAutoAssignMatches(match.league_night_instance_id);
+    
+    console.log('Admin override - match completed:', matchId);
+    console.log('Auto-assignment result:', autoAssignResult);
+
+    return res.json({
+      success: true,
+      message: 'Score overridden successfully',
+      data: {
+        matchId: matchId,
+        autoAssignResult
+      }
+    });
+
+  } catch (error) {
+    console.error('Error in override match score:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to override match score'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/matches/:matchId/cancel
+const cancelActiveMatch = async (req, res) => {
+  try {
+    const { leagueId, nightId, matchId } = req.params;
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    // Verify user is admin/organizer
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', user_id)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized - admin/organizer access required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Get the match to verify it exists and is active
+    const { data: match, error: matchError } = await supabase
+      .from('matches')
+      .select(`
+        *,
+        partnership1:confirmed_partnerships!partnership1_id (id),
+        partnership2:confirmed_partnerships!partnership2_id (id),
+        league_night_instance:league_night_instances!league_night_instance_id (
+          id,
+          league_id,
+          status
+        )
+      `)
+      .eq('id', matchId)
+      .eq('league_night_instance_id', instance.id)
+      .single();
+
+    if (matchError || !match) {
+      return res.status(404).json({
+        success: false,
+        error: 'Match not found'
+      });
+    }
+
+    if (match.status !== 'active') {
+      return res.status(400).json({
+        success: false,
+        error: 'Can only cancel active matches'
+      });
+    }
+
+    // Mark match as cancelled (don't delete - preserves match history for pairing logic)
+    const { error: updateError } = await supabase
+      .from('matches')
+      .update({
+        status: 'cancelled',
+        completed_at: new Date().toISOString()
+      })
+      .eq('id', matchId);
+
+    if (updateError) {
+      console.error('Error cancelling match:', updateError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to cancel match'
+      });
+    }
+
+    // Try to create new matches now that partnerships are back in the queue
+    console.log(`Match ${matchId} cancelled, checking for new matches...`);
+    const autoAssignResult = await tryAutoAssignMatches(instance.id);
+    console.log('Auto-assignment after match cancellation:', autoAssignResult);
+
+    res.json({
+      success: true,
+      message: 'Match cancelled successfully',
+      autoAssignment: autoAssignResult
+    });
+
+  } catch (error) {
+    console.error('Error cancelling match:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to cancel match'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/matches/assign
+const manualCourtAssignment = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { user_id, partnership1_id, partnership2_id, court_number } = req.body;
+
+    if (!user_id || !partnership1_id || !partnership2_id || court_number === undefined) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID, both partnership IDs, and court number are required'
+      });
+    }
+
+    // Verify user is admin/organizer
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', user_id)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unauthorized - admin/organizer access required'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    if (instance.status !== 'active') {
+      return res.status(400).json({
+        success: false,
+        error: 'League night must be active to assign matches'
+      });
+    }
+
+    // Verify both partnerships exist and are active
+    const { data: partnerships, error: partnershipsError } = await supabase
+      .from('confirmed_partnerships')
+      .select('id, player1_id, player2_id')
+      .eq('league_night_instance_id', instance.id)
+      .eq('is_active', true)
+      .in('id', [partnership1_id, partnership2_id]);
+
+    if (partnershipsError || !partnerships || partnerships.length !== 2) {
+      return res.status(404).json({
+        success: false,
+        error: 'Both partnerships must exist and be active'
+      });
+    }
+
+    // Check if partnerships are already in active matches
+    const { data: existingMatches, error: matchError } = await supabase
+      .from('matches')
+      .select('id, partnership1_id, partnership2_id')
+      .eq('league_night_instance_id', instance.id)
+      .eq('status', 'active')
+      .or(`partnership1_id.in.(${partnership1_id},${partnership2_id}),partnership2_id.in.(${partnership1_id},${partnership2_id})`);
+
+    if (matchError) {
+      console.error('Error checking existing matches:', matchError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to check partnership availability'
+      });
+    }
+
+    if (existingMatches && existingMatches.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'One or both partnerships are already in an active match'
+      });
+    }
+
+    // Verify court is available
+    const totalCourts = instance.courts_available || 4;
+    if (court_number < 1 || court_number > totalCourts) {
+      return res.status(400).json({
+        success: false,
+        error: `Court number must be between 1 and ${totalCourts}`
+      });
+    }
+
+    // Check if court is already in use
+    const { data: courtMatches, error: courtError } = await supabase
+      .from('matches')
+      .select('id')
+      .eq('league_night_instance_id', instance.id)
+      .eq('court_number', court_number)
+      .eq('status', 'active');
+
+    if (courtError) {
+      console.error('Error checking court availability:', courtError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to check court availability'
+      });
+    }
+
+    if (courtMatches && courtMatches.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Court is already in use'
+      });
+    }
+
+    // Create the match
+    const { data: newMatch, error: insertError } = await supabase
+      .from('matches')
+      .insert({
+        league_night_instance_id: instance.id,
+        partnership1_id,
+        partnership2_id,
+        court_number,
+        status: 'active'
+      })
+      .select(`
+        *,
+        partnership1:confirmed_partnerships!partnership1_id (
+          player1:profiles!player1_id (first_name, last_name),
+          player2:profiles!player2_id (first_name, last_name)
+        ),
+        partnership2:confirmed_partnerships!partnership2_id (
+          player1:profiles!player1_id (first_name, last_name),
+          player2:profiles!player2_id (first_name, last_name)
+        )
+      `)
+      .single();
+
+    if (insertError) {
+      console.error('Error creating manual match assignment:', insertError);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to create match'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Match assigned successfully',
+      match: newMatch
+    });
+
+  } catch (error) {
+    console.error('Error in manual court assignment:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to assign match'
+    });
+  }
+};
+
 module.exports = {
   getMatches,
   createMatches,
@@ -1566,5 +1985,8 @@ module.exports = {
   cancelMatchScore,
   tryAutoAssignMatches,
   getQueue,
-  getMyNightStats
+  getMyNightStats,
+  overrideMatchScore,
+  cancelActiveMatch,
+  manualCourtAssignment
 };
