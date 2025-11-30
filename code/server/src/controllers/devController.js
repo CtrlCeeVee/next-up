@@ -191,7 +191,7 @@ const completeRandomMatch = async (req, res) => {
     // Import and call auto-assignment (same as manual score submission)
     const { tryAutoAssignMatches } = require('./matchController');
     console.log(`Dev: Match ${match.id} completed, checking for new matches...`);
-    const autoAssignResult = await tryAutoAssignMatches(leagueNightId);
+    const autoAssignResult = await tryAutoAssignMatches(match.league_night_instance_id);
     console.log('Dev: Auto-assignment after match completion:', autoAssignResult);
 
     res.json({ 
@@ -232,10 +232,13 @@ const resetLeagueNight = async (req, res) => {
       .delete()
       .eq('league_night_instance_id', leagueNightId);
 
-    // Reset league night status
+    // Reset league night status and auto-assignment
     await supabase
       .from('league_night_instances')
-      .update({ status: 'scheduled' })
+      .update({ 
+        status: 'scheduled',
+        auto_assignment_enabled: true 
+      })
       .eq('id', leagueNightId);
 
     res.json({ 

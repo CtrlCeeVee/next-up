@@ -43,12 +43,25 @@ useEffect(() => { stableCallbacks.current = callbacks; });
 **Partnership priority queue**: Sort by `games_played_tonight ASC`, avoid repeat pairings, new partnerships inherit minimum games count for fairness
 
 ### 4. Database Patterns
+
+**CRITICAL: Always check existing code before writing database operations** (see Pre-Flight Checklist above)
+
 **Use RPC functions, not direct SQL**:
 ```javascript
-// ✅ Correct
+// ✅ Correct - but verify RPC exists first by checking existing code
 const { data } = await supabase.rpc('get_partnerships_with_game_counts', { instance_id });
 
 // ❌ Wrong: Direct SQL with outdated field names
+// ❌ Wrong: Calling non-existent RPC without checking existing code
+```
+
+**Column names - NEVER ASSUME**:
+```javascript
+// ❌ WRONG: Assuming schema
+.update({ winner: 'team1', full_name: 'John Doe' })
+
+// ✅ CORRECT: Check existing code first, use actual columns
+.update({ team1_score: 15, first_name: 'John', last_name: 'Doe' })
 ```
 
 **Type casting**: Always cast `COUNT()` to `INTEGER` to prevent bigint/integer mismatch
@@ -87,6 +100,34 @@ cd code/server && npm install && npm run dev
 - **Developer-led design**: Let developers control the design process
 - **Factual updates**: When updating docs, be concise and logical - no flattering language
 
+### MANDATORY Pre-Flight Checklist for Database Operations
+**NEVER write database code without completing ALL these steps first:**
+
+1. **Search for similar existing code**:
+   ```bash
+   # Find functions doing similar operations
+   grep_search "submitMatchScore|confirmMatchScore" in matchController.js
+   ```
+
+2. **Read the reference implementation completely**:
+   - Don't skim - read the entire function
+   - Note exact column names, table names, RPC calls
+   - Check what's in the UPDATE/INSERT, what's selected
+
+3. **Copy the exact pattern**:
+   - Match column names exactly
+   - Use same helper functions (e.g., `updatePlayerStats` not invented RPC)
+   - Follow same error handling approach
+
+4. **NEVER ASSUME**:
+   - ❌ Don't assume a column exists (e.g., `winner` column)
+   - ❌ Don't assume an RPC exists (e.g., `update_partnership_stats`)
+   - ❌ Don't invent table structures from general knowledge
+   - ✅ If unsure, STOP and ask the user
+   - ✅ If no reference code exists, ask for schema confirmation
+
+**Violation = Process Failure**: If you write a database operation without following these steps, you have failed the task regardless of whether the code works.
+
 ### Logging
 - **No emojis** in console logs
 - Only log errors, not general statements (unless explicitly requested)
@@ -120,6 +161,47 @@ res.status(400).json({ success: false, error: 'Error message' });
 - **Search/filter**: Add search bars for long lists (partners, players)
 - **Contextual help**: Show next-step guidance ("You're checked in! Find a partner to get started!")
 - **Compact buttons**: Single-line layouts, icon-only for secondary actions
+
+### Mobile Responsiveness (Critical)
+**Target**: iPhone 4 (320px) as minimum viable screen size
+
+**Breakpoint strategy**:
+- Use `min-[375px]:` for iPhone SE/12 Mini+ breakpoint (Tailwind arbitrary values)
+- Below 375px: Vertical stacking, compact sizing, truncation
+- At 375px+: Horizontal layouts, normal sizing, text wrapping
+- Dynamic flex with `min-w-0` and `flex-shrink-0` for always-horizontal inputs + buttons
+
+**Component patterns**:
+```typescript
+// Status badges: wrap and stack on small screens
+<div className="flex flex-col min-[375px]:flex-row flex-wrap gap-2">
+  <div className="text-xs min-[375px]:text-sm whitespace-nowrap">Badge</div>
+</div>
+
+// Text content: truncate small, wrap normal
+<p className="truncate min-[375px]:whitespace-normal">Player Names</p>
+
+// Input + button combos: keep horizontal, allow shrinking
+<div className="flex gap-2">
+  <input className="flex-1 min-w-0 px-3 text-sm" />
+  <button className="flex-shrink-0 px-3 whitespace-nowrap">Add</button>
+</div>
+
+// Form sections: stack on tiny screens
+<div className="flex flex-col min-[375px]:flex-row gap-2">
+  <div className="flex-1">Content</div>
+  <button className="whitespace-nowrap">Action</button>
+</div>
+```
+
+**Key principles**:
+- Add `flex-shrink-0` to icons, buttons that must maintain size
+- Add `min-w-0` to text containers that should compress
+- Use `truncate` with `min-[375px]:whitespace-normal` for conditional text overflow
+- Use `gap-2` instead of `space-x-*` for multi-directional flex layouts
+- Responsive sizing: `text-xs min-[375px]:text-sm sm:text-base`
+- Responsive padding: `px-2 min-[375px]:px-3 sm:px-4`
+- Always test at 320px width (iPhone 4) before considering mobile-ready
 
 ### Pickleball Scoring Rules
 Validate in `validatePickleballScore()`:
@@ -190,10 +272,10 @@ channel.subscribe((status) => { /* handle */ });
 1. ✅ Real-time system complete
 2. ✅ Tab-based navigation for League Night page
 3. ✅ Partner search and UX improvements
-4. 📋 Auto-assignment on new partnerships (currently only on league start + score submission)
-5. 📋 Score confirmation flow (opponent confirms submitted scores)
+4. ✅ Auto-assignment on new partnerships (currently only on league start + score submission)
+5. ✅ Score confirmation flow (opponent confirms submitted scores)
 6. 📋 Email integration (contact form functionality)
-7. 📋 Advanced admin controls (End League Night, match overrides, no-shows)
+7. 📋 Advanced admin controls (End League Night ✅, match overrides, no-shows)
 
 ---
 
