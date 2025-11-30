@@ -103,7 +103,7 @@ const ScoreConfirmation: React.FC<ScoreConfirmationProps> = ({
     : `${match.partnership2.player1.first_name} & ${match.partnership2.player2.first_name}`;
 
   return (
-    <div className="p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-700">
+    <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-700">
       <div className="flex items-start space-x-3">
         <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
         <div className="flex-1 min-w-0">
@@ -120,17 +120,17 @@ const ScoreConfirmation: React.FC<ScoreConfirmationProps> = ({
             </div>
           )}
 
-          <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <button
               onClick={handleConfirm}
               disabled={confirming || disputing}
-              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-1"
+              className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-1"
             >
               {confirming ? (
                 <span>Confirming...</span>
               ) : (
                 <>
-                  <CheckCircle className="h-4 w-4" />
+                  <CheckCircle className="h-4 w-4 flex-shrink-0" />
                   <span>Confirm</span>
                 </>
               )}
@@ -139,13 +139,13 @@ const ScoreConfirmation: React.FC<ScoreConfirmationProps> = ({
             <button
               onClick={handleDispute}
               disabled={confirming || disputing}
-              className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-1"
+              className="flex-1 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white text-sm font-medium py-2 px-3 rounded-lg transition-colors duration-200 flex items-center justify-center gap-1"
             >
               {disputing ? (
                 <span>Disputing...</span>
               ) : (
                 <>
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4 flex-shrink-0" />
                   <span>Dispute</span>
                 </>
               )}

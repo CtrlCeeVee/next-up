@@ -204,14 +204,14 @@ const AdminTab: React.FC<AdminTabProps> = ({
               onChange={(e) => setNewCourtName(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleAddCourt()}
               placeholder="Court name (e.g., Court 5)"
-              className="flex-1 px-4 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-400"
+              className="flex-1 min-w-0 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 dark:text-white placeholder-slate-400 text-sm"
             />
             <button
               onClick={handleAddCourt}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
+              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 whitespace-nowrap flex-shrink-0"
             >
-              <Plus className="w-4 h-4" />
-              Add
+              <Plus className="w-4 h-4 flex-shrink-0" />
+              <span className="text-sm">Add</span>
             </button>
           </div>
 

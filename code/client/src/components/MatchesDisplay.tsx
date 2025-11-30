@@ -260,31 +260,31 @@ const MatchesDisplay: React.FC<MatchesDisplayProps> = ({
                     : 'border-white/20 dark:border-slate-700/50'
                 } shadow-lg`}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-blue-600 dark:bg-blue-500 text-white text-sm font-bold px-3 py-1 rounded-full">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
+                  <div className="flex items-center flex-wrap gap-2">
+                    <div className="bg-blue-600 dark:bg-blue-500 text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">
                       {match.court_label || `Court ${match.court_number}`}
                     </div>
                     {isUserMatch && (
-                      <div className="bg-green-600 dark:bg-green-500 text-white text-sm font-bold px-3 py-1 rounded-full">
+                      <div className="bg-green-600 dark:bg-green-500 text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 rounded-full whitespace-nowrap">
                         Your Match
                       </div>
                     )}
                     {match.score_status === 'pending' && (
-                      <div className="bg-yellow-600 dark:bg-yellow-500 text-white text-sm font-bold px-3 py-1 rounded-full flex items-center space-x-1">
-                        <AlertCircle className="h-3 w-3" />
+                      <div className="bg-yellow-600 dark:bg-yellow-500 text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 rounded-full flex items-center gap-1 whitespace-nowrap">
+                        <AlertCircle className="h-3 w-3 flex-shrink-0" />
                         <span>Score Pending</span>
                       </div>
                     )}
                     {match.score_status === 'disputed' && (
-                      <div className="bg-red-600 dark:bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full flex items-center space-x-1">
-                        <AlertCircle className="h-3 w-3" />
+                      <div className="bg-red-600 dark:bg-red-500 text-white text-xs sm:text-sm font-bold px-2 sm:px-3 py-1 rounded-full flex items-center gap-1 whitespace-nowrap">
+                        <AlertCircle className="h-3 w-3 flex-shrink-0" />
                         <span>Disputed</span>
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
-                    <Clock className="h-4 w-4" />
+                  <div className="flex items-center gap-1 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                     <span>Active</span>
                   </div>
                 </div>
