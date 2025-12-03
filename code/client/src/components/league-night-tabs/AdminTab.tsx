@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Settings, Play, StopCircle, Edit, Users, BarChart, Plus, X, Trophy, AlertTriangle } from 'lucide-react';
+import { Settings, Play, StopCircle, Edit, Users, BarChart, Plus, X, Trophy, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 import TestingPanel from '../admin/TestingPanel';
 import { leagueNightService } from '../../services/api/leagueNights';
 
@@ -65,6 +65,9 @@ const AdminTab: React.FC<AdminTabProps> = ({
   // Auto-assignment toggle state
   const [autoAssignmentEnabled, setAutoAssignmentEnabled] = useState(leagueNight.autoAssignmentEnabled !== false);
   const [togglingAutoAssignment, setTogglingAutoAssignment] = useState(false);
+
+  // Dev tools collapse state
+  const [devToolsExpanded, setDevToolsExpanded] = useState(false);
 
   const handleAddCourt = () => {
     if (!newCourtName.trim()) {
@@ -729,17 +732,35 @@ const AdminTab: React.FC<AdminTabProps> = ({
         </div>
       </div>
 
-      {/* Testing Panel (Development) */}
-      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
-          Development Tools
-        </h3>
-        <TestingPanel 
-          leagueNightId={leagueNight.id}
-          leagueId={leagueId}
-          onRefresh={onRefresh}
-        />
-      </div>
+      {/* Testing Panel (Development Only) */}
+      {import.meta.env.DEV && (
+        <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-lg overflow-hidden">
+          <button
+            onClick={() => setDevToolsExpanded(!devToolsExpanded)}
+            className="w-full px-6 py-4 flex items-center justify-between hover:bg-white/40 dark:hover:bg-slate-700/40 transition-colors"
+          >
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Settings className="w-5 h-5 text-orange-500" />
+              Development Tools
+            </h3>
+            {devToolsExpanded ? (
+              <ChevronUp className="w-5 h-5 text-slate-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-slate-400" />
+            )}
+          </button>
+          
+          {devToolsExpanded && (
+            <div className="px-6 pb-6">
+              <TestingPanel 
+                leagueNightId={leagueNight.id}
+                leagueId={leagueId}
+                onRefresh={onRefresh}
+              />
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Manual Court Assignment Modal */}
       {showAssignModal && (
