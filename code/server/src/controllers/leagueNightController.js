@@ -978,6 +978,203 @@ const updateCourts = async (req, res) => {
   }
 };
 
+// POST /api/leagues/:leagueId/nights/:nightId/admin/checkin-player - Admin checks in player
+const adminCheckInPlayer = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { admin_user_id, player_user_id } = req.body;
+
+    if (!admin_user_id || !player_user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Admin ID and player ID are required'
+      });
+    }
+
+    // Check if admin has permission (admin or organizer)
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', admin_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins/organizers can check in players'
+      });
+    }
+
+    // Verify player is a league member
+    const { data: playerMembership, error: playerMembershipError } = await supabase
+      .from('league_memberships')
+      .select('user_id')
+      .eq('league_id', leagueId)
+      .eq('user_id', player_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (playerMembershipError || !playerMembership) {
+      return res.status(400).json({
+        success: false,
+        error: 'Player is not a member of this league'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Check if user is already checked in (active)
+    const { data: activeCheckin, error: activeError } = await supabase
+      .from('league_night_checkins')
+      .select('*')
+      .eq('league_night_instance_id', instance.id)
+      .eq('user_id', player_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (!activeError && activeCheckin) {
+      return res.status(400).json({
+        success: false,
+        error: 'Player is already checked in'
+      });
+    }
+
+    // Check if user has an inactive checkin that we can reactivate
+    const { data: inactiveCheckin, error: inactiveError } = await supabase
+      .from('league_night_checkins')
+      .select('*')
+      .eq('league_night_instance_id', instance.id)
+      .eq('user_id', player_user_id)
+      .eq('is_active', false)
+      .single();
+
+    let checkin;
+    if (!inactiveError && inactiveCheckin) {
+      // Reactivate existing checkin
+      const { data: reactivatedCheckin, error: reactivateError } = await supabase
+        .from('league_night_checkins')
+        .update({ 
+          is_active: true,
+          checked_in_at: new Date().toISOString()
+        })
+        .eq('id', inactiveCheckin.id)
+        .select()
+        .single();
+
+      if (reactivateError) throw reactivateError;
+      checkin = reactivatedCheckin;
+    } else {
+      // Create new check-in
+      const { data: newCheckin, error: checkinError } = await supabase
+        .from('league_night_checkins')
+        .insert({
+          league_night_instance_id: instance.id,
+          user_id: player_user_id,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (checkinError) throw checkinError;
+      checkin = newCheckin;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        checkin,
+        message: 'Player successfully checked in by admin'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error admin checking in player:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check in player'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/checkout-player - Admin checks out player
+const adminCheckOutPlayer = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { admin_user_id, player_user_id } = req.body;
+
+    if (!admin_user_id || !player_user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Admin ID and player ID are required'
+      });
+    }
+
+    // Check if admin has permission (admin or organizer)
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', admin_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins/organizers can check out players'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // First, remove any confirmed partnerships involving this player
+    const { error: partnershipError } = await supabase
+      .from('confirmed_partnerships')
+      .update({ is_active: false })
+      .eq('league_night_instance_id', instance.id)
+      .or(`player1_id.eq.${player_user_id},player2_id.eq.${player_user_id}`)
+      .eq('is_active', true);
+
+    if (partnershipError) throw partnershipError;
+
+    // Delete any pending partnership requests involving this player
+    const { error: requestError } = await supabase
+      .from('partnership_requests')
+      .delete()
+      .eq('league_night_instance_id', instance.id)
+      .or(`requester_id.eq.${player_user_id},requested_id.eq.${player_user_id}`)
+      .eq('status', 'pending');
+
+    if (requestError) throw requestError;
+
+    // Remove the check-in
+    const { error: checkinError } = await supabase
+      .from('league_night_checkins')
+      .update({ is_active: false })
+      .eq('league_night_instance_id', instance.id)
+      .eq('user_id', player_user_id)
+      .eq('is_active', true);
+
+    if (checkinError) throw checkinError;
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Player successfully checked out by admin'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error admin checking out player:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check out player'
+    });
+  }
+};
+
 // POST /api/leagues/:leagueId/nights/:nightId/toggle-auto-assignment
 const toggleAutoAssignment = async (req, res) => {
   try {
@@ -1059,5 +1256,7 @@ module.exports = {
   startLeague,
   endLeague,
   updateCourts,
-  toggleAutoAssignment
+  toggleAutoAssignment,
+  adminCheckInPlayer,
+  adminCheckOutPlayer
 };

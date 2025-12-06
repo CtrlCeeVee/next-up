@@ -16,7 +16,9 @@ const {
   startLeague,
   endLeague,
   updateCourts,
-  toggleAutoAssignment
+  toggleAutoAssignment,
+  adminCheckInPlayer,
+  adminCheckOutPlayer
 } = require('../controllers/leagueNightController');const {
   getMatches,
   createMatches,
@@ -96,6 +98,12 @@ router.post('/:leagueId/nights/:nightId/matches/:matchId/cancel', cancelActiveMa
 
 // POST /api/leagues/:leagueId/nights/:nightId/matches/assign - Admin manual court assignment
 router.post('/:leagueId/nights/:nightId/matches/assign', manualCourtAssignment);
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/checkin-player - Admin check in player
+router.post('/:leagueId/nights/:nightId/admin/checkin-player', adminCheckInPlayer);
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/checkout-player - Admin check out player
+router.post('/:leagueId/nights/:nightId/admin/checkout-player', adminCheckOutPlayer);
 
 // DELETE /api/leagues/:leagueId/nights/:nightId/checkin - Uncheck player
 router.delete('/:leagueId/nights/:nightId/checkin', uncheckPlayer);

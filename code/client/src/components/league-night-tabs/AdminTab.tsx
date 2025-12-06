@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Settings, Play, StopCircle, Edit, Users, BarChart, Plus, X, Trophy, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Settings, Play, StopCircle, Edit, Users, BarChart, Plus, X, Trophy, AlertTriangle, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import TestingPanel from '../admin/TestingPanel';
 import { leagueNightService } from '../../services/api/leagueNights';
 
@@ -68,6 +68,22 @@ const AdminTab: React.FC<AdminTabProps> = ({
 
   // Dev tools collapse state
   const [devToolsExpanded, setDevToolsExpanded] = useState(false);
+
+  // Admin check-in/check-out state
+  const [leagueMembers, setLeagueMembers] = useState<any[]>([]);
+  const [checkedInPlayers, setCheckedInPlayers] = useState<any[]>([]);
+  const [selectedPlayerToCheckIn, setSelectedPlayerToCheckIn] = useState('');
+  const [selectedPlayerToCheckOut, setSelectedPlayerToCheckOut] = useState('');
+  const [checkingInPlayer, setCheckingInPlayer] = useState(false);
+  const [checkingOutPlayer, setCheckingOutPlayer] = useState(false);
+  const [checkInError, setCheckInError] = useState<string | null>(null);
+  const [checkOutError, setCheckOutError] = useState<string | null>(null);
+  const [checkInSearch, setCheckInSearch] = useState('');
+  const [checkOutSearch, setCheckOutSearch] = useState('');
+  const [showCheckInDropdown, setShowCheckInDropdown] = useState(false);
+  const [showCheckOutDropdown, setShowCheckOutDropdown] = useState(false);
+  const checkInRef = useRef<HTMLDivElement>(null);
+  const checkOutRef = useRef<HTMLDivElement>(null);
 
   const handleAddCourt = () => {
     if (!newCourtName.trim()) {
@@ -298,6 +314,119 @@ const AdminTab: React.FC<AdminTabProps> = ({
       fetchActiveMatches();
     }
   }, [isActive, leagueId, nightId]);
+
+  // Fetch league members and checked-in players
+  useEffect(() => {
+    fetchLeagueMembersAndCheckedIn();
+  }, [leagueId, leagueNight.id]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (checkInRef.current && !checkInRef.current.contains(event.target as Node)) {
+        setShowCheckInDropdown(false);
+      }
+      if (checkOutRef.current && !checkOutRef.current.contains(event.target as Node)) {
+        setShowCheckOutDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const fetchLeagueMembersAndCheckedIn = async () => {
+    try {
+      // Fetch league members
+      const membersResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/leagues/${leagueId}/members`);
+      const membersData = await membersResponse.json();
+      if (membersData.success) {
+        setLeagueMembers(membersData.data || []);
+      }
+
+      // Fetch checked-in players
+      const checkedInResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/leagues/${leagueId}/nights/${nightId}/checkins`);
+      const checkedInData = await checkedInResponse.json();
+      if (checkedInData.success) {
+        setCheckedInPlayers(checkedInData.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching league data:', error);
+    }
+  };
+
+  const handleAdminCheckIn = async () => {
+    if (!userId || !selectedPlayerToCheckIn) return;
+
+    setCheckingInPlayer(true);
+    setCheckInError(null);
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/admin/checkin-player`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          admin_user_id: userId,
+          player_user_id: selectedPlayerToCheckIn
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSelectedPlayerToCheckIn('');
+        setCheckInSearch('');
+        setShowCheckInDropdown(false);
+        fetchLeagueMembersAndCheckedIn();
+        onRefresh();
+      } else {
+        setCheckInError(data.error || 'Failed to check in player');
+      }
+    } catch (error) {
+      setCheckInError(error instanceof Error ? error.message : 'Failed to check in player');
+    } finally {
+      setCheckingInPlayer(false);
+    }
+  };
+
+  const handleAdminCheckOut = async () => {
+    if (!userId || !selectedPlayerToCheckOut) return;
+
+    setCheckingOutPlayer(true);
+    setCheckOutError(null);
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/admin/checkout-player`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          admin_user_id: userId,
+          player_user_id: selectedPlayerToCheckOut
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSelectedPlayerToCheckOut('');
+        setCheckOutSearch('');
+        setShowCheckOutDropdown(false);
+        fetchLeagueMembersAndCheckedIn();
+        onRefresh();
+      } else {
+        setCheckOutError(data.error || 'Failed to check out player');
+      }
+    } catch (error) {
+      setCheckOutError(error instanceof Error ? error.message : 'Failed to check out player');
+    } finally {
+      setCheckingOutPlayer(false);
+    }
+  };
+
+  const getSelectedPlayerName = (playerId: string, playerList: any[]) => {
+    const player = playerList.find(p => p.id === playerId);
+    return player?.name || 'Select player...';
+  };
 
   // Toggle auto-assignment
   const handleToggleAutoAssignment = async () => {
@@ -694,18 +823,163 @@ const AdminTab: React.FC<AdminTabProps> = ({
           <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           Player Management
         </h3>
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {/* Admin Check-in */}
+          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Check In Player
+            </label>
+            <div className="flex gap-2">
+              {/* Custom Searchable Dropdown */}
+              <div ref={checkInRef} className="flex-1 relative">
+                <button
+                  onClick={() => setShowCheckInDropdown(!showCheckInDropdown)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-slate-700 dark:text-white text-left flex items-center justify-between"
+                >
+                  <span className={selectedPlayerToCheckIn ? '' : 'text-slate-400'}>
+                    {getSelectedPlayerName(selectedPlayerToCheckIn, leagueMembers.filter(m => !checkedInPlayers.some(p => p.id === m.id)))}
+                  </span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                
+                {showCheckInDropdown && (
+                  <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-64 overflow-hidden">
+                    <div className="p-2 border-b border-slate-200 dark:border-slate-600">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          value={checkInSearch}
+                          onChange={(e) => setCheckInSearch(e.target.value)}
+                          className="w-full pl-8 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-slate-600 dark:text-white text-sm"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {leagueMembers
+                        .filter(member => !checkedInPlayers.some(p => p.id === member.id))
+                        .filter(member => 
+                          checkInSearch === '' || 
+                          member.name.toLowerCase().includes(checkInSearch.toLowerCase())
+                        )
+                        .map((member) => (
+                          <button
+                            key={member.id}
+                            onClick={() => {
+                              setSelectedPlayerToCheckIn(member.id);
+                              setShowCheckInDropdown(false);
+                              setCheckInSearch('');
+                            }}
+                            className="w-full px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors dark:text-white"
+                          >
+                            {member.name}
+                          </button>
+                        ))}
+                      {leagueMembers.filter(member => !checkedInPlayers.some(p => p.id === member.id) && (checkInSearch === '' || member.name.toLowerCase().includes(checkInSearch.toLowerCase()))).length === 0 && (
+                        <div className="px-3 py-4 text-center text-slate-400 text-sm">
+                          No players found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <button
+                onClick={handleAdminCheckIn}
+                disabled={checkingInPlayer || !selectedPlayerToCheckIn}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-400 text-white rounded-lg transition-colors font-medium whitespace-nowrap"
+              >
+                {checkingInPlayer ? 'Checking In...' : 'Check In'}
+              </button>
+            </div>
+            {checkInError && (
+              <p className="text-sm text-red-600 dark:text-red-400 mt-2">{checkInError}</p>
+            )}
+          </div>
+
+          {/* Admin Check-out */}
+          <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+              Check Out Player
+            </label>
+            <div className="flex gap-2">
+              {/* Custom Searchable Dropdown */}
+              <div ref={checkOutRef} className="flex-1 relative">
+                <button
+                  onClick={() => setShowCheckOutDropdown(!showCheckOutDropdown)}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-slate-700 dark:text-white text-left flex items-center justify-between"
+                >
+                  <span className={selectedPlayerToCheckOut ? '' : 'text-slate-400'}>
+                    {getSelectedPlayerName(selectedPlayerToCheckOut, checkedInPlayers)}
+                  </span>
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+                
+                {showCheckOutDropdown && (
+                  <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-64 overflow-hidden">
+                    <div className="p-2 border-b border-slate-200 dark:border-slate-600">
+                      <div className="relative">
+                        <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Search..."
+                          value={checkOutSearch}
+                          onChange={(e) => setCheckOutSearch(e.target.value)}
+                          className="w-full pl-8 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-slate-600 dark:text-white text-sm"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {checkedInPlayers
+                        .filter(player => 
+                          checkOutSearch === '' || 
+                          (player.name && player.name.toLowerCase().includes(checkOutSearch.toLowerCase()))
+                        )
+                        .map((player) => (
+                          <button
+                            key={player.id}
+                            onClick={() => {
+                              setSelectedPlayerToCheckOut(player.id);
+                              setShowCheckOutDropdown(false);
+                              setCheckOutSearch('');
+                            }}
+                            className="w-full px-3 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors dark:text-white"
+                          >
+                            {player.name || 'Unknown Player'}
+                          </button>
+                        ))}
+                      {checkedInPlayers.filter(player => checkOutSearch === '' || (player.name && player.name.toLowerCase().includes(checkOutSearch.toLowerCase()))).length === 0 && (
+                        <div className="px-3 py-4 text-center text-slate-400 text-sm">
+                          No players found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <button
+                onClick={handleAdminCheckOut}
+                disabled={checkingOutPlayer || !selectedPlayerToCheckOut}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-slate-400 text-white rounded-lg transition-colors font-medium whitespace-nowrap"
+              >
+                {checkingOutPlayer ? 'Checking Out...' : 'Check Out'}
+              </button>
+            </div>
+            {checkOutError && (
+              <p className="text-sm text-red-600 dark:text-red-400 mt-2">{checkOutError}</p>
+            )}
+          </div>
+
           <button
             disabled
             className="w-full px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg opacity-50 cursor-not-allowed font-medium text-left"
           >
             Mark No-Show (Coming Soon)
-          </button>
-          <button
-            disabled
-            className="w-full px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg opacity-50 cursor-not-allowed font-medium text-left"
-          >
-            Force Check-Out Player (Coming Soon)
           </button>
         </div>
       </div>
