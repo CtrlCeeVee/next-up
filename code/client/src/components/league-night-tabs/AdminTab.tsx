@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Play, StopCircle, Edit, Users, BarChart, Plus, X, Trophy, AlertTriangle, ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { Settings, Play, StopCircle, Edit, Users, BarChart, Plus, X, Trophy, AlertTriangle, ChevronDown, ChevronUp, Search, UserPlus } from 'lucide-react';
 import TestingPanel from '../admin/TestingPanel';
 import { leagueNightService } from '../../services/api/leagueNights';
 
@@ -84,6 +84,20 @@ const AdminTab: React.FC<AdminTabProps> = ({
   const [showCheckOutDropdown, setShowCheckOutDropdown] = useState(false);
   const checkInRef = useRef<HTMLDivElement>(null);
   const checkOutRef = useRef<HTMLDivElement>(null);
+
+  // Admin partnership management state
+  const [activePartnerships, setActivePartnerships] = useState<any[]>([]);
+  const [selectedPlayer1, setSelectedPlayer1] = useState('');
+  const [selectedPlayer2, setSelectedPlayer2] = useState('');
+  const [creatingPartnership, setCreatingPartnership] = useState(false);
+  const [removingPartnership, setRemovingPartnership] = useState<number | null>(null);
+  const [partnershipError, setPartnershipError] = useState<string | null>(null);
+  const [player1Search, setPlayer1Search] = useState('');
+  const [player2Search, setPlayer2Search] = useState('');
+  const [showPlayer1Dropdown, setShowPlayer1Dropdown] = useState(false);
+  const [showPlayer2Dropdown, setShowPlayer2Dropdown] = useState(false);
+  const player1Ref = useRef<HTMLDivElement>(null);
+  const player2Ref = useRef<HTMLDivElement>(null);
 
   const handleAddCourt = () => {
     if (!newCourtName.trim()) {
@@ -329,6 +343,12 @@ const AdminTab: React.FC<AdminTabProps> = ({
       if (checkOutRef.current && !checkOutRef.current.contains(event.target as Node)) {
         setShowCheckOutDropdown(false);
       }
+      if (player1Ref.current && !player1Ref.current.contains(event.target as Node)) {
+        setShowPlayer1Dropdown(false);
+      }
+      if (player2Ref.current && !player2Ref.current.contains(event.target as Node)) {
+        setShowPlayer2Dropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -344,11 +364,18 @@ const AdminTab: React.FC<AdminTabProps> = ({
         setLeagueMembers(membersData.data || []);
       }
 
-      // Fetch checked-in players
+      // Fetch checked-in players (includes partnership info)
       const checkedInResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/leagues/${leagueId}/nights/${nightId}/checkins`);
       const checkedInData = await checkedInResponse.json();
       if (checkedInData.success) {
         setCheckedInPlayers(checkedInData.data || []);
+      }
+
+      // Fetch all active partnerships via API
+      const partnershipsResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/leagues/${leagueId}/nights/${nightId}/partnerships`);
+      const partnershipsData = await partnershipsResponse.json();
+      if (partnershipsData.success) {
+        setActivePartnerships(partnershipsData.data || []);
       }
     } catch (error) {
       console.error('Error fetching league data:', error);
@@ -428,6 +455,79 @@ const AdminTab: React.FC<AdminTabProps> = ({
     return player?.name || 'Select player...';
   };
 
+  const handleAdminCreatePartnership = async () => {
+    if (!userId || !selectedPlayer1 || !selectedPlayer2) return;
+
+    if (selectedPlayer1 === selectedPlayer2) {
+      setPartnershipError('Cannot partner a player with themselves');
+      return;
+    }
+
+    setCreatingPartnership(true);
+    setPartnershipError(null);
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/admin/create-partnership`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          admin_user_id: userId,
+          player1_id: selectedPlayer1,
+          player2_id: selectedPlayer2
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSelectedPlayer1('');
+        setSelectedPlayer2('');
+        setPlayer1Search('');
+        setPlayer2Search('');
+        setShowPlayer1Dropdown(false);
+        setShowPlayer2Dropdown(false);
+        fetchLeagueMembersAndCheckedIn();
+        onRefresh();
+      } else {
+        setPartnershipError(data.error || 'Failed to create partnership');
+      }
+    } catch (error) {
+      setPartnershipError(error instanceof Error ? error.message : 'Failed to create partnership');
+    } finally {
+      setCreatingPartnership(false);
+    }
+  };
+
+  const handleAdminRemovePartnership = async (partnershipId: number) => {
+    if (!userId) return;
+
+    setRemovingPartnership(partnershipId);
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/leagues/${leagueId}/nights/${nightId}/admin/remove-partnership`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          admin_user_id: userId,
+          partnership_id: partnershipId
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        fetchLeagueMembersAndCheckedIn();
+        onRefresh();
+      } else {
+        alert(data.error || 'Failed to remove partnership');
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to remove partnership');
+    } finally {
+      setRemovingPartnership(null);
+    }
+  };
+
   // Toggle auto-assignment
   const handleToggleAutoAssignment = async () => {
     if (!userId) return;
@@ -466,7 +566,7 @@ const AdminTab: React.FC<AdminTabProps> = ({
   };
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="space-y-6 pb-24 overflow-visible">
       {/* Admin Controls Header */}
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg">
         <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
@@ -480,7 +580,7 @@ const AdminTab: React.FC<AdminTabProps> = ({
 
 
       {/* League Night Management */}
-      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
+      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg overflow-visible">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Play className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           League Night Status
@@ -546,7 +646,7 @@ const AdminTab: React.FC<AdminTabProps> = ({
       </div>
 
       {/* Court Management */}
-      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
+      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg overflow-visible">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Edit className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           Court Management
@@ -627,7 +727,7 @@ const AdminTab: React.FC<AdminTabProps> = ({
       </div>
 
       {/* Match Management */}
-      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
+      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg overflow-visible">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Edit className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           Match Management
@@ -818,7 +918,7 @@ const AdminTab: React.FC<AdminTabProps> = ({
       )}
 
       {/* Player Management */}
-      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
+      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg overflow-visible">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Users className="w-5 h-5 text-purple-600 dark:text-purple-400" />
           Player Management
@@ -984,8 +1084,216 @@ const AdminTab: React.FC<AdminTabProps> = ({
         </div>
       </div>
 
+      {/* Partnership Management */}
+      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg overflow-visible">
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+          <UserPlus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+          Partnership Management
+        </h3>
+        <div className="space-y-6">
+          {/* Create Partnership */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
+              Create Partnership
+            </h4>
+            
+            <div className="flex gap-3">
+              {/* Player 1 Dropdown */}
+              <div ref={player1Ref} className="flex-1 relative">
+                <button
+                  onClick={() => setShowPlayer1Dropdown(!showPlayer1Dropdown)}
+                  className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-left flex items-center justify-between hover:border-emerald-500 dark:hover:border-emerald-400 transition-colors"
+                >
+                  <span className="text-slate-700 dark:text-slate-200">
+                    {selectedPlayer1 
+                      ? getSelectedPlayerName(selectedPlayer1, checkedInPlayers) 
+                      : 'Select Player 1'}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showPlayer1Dropdown ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {showPlayer1Dropdown && (
+                  <div className="absolute z-50 mt-1 w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                    <div className="p-2 border-b border-slate-200 dark:border-slate-700">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Search players..."
+                          value={player1Search}
+                          onChange={(e) => setPlayer1Search(e.target.value)}
+                          className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-44 overflow-y-auto">
+                      {checkedInPlayers
+                        .filter(p => 
+                          p.name.toLowerCase().includes(player1Search.toLowerCase()) &&
+                          p.id !== selectedPlayer2 // Can't select same player
+                        )
+                        .map(player => (
+                          <button
+                            key={player.id}
+                            onClick={() => {
+                              setSelectedPlayer1(player.id);
+                              setShowPlayer1Dropdown(false);
+                              setPlayer1Search('');
+                            }}
+                            className="w-full px-4 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
+                          >
+                            {player.name}
+                          </button>
+                        ))}
+                      {checkedInPlayers.filter(p => 
+                        p.name.toLowerCase().includes(player1Search.toLowerCase()) &&
+                        p.id !== selectedPlayer2
+                      ).length === 0 && (
+                        <div className="px-4 py-3 text-slate-500 dark:text-slate-400 text-sm">
+                          No players found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Player 2 Dropdown */}
+              <div ref={player2Ref} className="flex-1 relative">
+                <button
+                  onClick={() => setShowPlayer2Dropdown(!showPlayer2Dropdown)}
+                  className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-left flex items-center justify-between hover:border-emerald-500 dark:hover:border-emerald-400 transition-colors"
+                >
+                  <span className="text-slate-700 dark:text-slate-200">
+                    {selectedPlayer2 
+                      ? getSelectedPlayerName(selectedPlayer2, checkedInPlayers) 
+                      : 'Select Player 2'}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${showPlayer2Dropdown ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {showPlayer2Dropdown && (
+                  <div className="absolute z-50 mt-1 w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                    <div className="p-2 border-b border-slate-200 dark:border-slate-700">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Search players..."
+                          value={player2Search}
+                          onChange={(e) => setPlayer2Search(e.target.value)}
+                          className="w-full pl-10 pr-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    </div>
+                    <div className="max-h-44 overflow-y-auto">
+                      {checkedInPlayers
+                        .filter(p => 
+                          p.name.toLowerCase().includes(player2Search.toLowerCase()) &&
+                          p.id !== selectedPlayer1 // Can't select same player
+                        )
+                        .map(player => (
+                          <button
+                            key={player.id}
+                            onClick={() => {
+                              setSelectedPlayer2(player.id);
+                              setShowPlayer2Dropdown(false);
+                              setPlayer2Search('');
+                            }}
+                            className="w-full px-4 py-2 text-left hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
+                          >
+                            {player.name}
+                          </button>
+                        ))}
+                      {checkedInPlayers.filter(p => 
+                        p.name.toLowerCase().includes(player2Search.toLowerCase()) &&
+                        p.id !== selectedPlayer1
+                      ).length === 0 && (
+                        <div className="px-4 py-3 text-slate-500 dark:text-slate-400 text-sm">
+                          No players found
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <button
+              onClick={handleAdminCreatePartnership}
+              disabled={!selectedPlayer1 || !selectedPlayer2 || creatingPartnership}
+              className="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {creatingPartnership ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Creating Partnership...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-4 h-4" />
+                  Create Partnership
+                </>
+              )}
+            </button>
+
+            {partnershipError && (
+              <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 px-3 py-2 rounded-lg">
+                {partnershipError}
+              </div>
+            )}
+          </div>
+
+          {/* Active Partnerships List */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-200 uppercase tracking-wide">
+              Active Partnerships ({activePartnerships.length})
+            </h4>
+            
+            {activePartnerships.length === 0 ? (
+              <div className="text-slate-500 dark:text-slate-400 text-sm bg-slate-50 dark:bg-slate-700/50 px-4 py-3 rounded-lg">
+                No active partnerships
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {activePartnerships.map(partnership => {
+                  const player1 = checkedInPlayers.find(p => p.id === partnership.player1_id);
+                  const player2 = checkedInPlayers.find(p => p.id === partnership.player2_id);
+                  return (
+                    <div 
+                      key={partnership.id}
+                      className="flex items-center justify-between bg-white dark:bg-slate-800 px-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700"
+                    >
+                      <span className="text-slate-700 dark:text-slate-200 font-medium">
+                        {player1?.name || 'Unknown'} & {player2?.name || 'Unknown'}
+                      </span>
+                      <button
+                        onClick={() => handleAdminRemovePartnership(partnership.id)}
+                        disabled={removingPartnership !== null}
+                        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white text-sm rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center gap-1.5"
+                      >
+                        {removingPartnership === partnership.id ? (
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <X className="w-3.5 h-3.5" />
+                            Remove
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Reports & Analytics */}
-      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
+      <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg overflow-visible">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <BarChart className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           Reports & Analytics

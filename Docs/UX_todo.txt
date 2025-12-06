@@ -46,7 +46,7 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
    Current system ensures equal games played for everyone - this is the actual goal. Perception issue, not fairness issue.
    Requires full matchmaking redesign to solve properly.
 
-[] 8. Confirming scores between matches
+[X] 8. Confirming scores between matches
  - currently whichever team submitted the scores just got their scores saved without any kind of confirmation
  - this results in some issues where people just submitted a score that was incorrect or when they just werent meant to 
    submit a score

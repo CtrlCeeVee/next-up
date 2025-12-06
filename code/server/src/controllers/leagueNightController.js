@@ -1175,6 +1175,184 @@ const adminCheckOutPlayer = async (req, res) => {
   }
 };
 
+// POST /api/leagues/:leagueId/nights/:nightId/admin/create-partnership - Admin creates partnership
+const adminCreatePartnership = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { admin_user_id, player1_id, player2_id } = req.body;
+
+    if (!admin_user_id || !player1_id || !player2_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Admin ID and both player IDs are required'
+      });
+    }
+
+    if (player1_id === player2_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot partner a player with themselves'
+      });
+    }
+
+    // Check if admin has permission (admin or organizer)
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', admin_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins/organizers can create partnerships'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Check if both players are checked in
+    const { data: checkins, error: checkinsError } = await supabase
+      .from('league_night_checkins')
+      .select('user_id')
+      .eq('league_night_instance_id', instance.id)
+      .in('user_id', [player1_id, player2_id])
+      .eq('is_active', true);
+
+    if (checkinsError) throw checkinsError;
+
+    if (checkins.length !== 2) {
+      return res.status(400).json({
+        success: false,
+        error: 'Both players must be checked in to form a partnership'
+      });
+    }
+
+    // Check if either player already has a confirmed partnership
+    const { data: existingPartnerships, error: existingError } = await supabase
+      .from('confirmed_partnerships')
+      .select('*')
+      .eq('league_night_instance_id', instance.id)
+      .or(`player1_id.eq.${player1_id},player2_id.eq.${player1_id},player1_id.eq.${player2_id},player2_id.eq.${player2_id}`)
+      .eq('is_active', true);
+
+    if (existingError) throw existingError;
+
+    if (existingPartnerships.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'One or both players already have a confirmed partnership'
+      });
+    }
+
+    // Clean up any existing requests between these players
+    await supabase
+      .from('partnership_requests')
+      .delete()
+      .eq('league_night_instance_id', instance.id)
+      .or(`and(requester_id.eq.${player1_id},requested_id.eq.${player2_id}),and(requester_id.eq.${player2_id},requested_id.eq.${player1_id})`);
+
+    // Create confirmed partnership
+    const { data: partnership, error: partnershipError } = await supabase
+      .from('confirmed_partnerships')
+      .insert({
+        league_night_instance_id: instance.id,
+        player1_id: player1_id,
+        player2_id: player2_id,
+        is_active: true
+      })
+      .select()
+      .single();
+
+    if (partnershipError) throw partnershipError;
+
+    // Reject any other pending requests involving these players
+    await supabase
+      .from('partnership_requests')
+      .update({ status: 'declined' })
+      .eq('league_night_instance_id', instance.id)
+      .or(`requester_id.eq.${player1_id},requested_id.eq.${player1_id},requester_id.eq.${player2_id},requested_id.eq.${player2_id}`)
+      .eq('status', 'pending');
+
+    // Try to auto-assign matches if league night is active and courts are available
+    await tryAutoAssignMatches(instance.id);
+
+    res.json({
+      success: true,
+      data: {
+        partnership,
+        message: 'Partnership created successfully by admin'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error admin creating partnership:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create partnership'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/remove-partnership - Admin removes partnership
+const adminRemovePartnership = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { admin_user_id, partnership_id } = req.body;
+
+    if (!admin_user_id || !partnership_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Admin ID and partnership ID are required'
+      });
+    }
+
+    // Check if admin has permission (admin or organizer)
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', admin_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins/organizers can remove partnerships'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Deactivate the partnership (preserves historical data)
+    const { error: partnershipError } = await supabase
+      .from('confirmed_partnerships')
+      .update({ is_active: false })
+      .eq('id', partnership_id)
+      .eq('league_night_instance_id', instance.id)
+      .eq('is_active', true);
+
+    if (partnershipError) throw partnershipError;
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Partnership removed successfully by admin'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error admin removing partnership:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to remove partnership'
+    });
+  }
+};
+
 // POST /api/leagues/:leagueId/nights/:nightId/toggle-auto-assignment
 const toggleAutoAssignment = async (req, res) => {
   try {
@@ -1243,6 +1421,49 @@ const toggleAutoAssignment = async (req, res) => {
   }
 };
 
+// GET /api/leagues/:leagueId/nights/:nightId/partnerships - Get all active partnerships (admin)
+const getAllPartnerships = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    const { data: partnerships, error } = await supabase
+      .from('confirmed_partnerships')
+      .select(`
+        id,
+        player1_id,
+        player2_id,
+        player1:profiles!confirmed_partnerships_player1_id_fkey (
+          id,
+          first_name,
+          last_name
+        ),
+        player2:profiles!confirmed_partnerships_player2_id_fkey (
+          id,
+          first_name,
+          last_name
+        )
+      `)
+      .eq('league_night_instance_id', instance.id)
+      .eq('is_active', true);
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data: partnerships || []
+    });
+
+  } catch (error) {
+    console.error('Error fetching partnerships:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch partnerships'
+    });
+  }
+};
+
 module.exports = {
   getLeagueNight,
   getCheckedInPlayers,
@@ -1258,5 +1479,8 @@ module.exports = {
   updateCourts,
   toggleAutoAssignment,
   adminCheckInPlayer,
-  adminCheckOutPlayer
+  adminCheckOutPlayer,
+  adminCreatePartnership,
+  adminRemovePartnership,
+  getAllPartnerships
 };

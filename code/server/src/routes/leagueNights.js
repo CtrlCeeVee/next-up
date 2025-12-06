@@ -18,7 +18,10 @@ const {
   updateCourts,
   toggleAutoAssignment,
   adminCheckInPlayer,
-  adminCheckOutPlayer
+  adminCheckOutPlayer,
+  adminCreatePartnership,
+  adminRemovePartnership,
+  getAllPartnerships
 } = require('../controllers/leagueNightController');const {
   getMatches,
   createMatches,
@@ -41,6 +44,9 @@ router.get('/:leagueId/nights/:nightId/checkins', getCheckedInPlayers);
 
 // GET /api/leagues/:leagueId/nights/:nightId/partnership-requests - Get partnership requests
 router.get('/:leagueId/nights/:nightId/partnership-requests', getPartnershipRequests);
+
+// GET /api/leagues/:leagueId/nights/:nightId/partnerships - Get all active partnerships
+router.get('/:leagueId/nights/:nightId/partnerships', getAllPartnerships);
 
 // GET /api/leagues/:leagueId/nights/:nightId/matches - Get all matches for league night
 router.get('/:leagueId/nights/:nightId/matches', getMatches);
@@ -104,6 +110,12 @@ router.post('/:leagueId/nights/:nightId/admin/checkin-player', adminCheckInPlaye
 
 // POST /api/leagues/:leagueId/nights/:nightId/admin/checkout-player - Admin check out player
 router.post('/:leagueId/nights/:nightId/admin/checkout-player', adminCheckOutPlayer);
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/create-partnership - Admin create partnership
+router.post('/:leagueId/nights/:nightId/admin/create-partnership', adminCreatePartnership);
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/remove-partnership - Admin remove partnership
+router.post('/:leagueId/nights/:nightId/admin/remove-partnership', adminRemovePartnership);
 
 // DELETE /api/leagues/:leagueId/nights/:nightId/checkin - Uncheck player
 router.delete('/:leagueId/nights/:nightId/checkin', uncheckPlayer);
