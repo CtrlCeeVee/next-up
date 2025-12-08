@@ -92,7 +92,9 @@
    - Click "Start League Night" when ready
    - System creates initial matches automatically
    - Watch queue and court utilization
-   - Override scores if needed (future feature)
+   - Override scores if needed
+   - Create temporary accounts for players without phones
+   - Check in/out players and manage partnerships directly
 
 2. **League administration**
    - Manage league members
@@ -143,16 +145,12 @@
 
 ### Future Features (Post-MVP)
 
-**Player Features**:
+**Admin Features**:
 - Auto-assign solo players to teams
 - Queue position notifications
 - Opponent selection by mutual agreement
-
-**Admin Features**:
-- Manual match overrides and court reassignment
-- Mark no-shows or late arrivals
-- Advanced tournament modes (round-robin, knockout)
-- Stats dashboards with analytics
+- Advanced stats dashboards with analytics
+- Dependent accounts (parents checking in kids)
 
 **League Features**:
 - Skill-based balancing (ELO system)

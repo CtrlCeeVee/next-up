@@ -1464,6 +1464,174 @@ const getAllPartnerships = async (req, res) => {
   }
 };
 
+// POST /api/leagues/:leagueId/nights/:nightId/admin/create-temp-account - Admin creates temporary account
+const adminCreateTempAccount = async (req, res) => {
+  try {
+    const { leagueId } = req.params;
+    const { admin_user_id, first_name, last_name, skill_level } = req.body;
+
+    if (!admin_user_id || !first_name || !last_name || !skill_level) {
+      return res.status(400).json({
+        success: false,
+        error: 'Admin ID, first name, last name, and skill level are required'
+      });
+    }
+
+    // Check if admin has permission (admin or organizer)
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', admin_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins/organizers can create temporary accounts'
+      });
+    }
+
+    // Generate random password (12 characters: alphanumeric + special chars)
+    const generatePassword = () => {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+      let password = '';
+      for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return password;
+    };
+    
+    const password = generatePassword();
+    const email = `temp-${Date.now()}-${Math.random().toString(36).substring(7)}@next-up.local`;
+
+    // Generate username from first and last name
+    const generateUsername = (firstName, lastName) => {
+      const sanitize = (str) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const sanitizedFirst = sanitize(firstName);
+      const sanitizedLast = sanitize(lastName);
+      return `${sanitizedFirst}-${sanitizedLast}`;
+    };
+
+    const baseUsername = generateUsername(first_name, last_name);
+
+    // Check for username collisions and append number if needed
+    let username = baseUsername;
+    let counter = 1;
+    let usernameExists = true;
+
+    while (usernameExists) {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .single();
+
+      if (!existingProfile) {
+        usernameExists = false;
+      } else {
+        username = `${baseUsername}-${counter}`;
+        counter++;
+      }
+    }
+
+    // Create user in Supabase Auth using admin API
+    // Note: Database trigger will auto-create profile from user_metadata
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: email,
+      password: password,
+      email_confirm: true,
+      user_metadata: {
+        first_name: first_name,
+        last_name: last_name,
+        username: username,
+        skill_level: skill_level
+      }
+    });
+
+    if (authError) {
+      console.error('Error creating temp user in auth:', authError);
+      throw authError;
+    }
+
+    // Wait briefly for DB trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Fetch the auto-created profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      throw profileError;
+    }
+
+    // Add user to league membership
+    const { data: leagueMembership, error: leagueMembershipError } = await supabase
+      .from('league_memberships')
+      .insert({
+        league_id: leagueId,
+        user_id: authData.user.id,
+        role: 'player',
+        is_active: true
+      })
+      .select()
+      .single();
+
+    if (leagueMembershipError) {
+      console.error('Error creating league membership:', leagueMembershipError);
+      throw leagueMembershipError;
+    }
+
+    // Create initial player stats
+    const { data: initialPlayerStats, error: initialStatsError } = await supabase
+      .from('player_stats')
+      .insert({
+        user_id: authData.user.id,
+        league_id: leagueId,
+        games_played: 0,
+        games_won: 0,
+        games_lost: 0,
+        total_points: 0,
+        average_points: 0.0
+      })
+      .select()
+      .single();
+
+    if (initialStatsError) {
+      console.error('Error creating player stats:', initialStatsError);
+      throw initialStatsError;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: authData.user.id,
+          email: email,
+          first_name: first_name,
+          last_name: last_name,
+          username: username,
+          skill_level: skill_level
+        },
+        password: password
+      },
+      message: 'Temporary account created successfully'
+    });
+
+  } catch (error) {
+    console.error('Error creating temporary account:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to create temporary account'
+    });
+  }
+};
+
 module.exports = {
   getLeagueNight,
   getCheckedInPlayers,
@@ -1482,5 +1650,6 @@ module.exports = {
   adminCheckOutPlayer,
   adminCreatePartnership,
   adminRemovePartnership,
-  getAllPartnerships
+  getAllPartnerships,
+  adminCreateTempAccount
 };

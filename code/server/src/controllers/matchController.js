@@ -1629,6 +1629,9 @@ const overrideMatchScore = async (req, res) => {
         id,
         league_night_instance_id,
         status,
+        league_night_instance:league_night_instances!inner (
+          league_id
+        ),
         partnership1:confirmed_partnerships!matches_partnership1_id_fkey (
           id,
           player1_id,

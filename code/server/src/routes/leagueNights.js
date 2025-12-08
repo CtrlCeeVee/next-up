@@ -21,7 +21,8 @@ const {
   adminCheckOutPlayer,
   adminCreatePartnership,
   adminRemovePartnership,
-  getAllPartnerships
+  getAllPartnerships,
+  adminCreateTempAccount
 } = require('../controllers/leagueNightController');const {
   getMatches,
   createMatches,
@@ -116,6 +117,9 @@ router.post('/:leagueId/nights/:nightId/admin/create-partnership', adminCreatePa
 
 // POST /api/leagues/:leagueId/nights/:nightId/admin/remove-partnership - Admin remove partnership
 router.post('/:leagueId/nights/:nightId/admin/remove-partnership', adminRemovePartnership);
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/create-temp-account - Admin create temporary account
+router.post('/:leagueId/nights/:nightId/admin/create-temp-account', adminCreateTempAccount);
 
 // DELETE /api/leagues/:leagueId/nights/:nightId/checkin - Uncheck player
 router.delete('/:leagueId/nights/:nightId/checkin', uncheckPlayer);

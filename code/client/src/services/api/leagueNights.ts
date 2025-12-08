@@ -358,6 +358,37 @@ class LeagueNightService {
 
     return response.json();
   }
+
+  // Admin: Create temporary account for player without phone
+  async createTempAccount(
+    leagueId: number, 
+    nightId: string, 
+    adminUserId: string, 
+    firstName: string, 
+    lastName: string, 
+    skillLevel: 'Beginner' | 'Intermediate' | 'Advanced'
+  ): Promise<{ user: any; password: string }> {
+    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/admin/create-temp-account`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        admin_user_id: adminUserId,
+        first_name: firstName,
+        last_name: lastName,
+        skill_level: skillLevel
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create temporary account');
+    }
+
+    const result = await response.json();
+    return result.data;
+  }
 }
 
 export const leagueNightService = new LeagueNightService();

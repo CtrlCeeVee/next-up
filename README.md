@@ -37,9 +37,11 @@ Visit `next-up.co.za` → Select your league → Check in → Play!
 
 ## 🎯 Current Status
 
-**v1.2.1 - UX Polish** (Nov 21, 2025)
+**v1.2.2 - Players Without Phones** (Dec 8, 2025)
 
 **✅ Production Ready**
+- Admins can create temporary accounts for players without phones
+- Full account creation with auto-membership and stats initialization
 - Tab-based navigation eliminates clutter when many players checked in
 - Search/filter available partners
 - Mobile-friendly bottom navigation

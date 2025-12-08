@@ -1,5 +1,31 @@
 # 📝 Next-Up Changelog
 
+## Version 1.2.2 - Players Without Phones Support (December 2025)
+
+### Admin Features
+
+**Temporary Account Creation**
+- Admins can create accounts for players without phones from Admin tab
+- Auto-generates unique email (`temp-{timestamp}-{random}@next-up.local`)
+- Auto-generates secure 12-character random password
+- Automatically adds user to league membership with initial stats
+- Password displayed once with copy button and warning to write down
+- Admin can immediately check in and partner temp account users
+
+**Implementation Details**
+- New endpoint: `POST /api/leagues/:leagueId/nights/:nightId/admin/create-temp-account`
+- Requires: first name, last name, skill level
+- Creates full user account via Supabase Auth Admin API
+- Profile auto-created by database trigger
+- League membership and player stats initialized
+- Username collision handling (appends `-1`, `-2`, etc.)
+
+### Bug Fixes
+- **Override match score error**: Fixed missing `league_id` in match query - added `league_night_instance` join
+- **Temp account creation**: Handle database trigger auto-creating profiles to prevent duplicate key errors
+
+---
+
 ## Version 1.2.1 - UX Polish (November 2025)
 
 ### UI/UX Improvements

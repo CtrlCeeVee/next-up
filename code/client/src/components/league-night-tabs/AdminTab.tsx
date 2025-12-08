@@ -99,6 +99,15 @@ const AdminTab: React.FC<AdminTabProps> = ({
   const player1Ref = useRef<HTMLDivElement>(null);
   const player2Ref = useRef<HTMLDivElement>(null);
 
+  // Temp account creation state
+  const [showTempAccountModal, setShowTempAccountModal] = useState(false);
+  const [tempFirstName, setTempFirstName] = useState('');
+  const [tempLastName, setTempLastName] = useState('');
+  const [tempSkillLevel, setTempSkillLevel] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Beginner');
+  const [creatingTempAccount, setCreatingTempAccount] = useState(false);
+  const [tempAccountError, setTempAccountError] = useState<string | null>(null);
+  const [tempAccountSuccess, setTempAccountSuccess] = useState<{ name: string; email: string; password: string } | null>(null);
+
   const handleAddCourt = () => {
     if (!newCourtName.trim()) {
       setCourtError('Court name cannot be empty');
@@ -448,6 +457,54 @@ const AdminTab: React.FC<AdminTabProps> = ({
     } finally {
       setCheckingOutPlayer(false);
     }
+  };
+
+  const handleCreateTempAccount = async () => {
+    if (!userId || !tempFirstName.trim() || !tempLastName.trim()) {
+      setTempAccountError('First name and last name are required');
+      return;
+    }
+
+    setCreatingTempAccount(true);
+    setTempAccountError(null);
+    
+    try {
+      const result = await leagueNightService.createTempAccount(
+        leagueId,
+        nightId,
+        userId,
+        tempFirstName.trim(),
+        tempLastName.trim(),
+        tempSkillLevel
+      );
+
+      setTempAccountSuccess({
+        name: `${result.user.first_name} ${result.user.last_name}`,
+        email: result.user.email,
+        password: result.password
+      });
+      
+      // Clear form
+      setTempFirstName('');
+      setTempLastName('');
+      setTempSkillLevel('Beginner');
+      
+      // Refresh league members
+      fetchLeagueMembersAndCheckedIn();
+    } catch (error) {
+      setTempAccountError(error instanceof Error ? error.message : 'Failed to create temporary account');
+    } finally {
+      setCreatingTempAccount(false);
+    }
+  };
+
+  const handleCloseTempAccountModal = () => {
+    setShowTempAccountModal(false);
+    setTempAccountSuccess(null);
+    setTempAccountError(null);
+    setTempFirstName('');
+    setTempLastName('');
+    setTempSkillLevel('Beginner');
   };
 
   const getSelectedPlayerName = (playerId: string, playerList: any[]) => {
@@ -917,6 +974,171 @@ const AdminTab: React.FC<AdminTabProps> = ({
         </div>
       )}
 
+      {/* Create Temporary Account Modal */}
+      {showTempAccountModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                Create Temporary Account
+              </h3>
+              <button
+                onClick={handleCloseTempAccountModal}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {!tempAccountSuccess ? (
+              <>
+                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                    <p className="text-xs text-blue-800 dark:text-blue-300">
+                      For players without phones. You'll receive a password to write down and give to them.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      First Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={tempFirstName}
+                      onChange={(e) => setTempFirstName(e.target.value)}
+                      placeholder="Enter first name"
+                      className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Last Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={tempLastName}
+                      onChange={(e) => setTempLastName(e.target.value)}
+                      placeholder="Enter last name"
+                      className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                      Skill Level
+                    </label>
+                    <select
+                      value={tempSkillLevel}
+                      onChange={(e) => setTempSkillLevel(e.target.value as 'Beginner' | 'Intermediate' | 'Advanced')}
+                      className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
+                    >
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                    </select>
+                  </div>
+
+                  {tempAccountError && (
+                    <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-700">
+                      <p className="text-sm text-red-800 dark:text-red-300">{tempAccountError}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={handleCreateTempAccount}
+                      disabled={creatingTempAccount || !tempFirstName.trim() || !tempLastName.trim()}
+                      className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors font-medium"
+                    >
+                      {creatingTempAccount ? 'Creating...' : 'Create Account'}
+                    </button>
+                    <button
+                      onClick={handleCloseTempAccountModal}
+                      disabled={creatingTempAccount}
+                      className="px-4 py-2 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-700">
+                  <div className="flex items-start gap-2">
+                    <Trophy className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-green-800 dark:text-green-300 mb-1">
+                        Account Created Successfully!
+                      </p>
+                      <p className="text-xs text-green-700 dark:text-green-400">
+                        Write down these credentials and give them to the player.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                      Name
+                    </label>
+                    <p className="text-lg font-semibold text-slate-900 dark:text-white">
+                      {tempAccountSuccess.name}
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4">
+                    <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                      Email (for login)
+                    </label>
+                    <p className="text-sm font-mono text-slate-900 dark:text-white break-all">
+                      {tempAccountSuccess.email}
+                    </p>
+                  </div>
+
+                  <div className="bg-yellow-50 dark:bg-yellow-900/30 rounded-lg p-4 border-2 border-yellow-400 dark:border-yellow-600">
+                    <label className="block text-xs font-medium text-yellow-800 dark:text-yellow-400 mb-2">
+                      Password (Write this down!)
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <p className="text-lg font-mono font-bold text-yellow-900 dark:text-yellow-300 flex-1 break-all">
+                        {tempAccountSuccess.password}
+                      </p>
+                      <button
+                        onClick={() => navigator.clipboard.writeText(tempAccountSuccess.password)}
+                        className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg text-xs font-medium whitespace-nowrap"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-orange-50 dark:bg-orange-900/30 rounded-lg border border-orange-200 dark:border-orange-700">
+                    <p className="text-xs text-orange-800 dark:text-orange-300">
+                      ⚠️ This password will only be shown once. Make sure to write it down!
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={handleCloseTempAccountModal}
+                    className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+                  >
+                    Done
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Player Management */}
       <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg overflow-visible">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -1074,6 +1296,14 @@ const AdminTab: React.FC<AdminTabProps> = ({
               <p className="text-sm text-red-600 dark:text-red-400 mt-2">{checkOutError}</p>
             )}
           </div>
+
+          <button
+            onClick={() => setShowTempAccountModal(true)}
+            className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+          >
+            <UserPlus className="w-4 h-4" />
+            Create Temporary Account
+          </button>
 
           <button
             disabled
