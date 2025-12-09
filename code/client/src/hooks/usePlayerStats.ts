@@ -15,6 +15,8 @@ interface LeagueStatsFromAPI {
   winRate: number;
   averagePoints: number;
   totalPoints: number;
+  totalPlayers: number;
+  ranking: number;
 }
 
 interface OverallStatsFromAPI {
@@ -100,7 +102,7 @@ export const usePlayerStats = (userId: string | null): UsePlayerStatsReturn => {
         activeLeagues: response.overall.totalLeagues // For now, assume all leagues are active
       };
 
-      const transformedLeagueStats: LeagueStats[] = response.leagueStats.map((league, index) => ({
+      const transformedLeagueStats: LeagueStats[] = response.leagueStats.map((league) => ({
         leagueId: league.leagueId,
         leagueName: league.leagueName,
         games: league.gamesPlayed,
@@ -108,10 +110,8 @@ export const usePlayerStats = (userId: string | null): UsePlayerStatsReturn => {
         losses: league.gamesLost,
         winRate: league.winRate,
         points: league.totalPoints,
-        // TODO: Calculate actual ranking when available
-        ranking: index + 1, // Temporary: use array index + 1
-        // TODO: Get actual total players from league stats
-        totalPlayers: 0 // Will be updated when we integrate league member counts
+        ranking: league.ranking,
+        totalPlayers: league.totalPlayers
       }));
 
       setStats(transformedStats);

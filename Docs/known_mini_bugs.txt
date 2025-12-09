@@ -4,4 +4,4 @@
 4. There seems to be no caching of any data, everytime you go to a page it auto resyncs the ENTIRE page.
 5. You can game the seeding by unchecking in then rechecking in - results in you having played "0" matches allowing you to get top priortity each time.
 [FIXED] 6. It says "your team" for the incorrect team on my night if you are the second team.
-[FIXED] 7. My night does show the pending scores status / request
+[FIXED] 7. My night now shows the pending scores status / request

@@ -5,6 +5,7 @@ require('dotenv').config();
 // Import routes
 const leagueRoutes = require('./src/routes/leagues');
 const leagueNightRoutes = require('./src/routes/leagueNights');
+const profileRoutes = require('./src/routes/profiles');
 const devRoutes = require('./src/routes/dev');
 
 const app = express();
@@ -45,6 +46,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/leagues', leagueRoutes);
 app.use('/api/leagues', leagueNightRoutes);
+app.use('/api/profiles', profileRoutes);
 app.use('/api/dev', devRoutes);
 
 // Start server

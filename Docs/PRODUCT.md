@@ -125,13 +125,12 @@
 
 ### Remaining MVP Work
 
-1. **Mock data removal**:
-   - League nights still use mock data in `LeaguePage.tsx`
-   - Need proper league night instances API integration
-
-2. **Email integration**:
+1. **Email integration**:
    - Contact form exists but not functional
    - Need EmailJS or similar service
+
+2. **Time-gated score confirmation**:
+   - Scores auto-confirm after timeout to prevent stuck courts
 
 ### UX Improvements Needed (Post-Demo Feedback)
 

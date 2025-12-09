@@ -46,12 +46,13 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
    Current system ensures equal games played for everyone - this is the actual goal. Perception issue, not fairness issue.
    Requires full matchmaking redesign to solve properly.
 
-[X] 8. Confirming scores between matches
+[DONE ✅] 8. Confirming scores between matches
  - currently whichever team submitted the scores just got their scores saved without any kind of confirmation
  - this results in some issues where people just submitted a score that was incorrect or when they just werent meant to 
    submit a score
  - we need implement a feature where, like the partnership request, when someone submits a score then the other team must 
    confirm before the official score gets confirmed.
+ - COMPLETED: Score submission creates pending state, opponent must confirm/dispute before finalizing
 
 [x - did landing page] 9. Caching of information
  - Currently every single time we load the website it does the UI animation of loading the leagues, active players, 
@@ -68,6 +69,46 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
    - http://localhost:5173/profile/random_random!@ shows an account with user name random_random!@ to display (this account
      does not exist nor has any data)
 
+ BREAKDOWN OF PROFILE WORK:
+ 
+ ✅ WORKING (Real Data):
+ - Basic stats (games, wins, losses, win rate, points) - pulls from player_stats table
+ - League breakdown (per-league statistics)
+ - Stats tab displays real data from API
+ 
+ ✅ PHASE 1: Core Profile Features (COMPLETED)
+   ✅ 1a. Profile API - GET /api/profiles/:username (fetch user by username, stop mock profiles)
+   ✅ 1b. Profile API - PUT /api/profiles/:userId (update bio, location)
+   ✅ 1c. Database - Add columns: bio, location, avatar_url to profiles table
+   ✅ 1d. UI - Profile editing (bio, location, skill level editable when isEditing=true)
+   ✅ 1e. Fix - Prevent mock profiles for non-existent users (show 404 instead)
+ 
+ ✅ PHASE 2: Advanced Stats (COMPLETED - Dec 9, 2025)
+   ✅ 2a. Streaks API - GET /api/profiles/:userId/streaks (calculate from matches table)
+   ✅ 2b. Backend - Query last N matches to determine current/best win streaks
+   ✅ 2c. UI - Display real current/best streak (remove hardcoded values)
+   ✅ 2d. UI - Recent form W/L tiles (last 10 games from match history)
+ 
+ [] PHASE 3: Rankings & Leaderboards (Medium Priority)
+   [] 3a. Rankings API - Add ranking/totalPlayers to existing getPlayerStats
+   [] 3b. Backend - Calculate player position within each league
+   [] 3c. UI - Display actual league rankings instead of array index
+ 
+ [] PHASE 4: Social Features (Low Priority - Future)
+   [] 4a. Partnerships API - GET /api/profiles/:userId/partnerships
+   [] 4b. Backend - Aggregate partnership stats from confirmed_partnerships + matches
+   [] 4c. Activity API - GET /api/profiles/:userId/activity (recent matches, achievements)
+   [] 4d. H2H API - GET /api/profiles/:userId/head-to-head/:opponentId
+   [] 4e. UI - Replace all mock social tab data with real API data
+ 
+ [] PHASE 5: Polish (Low Priority - Future)
+   [] 5a. Avatar upload functionality
+   [] 5b. Charts library integration (replace placeholder divs)
+   [] 5c. Achievements system (define achievement criteria)
+   [] 5d. Consistency/improvement metrics calculations
+
+ COMPLETED: Phase 1 - Core profile features with real API integration (Dec 9, 2025)
+
 [DONE ✅] 11. Ending the league night
  - We need a way to "end" a league night
  - What I mean is that it normally runs from 6:30-9pm but the app will just keep auto-assigning until people just stop playing
@@ -75,7 +116,7 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
  - It shouldnt immediately end everything but rather just stop the auto-assignment from running when a game is finished
  - That way it will allow all the games currently being played to finish and thereafter prevent any more games from occuring.
 
- [] 12. Admin functionality
+ [DONE ✅] 12. Admin functionality
   - set number of courts
   - manual games
   - change scores

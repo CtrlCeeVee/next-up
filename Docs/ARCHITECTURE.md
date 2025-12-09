@@ -43,9 +43,10 @@ useEffect(() => { stableCallbacks.current = callbacks; });
 ### Core Tables
 
 **profiles** - User profiles (application-managed, NOT DB-triggered)
-- Fields: `id`, `email`, `first_name`, `last_name`, `username`, `skill_level`
+- Fields: `id`, `email`, `first_name`, `last_name`, `username`, `skill_level`, `bio`, `location`, `avatar_url`
 - Display name: Concatenate `first_name || ' ' || last_name` (NOT stored)
 - Username: Sanitized `firstName-lastName` with numeric suffix on collision
+
 
 **leagues** → **league_days** → **league_night_instances**
 - Instances auto-created on first access for each scheduled date

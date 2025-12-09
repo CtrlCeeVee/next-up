@@ -59,11 +59,11 @@ Visit `next-up.co.za` → Select your league → Check in → Play!
 - Identified UX improvements implemented in v1.2.1
 
 **📋 Next Priorities**
-1. **Auto-assignment on new partnerships** (currently only on league start + score submission)
-2. **Score confirmation flow** (opponent confirms submitted scores)
-3. **"End League Night" button** with completion status
-4. **Email integration** (contact form functionality)
-5. **Advanced admin features** (match overrides, no-shows)
+1. **Time-gated auto-confirmation** (auto-confirm scores after timeout to prevent stuck courts)
+2. **Push notifications** (PWA setup for match assignment alerts)
+3. **Email integration** (contact form functionality)
+4. **Player profile improvements** (remove mock profiles for non-existent users)
+5. **Data caching** (reduce unnecessary re-fetches on navigation)
 
 **MVP Status**: 98% complete - Ready for real league testing
 
