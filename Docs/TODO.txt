@@ -1,0 +1,25 @@
+1. EMERGENCY TODO: 
+Currently some people show up to the night without a phone then it gets super complicated as they cant really play then.
+
+We have no way of placing even just their name into the pool of players.
+
+Furthermore some kids come play in the league and their parents have a phone but they dont - same issue.
+
+We have 2 thoughts of solving this right now, I think we actually implement both.
+
+1. Admins can create temp accounts (or permanent) for people without a phone and check them in. Then just facilitate for them in some sense. ✅ COMPLETE
+2. Parents can have "dependants" under their account. I.e. I can check in for my child. 
+ - in some sense this could also work for friends who want to check in their friends who dont have phones.
+
+Either way we want both:
+1. Admins can check in for others ✅ COMPLETE
+2. Friends can check in for friends (Future work)
+
+This way people can still be a part of the league without even using a phone!
+
+My only thing I need to think through is: 
+How would their stats work? Would we just create an account for them to store their stats?
+
+Then they can still access their account at anytime. Or rather setup their account at anytime but we still store their stats. ✅ SOLVED - Full accounts created with stats
+
+(Finished: Admin can check in/out players, partner them up/remove partnerships, and create temporary accounts for players without phones)

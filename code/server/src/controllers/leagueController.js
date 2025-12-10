@@ -455,10 +455,33 @@ const getPlayerStats = async (req, res) => {
     let totalPoints = 0;
     let totalLeagues = playerStats.length;
 
-    const leagueStats = playerStats.map(stat => {
+    const leagueStats = await Promise.all(playerStats.map(async (stat) => {
       totalGamesPlayed += stat.games_played;
       totalGamesWon += stat.games_won;
       totalPoints += stat.total_points;
+
+      // Get total players in this league
+      const { count: totalPlayers, error: countError } = await supabase
+        .from('player_stats')
+        .select('*', { count: 'exact', head: true })
+        .eq('league_id', stat.league_id);
+
+      if (countError) {
+        console.error('Error counting league players:', countError);
+      }
+
+      // Get player's ranking in this league (based on total_points)
+      const { count: betterPlayers, error: rankError } = await supabase
+        .from('player_stats')
+        .select('*', { count: 'exact', head: true })
+        .eq('league_id', stat.league_id)
+        .gt('total_points', stat.total_points);
+
+      if (rankError) {
+        console.error('Error calculating ranking:', rankError);
+      }
+
+      const ranking = (betterPlayers || 0) + 1;
 
       return {
         leagueId: stat.league_id,
@@ -469,9 +492,11 @@ const getPlayerStats = async (req, res) => {
         gamesLost: stat.games_lost,
         winRate: stat.games_played > 0 ? Math.round((stat.games_won / stat.games_played) * 100 * 10) / 10 : 0,
         averagePoints: stat.average_points,
-        totalPoints: stat.total_points
+        totalPoints: stat.total_points,
+        totalPlayers: totalPlayers || 0,
+        ranking: ranking
       };
-    });
+    }));
 
     // Calculate overall statistics
     const overallWinRate = totalGamesPlayed > 0 ? Math.round((totalGamesWon / totalGamesPlayed) * 100 * 10) / 10 : 0;

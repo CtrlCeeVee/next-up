@@ -3,6 +3,8 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
 import { usePlayerStats, type PlayerStats, type LeagueStats } from '../hooks/usePlayerStats';
+import { usePlayerStreaks } from '../hooks/usePlayerStreaks';
+import { profilesAPI, type ProfileData } from '../services/api/profiles';
 import {
   ArrowLeft,
   Moon,
@@ -46,6 +48,12 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState<PlayerProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Edit form state
+  const [editBio, setEditBio] = useState('');
+  const [editLocation, setEditLocation] = useState('');
+  const [editSkillLevel, setEditSkillLevel] = useState('');
   
   // Get tab from URL search params using proper React Router hook
   const [searchParams, setSearchParams] = useSearchParams();
@@ -60,9 +68,12 @@ const ProfilePage = () => {
 
   // Use the player stats hook for real data
   const { stats, leagueStats, loading: statsLoading, error: statsError, refetch } = usePlayerStats(targetUserId || null);
+  
+  // Use the player streaks hook for real streak data
+  const { streaks, loading: streaksLoading, error: streaksError } = usePlayerStreaks(targetUserId || null);
 
   // Overall loading state combines profile and stats loading
-  const loading = profileLoading || statsLoading;
+  const loading = profileLoading || statsLoading || streaksLoading;
 
   // Sync activeTab with URL search params
   useEffect(() => {
@@ -102,23 +113,28 @@ const ProfilePage = () => {
   const fetchProfileDataByUsername = async (username: string) => {
     setProfileLoading(true);
     try {
-      // TODO: Replace with actual API call to get user by username
-      // For now, mock the response for non-current users
-      const mockProfile: PlayerProfile = {
-        id: 'mock-user-id',
-        name: username.charAt(0).toUpperCase() + username.slice(1).replace(/-/g, ' '),
-        email: `${username}@example.com`,
-        skillLevel: 'Intermediate',
-        bio: 'Passionate pickleball player who loves the competitive spirit and community.',
-        location: 'Johannesburg, SA',
-        joinedDate: '2024-01-15',
+      const profileData = await profilesAPI.getProfileByUsername(username);
+      
+      const fetchedProfile: PlayerProfile = {
+        id: profileData.id,
+        name: profileData.name,
+        email: profileData.email,
+        skillLevel: profileData.skillLevel,
+        bio: profileData.bio || undefined,
+        location: profileData.location || undefined,
+        joinedDate: profileData.joinedDate,
+        avatar: profileData.avatarUrl || undefined,
         isCurrentUser: false
       };
 
-      setProfile(mockProfile);
-      setTargetUserId('mock-user-id');
-    } catch (error) {
+      setProfile(fetchedProfile);
+      setTargetUserId(profileData.id);
+    } catch (error: any) {
       console.error('Error fetching profile data by username:', error);
+      // If profile not found, set profile to null to show 404
+      if (error.message === 'Profile not found') {
+        setProfile(null);
+      }
     } finally {
       setProfileLoading(false);
     }
@@ -127,27 +143,70 @@ const ProfilePage = () => {
   const fetchProfileData = async (userId: string) => {
     setProfileLoading(true);
     try {
-      // TODO: Replace with actual profile API call when available
-      // For now, create profile from auth data
-      const mockProfile: PlayerProfile = {
-        id: userId,
-        name: isOwnProfile ? 
-          `${user?.user_metadata?.first_name || ''} ${user?.user_metadata?.last_name || ''}`.trim() || 'Your Name' 
-          : 'Player Name',
-        email: isOwnProfile ? user?.email || '' : 'player@email.com',
-        skillLevel: 'Intermediate',
-        bio: 'Passionate pickleball player who loves the competitive spirit and community.',
-        location: 'Johannesburg, SA',
-        joinedDate: '2024-01-15',
+      const profileData = await profilesAPI.getProfileByUserId(userId);
+      
+      const fetchedProfile: PlayerProfile = {
+        id: profileData.id,
+        name: profileData.name,
+        email: profileData.email,
+        skillLevel: profileData.skillLevel,
+        bio: profileData.bio || undefined,
+        location: profileData.location || undefined,
+        joinedDate: profileData.joinedDate,
+        avatar: profileData.avatarUrl || undefined,
         isCurrentUser: isOwnProfile
       };
 
-      setProfile(mockProfile);
+      setProfile(fetchedProfile);
+      
+      // Initialize edit form with current values
+      setEditBio(profileData.bio || '');
+      setEditLocation(profileData.location || '');
+      setEditSkillLevel(profileData.skillLevel);
     } catch (error) {
       console.error('Error fetching profile data:', error);
+      setProfile(null);
     } finally {
       setProfileLoading(false);
     }
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profile || !targetUserId) return;
+
+    setIsSaving(true);
+    try {
+      const updatedProfile = await profilesAPI.updateProfile(targetUserId, {
+        bio: editBio,
+        location: editLocation,
+        skillLevel: editSkillLevel
+      });
+
+      // Update local profile state
+      setProfile({
+        ...profile,
+        bio: updatedProfile.bio || undefined,
+        location: updatedProfile.location || undefined,
+        skillLevel: updatedProfile.skillLevel
+      });
+
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('Failed to save profile changes');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    // Reset edit fields to current profile values
+    if (profile) {
+      setEditBio(profile.bio || '');
+      setEditLocation(profile.location || '');
+      setEditSkillLevel(profile.skillLevel);
+    }
+    setIsEditing(false);
   };
 
   if (loading) {
@@ -194,13 +253,34 @@ const ProfilePage = () => {
 
             <div className="flex items-center space-x-4">
               {profile.isCurrentUser && (
-                <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
-                >
-                  <Edit3 className="h-4 w-4" />
-                  <span>{isEditing ? 'Done' : 'Edit'}</span>
-                </button>
+                <>
+                  {isEditing ? (
+                    <>
+                      <button
+                        onClick={handleCancelEdit}
+                        disabled={isSaving}
+                        className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
+                      >
+                        <span>Cancel</span>
+                      </button>
+                      <button
+                        onClick={handleSaveProfile}
+                        disabled={isSaving}
+                        className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-white bg-green-500 hover:bg-green-600 disabled:opacity-50"
+                      >
+                        <span>{isSaving ? 'Saving...' : 'Save'}</span>
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600"
+                    >
+                      <Edit3 className="h-4 w-4" />
+                      <span>Edit</span>
+                    </button>
+                  )}
+                </>
               )}
 
               <button
@@ -237,16 +317,49 @@ const ProfilePage = () => {
             {/* Profile Info */}
             <div className="text-center sm:text-left">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{profile.name}</h1>
-              <p className="text-green-600 dark:text-green-400 mt-1 font-medium">{profile.skillLevel} Player</p>
-              {profile.location && (
+              {isEditing && profile.isCurrentUser ? (
+                <div className="flex items-center justify-center sm:justify-start mt-1">
+                  <Target className="w-4 h-4 mr-1 text-green-500 dark:text-green-400 flex-shrink-0" />
+                  <select
+                    value={editSkillLevel}
+                    onChange={(e) => setEditSkillLevel(e.target.value)}
+                    className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 font-medium"
+                  >
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                  </select>
+                </div>
+              ) : (
+                <p className="text-green-600 dark:text-green-400 mt-1 font-medium">{profile.skillLevel}</p>
+              )}
+              {isEditing && profile.isCurrentUser ? (
+                <div className="flex items-center justify-center sm:justify-start mt-2">
+                  <MapPin className="w-4 h-4 mr-1 text-green-500 dark:text-green-400 flex-shrink-0" />
+                  <input
+                    type="text"
+                    value={editLocation}
+                    onChange={(e) => setEditLocation(e.target.value)}
+                    placeholder="City, Country"
+                    className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-sm"
+                    maxLength={255}
+                  />
+                </div>
+              ) : profile.location ? (
                 <div className="flex items-center justify-center sm:justify-start mt-2 text-gray-600 dark:text-gray-300">
                   <MapPin className="w-4 h-4 mr-1 text-green-500 dark:text-green-400" />
                   <span>{profile.location}</span>
                 </div>
-              )}
+              ) : null}
               <div className="flex items-center justify-center sm:justify-start mt-2 text-gray-600 dark:text-gray-300">
                 <Calendar className="w-4 h-4 mr-1 text-green-500 dark:text-green-400" />
-                <span>Joined {new Date(profile.joinedDate).toLocaleDateString()}</span>
+                <span>
+                  Joined {
+                    profile.joinedDate 
+                      ? new Date(profile.joinedDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', timeZone: 'UTC' })
+                      : 'Recently'
+                  }
+                </span>
               </div>
             </div>
 
@@ -323,7 +436,9 @@ const ProfilePage = () => {
                     className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     rows={4}
                     placeholder="Tell everyone about yourself..."
-                    defaultValue={profile.bio}
+                    value={editBio}
+                    onChange={(e) => setEditBio(e.target.value)}
+                    maxLength={500}
                   />
                 ) : (
                   <p className="text-gray-600 dark:text-gray-300">
@@ -335,20 +450,10 @@ const ProfilePage = () => {
               {/* Recent Achievement */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mt-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Achievements</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                    <Award className="w-8 h-8 text-green-500" />
-                    <div>
-                      <div className="font-medium text-gray-900 dark:text-white">3-Game Win Streak</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Achieved today</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <Star className="w-8 h-8 text-blue-500" />
-                    <div>
-                      <div className="font-medium text-gray-900 dark:text-white">Rising Star</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Improved win rate by 15%</div>
-                    </div>
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-center">
+                    <Trophy className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-2" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Coming Soon</p>
                   </div>
                 </div>
               </div>
@@ -370,11 +475,13 @@ const ProfilePage = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-300">Current Streak</span>
-                    <span className="font-semibold text-blue-600">{stats?.currentStreak} wins</span>
+                    <span className={`font-semibold ${streaks?.currentStreak && streaks.currentStreak > 0 ? 'text-green-600' : streaks?.currentStreak && streaks.currentStreak < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                      {streaks?.currentStreak ? Math.abs(streaks.currentStreak) : 0} {streaks?.currentStreak && streaks.currentStreak > 0 ? 'wins' : streaks?.currentStreak && streaks.currentStreak < 0 ? 'losses' : 'games'}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 dark:text-gray-300">Best Streak</span>
-                    <span className="font-semibold text-purple-600">{stats?.bestStreak} wins</span>
+                    <span className="font-semibold text-purple-600">{streaks?.bestStreak || 0} wins</span>
                   </div>
                 </div>
               </div>
@@ -435,106 +542,142 @@ const ProfilePage = () => {
             {/* Performance Overview Cards */}
             {!statsLoading && !statsError && (
               <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-100 text-sm">Total Games</p>
-                    <p className="text-3xl font-bold">{stats?.totalGames}</p>
-                  </div>
-                  <Target className="w-8 h-8 text-green-200" />
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-100 text-sm">Win Rate</p>
-                    <p className="text-3xl font-bold">{stats?.winRate?.toFixed(1)}%</p>
-                  </div>
-                  <Trophy className="w-8 h-8 text-blue-200" />
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-100 text-sm">Avg Points</p>
-                    <p className="text-3xl font-bold">{stats?.averagePoints?.toFixed(1)}</p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-purple-200" />
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-orange-100 text-sm">Current Streak</p>
-                    <p className="text-3xl font-bold">{stats?.currentStreak}</p>
-                  </div>
-                  <Activity className="w-8 h-8 text-orange-200" />
-                </div>
-              </div>
-            </div>
-
-            {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Win/Loss Chart */}
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Win/Loss Distribution</h3>
-                <div className="flex items-center justify-center h-48">
-                  {/* TODO: Add actual chart component here */}
-                  <div className="relative">
-                    <div className="w-32 h-32 rounded-full border-8 border-green-500 border-t-red-500 animate-spin-slow"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.winRate?.toFixed(0)}%</div>
-                        <div className="text-sm text-gray-500">Win Rate</div>
+              {/* Overall Performance */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Win/Loss Chart */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Overall Record</h3>
+                  <div className="flex items-center justify-center">
+                    <div className="relative w-40 h-40">
+                      <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                        <circle cx="50" cy="50" r="40" fill="none" stroke="#ef4444" strokeWidth="20" />
+                        <circle
+                          cx="50" cy="50" r="40" fill="none" stroke="#22c55e" strokeWidth="20"
+                          strokeDasharray={`${(stats?.winRate || 0) * 2.51} 251`}
+                          className="transition-all duration-500"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.winRate?.toFixed(0)}%</div>
+                          <div className="text-xs text-gray-500">Win Rate</div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="flex justify-center space-x-6 mt-4">
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">Wins ({stats?.wins})</span>
+                  <div className="grid grid-cols-3 gap-2 mt-4 text-center text-sm">
+                    <div>
+                      <div className="font-bold text-gray-900 dark:text-white">{stats?.totalGames}</div>
+                      <div className="text-xs text-gray-500">Games</div>
+                    </div>
+                    <div>
+                      <div className="font-bold text-green-600">{stats?.wins}</div>
+                      <div className="text-xs text-gray-500">Wins</div>
+                    </div>
+                    <div>
+                      <div className="font-bold text-red-600">{stats?.losses}</div>
+                      <div className="text-xs text-gray-500">Losses</div>
+                    </div>
                   </div>
-                  <div className="flex items-center">
-                    <div className="w-3 h-3 bg-red-500 rounded-full mr-2"></div>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">Losses ({stats?.losses})</span>
+                </div>
+
+                {/* Recent Form & Streaks */}
+                <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Form</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                        {streaks?.recentForm && streaks.recentForm.length > 0 
+                          ? `Last ${streaks.recentForm.length} matches` 
+                          : 'No match history'}
+                      </p>
+                    </div>
+                    {streaks?.recentForm && streaks.recentForm.length > 0 && (
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 bg-green-500 rounded"></div>
+                          <span className="text-gray-600 dark:text-gray-300">
+                            {streaks.recentForm.filter(g => g.result === 'W').length} Wins
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-3 h-3 bg-red-500 rounded"></div>
+                          <span className="text-gray-600 dark:text-gray-300">
+                            {streaks.recentForm.filter(g => g.result === 'L').length} Losses
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* W/L Tiles */}
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {streaks?.recentForm && streaks.recentForm.length > 0 ? (
+                      streaks.recentForm.map((game, index) => (
+                        <div
+                          key={index}
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold text-white transition-all cursor-default ${
+                            game.result === 'W' 
+                              ? 'bg-green-500 hover:bg-green-600 hover:scale-110' 
+                              : 'bg-red-500 hover:bg-red-600 hover:scale-110'
+                          }`}
+                          title={`${game.result === 'W' ? 'Win' : 'Loss'} - ${new Date(game.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                        >
+                          {game.result}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="flex items-center justify-center w-full py-8">
+                        <span className="text-sm text-gray-500">No recent matches</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Stats Row */}
+                  <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div className="text-center">
+                      <div className="flex items-center justify-center mb-1">
+                        <div className={`w-2 h-2 rounded-full mr-1.5 ${
+                          streaks?.currentStreak && streaks.currentStreak > 0 ? 'bg-green-500' : 
+                          streaks?.currentStreak && streaks.currentStreak < 0 ? 'bg-red-500' : 'bg-gray-400'
+                        }`}></div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Current Streak</span>
+                      </div>
+                      <span className="font-bold text-lg text-gray-900 dark:text-white">
+                        {streaks?.currentStreak ? Math.abs(streaks.currentStreak) : 0}{' '}
+                        {streaks?.currentStreak && streaks.currentStreak > 0 ? 'W' : 
+                         streaks?.currentStreak && streaks.currentStreak < 0 ? 'L' : '-'}
+                      </span>
+                    </div>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center mb-1">
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1.5"></div>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Best Streak</span>
+                      </div>
+                      <span className="font-bold text-lg text-gray-900 dark:text-white">{streaks?.bestStreak || 0} W</span>
+                    </div>
+                    <div className="text-center">
+                      <div className="flex items-center justify-center mb-1">
+                        <TrendingUp className="w-3 h-3 text-purple-500 mr-1.5" />
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Avg Points</span>
+                      </div>
+                      <span className="font-bold text-lg text-gray-900 dark:text-white">{stats?.averagePoints?.toFixed(1)}</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Performance Trend */}
+              {/* League Performance */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Performance Trend</h3>
-                <div className="h-48 flex items-end justify-between space-x-2">
-                  {/* TODO: Replace with actual chart library */}
-                  {[12, 15, 11, 18, 14, 16, 13, 17, 15, 19].map((height, index) => (
-                    <div
-                      key={index}
-                      className="bg-gradient-to-t from-blue-500 to-blue-400 rounded-t-sm flex-1"
-                      style={{ height: `${height * 2.5}px` }}
-                    ></div>
-                  ))}
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-2">
-                  <span>10 games ago</span>
-                  <span>Recent</span>
-                </div>
-              </div>
-            </div>
-
-            {/* League Performance */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">League Performance</h3>
               <div className="space-y-4">
                 {leagueStats.map((league, index) => (
                   <div key={league.leagueId} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="font-medium text-gray-900 dark:text-white">{league.leagueName}</h4>
-                      <span className="text-sm text-gray-500">Rank #{league.ranking} of {league.totalPlayers}</span>
+                      {league.totalPlayers > 0 && (
+                        <span className="text-sm text-gray-500">Rank #{league.ranking} of {league.totalPlayers}</span>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-4 gap-4 mb-3">
@@ -566,84 +709,6 @@ const ProfilePage = () => {
                     <div className="text-right text-sm text-gray-500 mt-1">{league.winRate}% win rate</div>
                   </div>
                 ))}
-              </div>
-            </div>
-
-            {/* Advanced Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Streak Analysis</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-300">Current Streak</span>
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                      <span className="font-semibold text-gray-900 dark:text-white">{stats?.currentStreak} wins</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600 dark:text-gray-300">Best Streak</span>
-                    <div className="flex items-center">
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></div>
-                      <span className="font-semibold text-gray-900 dark:text-white">{stats?.bestStreak} wins</span>
-                    </div>
-                  </div>
-                  <div className="mt-6">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Recent Form</h4>
-                    <div className="flex space-x-1">
-                      {/* TODO: Replace with actual recent match results */}
-                      {['W', 'W', 'L', 'W', 'W', 'W', 'L', 'W', 'W', 'W'].map((result, index) => (
-                        <div
-                          key={index}
-                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium text-white ${
-                            result === 'W' ? 'bg-green-500' : 'bg-red-500'
-                          }`}
-                        >
-                          {result}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">Last 10 games</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Performance Metrics</h3>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-300">Points per Game</span>
-                      <span className="font-medium">{stats?.averagePoints?.toFixed(1)}</span>
-                    </div>
-                    <div className="mt-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="bg-gradient-to-r from-blue-500 to-blue-400 h-2 rounded-full"
-                        style={{ width: `${(stats?.averagePoints || 0) * 5}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-300">Consistency Rating</span>
-                      <span className="font-medium">8.4/10</span>
-                    </div>
-                    <div className="mt-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-purple-500 to-purple-400 h-2 rounded-full" style={{ width: '84%' }}></div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-300">Improvement Rate</span>
-                      <span className="font-medium text-green-600">+15%</span>
-                    </div>
-                    <div className="mt-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full" style={{ width: '75%' }}></div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
             </>
@@ -679,7 +744,11 @@ const ProfilePage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-purple-100 text-sm">Best Ranking</p>
-                    <p className="text-3xl font-bold">#3</p>
+                    <p className="text-3xl font-bold">
+                      {leagueStats.length > 0 && leagueStats.some(l => l.totalPlayers > 0)
+                        ? `#${Math.min(...leagueStats.filter(l => l.totalPlayers > 0).map(l => l.ranking))}`
+                        : '-'}
+                    </p>
                   </div>
                   <Award className="w-8 h-8 text-purple-200" />
                 </div>
@@ -742,8 +811,10 @@ const ProfilePage = () => {
                     </div>
                   </div>
 
-                  {/* TODO: Add button to view league details */}
-                  <button className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors">
+                  <button 
+                    onClick={() => navigate(`/league/${league.leagueId}`)}
+                    className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors"
+                  >
                     View League Details
                   </button>
                 </div>
@@ -754,160 +825,44 @@ const ProfilePage = () => {
 
         {activeTab === 'social' && (
           <div className="space-y-8">
-            {/* Social Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-gradient-to-br from-pink-500 to-pink-600 text-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-pink-100 text-sm">Partnerships</p>
-                    <p className="text-3xl font-bold">12</p>
-                  </div>
-                  <Users className="w-8 h-8 text-pink-200" />
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 text-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-yellow-100 text-sm">Favorite Partner</p>
-                    <p className="text-lg font-bold">Luke</p>
-                  </div>
-                  <Heart className="w-8 h-8 text-yellow-200" />
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-indigo-100 text-sm">Best Win Rate</p>
-                    <p className="text-3xl font-bold">85%</p>
-                  </div>
-                  <Trophy className="w-8 h-8 text-indigo-200" />
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-teal-500 to-teal-600 text-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-teal-100 text-sm">Social Score</p>
-                    <p className="text-3xl font-bold">9.2</p>
-                  </div>
-                  <Star className="w-8 h-8 text-teal-200" />
-                </div>
-              </div>
-            </div>
-
-            {/* Partnership Statistics */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Top Partnerships</h3>
-                <div className="space-y-4">
-                  {/* TODO: Replace with actual partnership data */}
-                  {[
-                    { name: 'Luke Johnson', games: 18, wins: 15, winRate: 83.3, avatar: '👨‍💼' },
-                    { name: 'Sarah Wilson', games: 12, wins: 9, winRate: 75.0, avatar: '👩‍💼' },
-                    { name: 'Mike Chen', games: 8, wins: 6, winRate: 75.0, avatar: '👨‍💻' },
-                    { name: 'Emma Davis', games: 6, wins: 4, winRate: 66.7, avatar: '👩‍🎓' }
-                  ].map((partner, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-xl">
-                          {partner.avatar}
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900 dark:text-white">{partner.name}</div>
-                          <div className="text-sm text-gray-500">{partner.games} games together</div>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-green-600">{partner.winRate.toFixed(1)}%</div>
-                        <div className="text-sm text-gray-500">{partner.wins}/{partner.games} wins</div>
-                      </div>
+            {/* Coming Soon Message */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12">
+              <div className="text-center">
+                <Users className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Social Features Coming Soon</h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  We're working on bringing you partnership stats, activity feeds, and head-to-head records.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-left">
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Users className="w-5 h-5 text-pink-500" />
+                      <span className="font-medium text-gray-900 dark:text-white">Top Partnerships</span>
                     </div>
-                  ))}
-                </div>
-
-                {/* TODO: Add button to view all partnerships */}
-                <button className="w-full mt-4 text-blue-600 hover:text-blue-700 py-2 text-sm font-medium">
-                  View All Partnerships →
-                </button>
-              </div>
-
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Recent Activity</h3>
-                <div className="space-y-4">
-                  {/* TODO: Replace with actual activity data */}
-                  {[
-                    { type: 'partnership', message: 'Played with Luke Johnson', time: '2 hours ago', result: 'won' },
-                    { type: 'achievement', message: 'Achieved 3-game win streak', time: '1 day ago', result: 'achievement' },
-                    { type: 'partnership', message: 'Played with Sarah Wilson', time: '2 days ago', result: 'lost' },
-                    { type: 'join', message: 'Joined Sandton Smashers league', time: '3 days ago', result: 'neutral' },
-                    { type: 'partnership', message: 'Played with Mike Chen', time: '4 days ago', result: 'won' }
-                  ].map((activity, index) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <div className={`w-2 h-2 rounded-full mt-2 ${
-                        activity.result === 'won' ? 'bg-green-500' :
-                        activity.result === 'lost' ? 'bg-red-500' :
-                        activity.result === 'achievement' ? 'bg-yellow-500' :
-                        'bg-blue-500'
-                      }`}></div>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-900 dark:text-white">{activity.message}</p>
-                        <p className="text-xs text-gray-500">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <button className="w-full mt-4 text-blue-600 hover:text-blue-700 py-2 text-sm font-medium">
-                  View All Activity →
-                </button>
-              </div>
-            </div>
-
-            {/* Head-to-Head Records */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Head-to-Head Records</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* TODO: Replace with actual head-to-head data */}
-                {[
-                  { opponent: 'Matt Thompson', wins: 3, losses: 1, lastPlayed: '1 week ago' },
-                  { opponent: 'Alex Rodriguez', wins: 2, losses: 2, lastPlayed: '2 weeks ago' },
-                  { opponent: 'Chris Taylor', wins: 1, losses: 3, lastPlayed: '1 month ago' },
-                  { opponent: 'Jordan Smith', wins: 4, losses: 0, lastPlayed: '3 days ago' },
-                  { opponent: 'Morgan Lee', wins: 2, losses: 1, lastPlayed: '1 week ago' },
-                  { opponent: 'Casey Johnson', wins: 1, losses: 2, lastPlayed: '2 weeks ago' }
-                ].map((record, index) => (
-                  <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-gray-900 dark:text-white">{record.opponent}</h4>
-                      <span className="text-xs text-gray-500">{record.lastPlayed}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="text-sm">
-                        <span className="text-green-600 font-medium">{record.wins}W</span>
-                        <span className="text-gray-400 mx-1">-</span>
-                        <span className="text-red-600 font-medium">{record.losses}L</span>
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {((record.wins / (record.wins + record.losses)) * 100).toFixed(0)}%
-                      </div>
-                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">See who you play best with</p>
                   </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Find Partners */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Looking for a Partner?</h3>
-                  <p className="text-blue-100">Find players with similar skill levels in your leagues</p>
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Heart className="w-5 h-5 text-yellow-500" />
+                      <span className="font-medium text-gray-900 dark:text-white">Favorite Partners</span>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Track your most frequent teammates</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Trophy className="w-5 h-5 text-indigo-500" />
+                      <span className="font-medium text-gray-900 dark:text-white">Head-to-Head</span>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Compare records with opponents</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Activity className="w-5 h-5 text-teal-500" />
+                      <span className="font-medium text-gray-900 dark:text-white">Activity Feed</span>
+                    </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Stay updated on recent matches</p>
+                  </div>
                 </div>
-                <button className="bg-white text-blue-600 px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors">
-                  Find Partners
-                </button>
               </div>
             </div>
           </div>

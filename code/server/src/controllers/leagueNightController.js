@@ -978,6 +978,381 @@ const updateCourts = async (req, res) => {
   }
 };
 
+// POST /api/leagues/:leagueId/nights/:nightId/admin/checkin-player - Admin checks in player
+const adminCheckInPlayer = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { admin_user_id, player_user_id } = req.body;
+
+    if (!admin_user_id || !player_user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Admin ID and player ID are required'
+      });
+    }
+
+    // Check if admin has permission (admin or organizer)
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', admin_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins/organizers can check in players'
+      });
+    }
+
+    // Verify player is a league member
+    const { data: playerMembership, error: playerMembershipError } = await supabase
+      .from('league_memberships')
+      .select('user_id')
+      .eq('league_id', leagueId)
+      .eq('user_id', player_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (playerMembershipError || !playerMembership) {
+      return res.status(400).json({
+        success: false,
+        error: 'Player is not a member of this league'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Check if user is already checked in (active)
+    const { data: activeCheckin, error: activeError } = await supabase
+      .from('league_night_checkins')
+      .select('*')
+      .eq('league_night_instance_id', instance.id)
+      .eq('user_id', player_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (!activeError && activeCheckin) {
+      return res.status(400).json({
+        success: false,
+        error: 'Player is already checked in'
+      });
+    }
+
+    // Check if user has an inactive checkin that we can reactivate
+    const { data: inactiveCheckin, error: inactiveError } = await supabase
+      .from('league_night_checkins')
+      .select('*')
+      .eq('league_night_instance_id', instance.id)
+      .eq('user_id', player_user_id)
+      .eq('is_active', false)
+      .single();
+
+    let checkin;
+    if (!inactiveError && inactiveCheckin) {
+      // Reactivate existing checkin
+      const { data: reactivatedCheckin, error: reactivateError } = await supabase
+        .from('league_night_checkins')
+        .update({ 
+          is_active: true,
+          checked_in_at: new Date().toISOString()
+        })
+        .eq('id', inactiveCheckin.id)
+        .select()
+        .single();
+
+      if (reactivateError) throw reactivateError;
+      checkin = reactivatedCheckin;
+    } else {
+      // Create new check-in
+      const { data: newCheckin, error: checkinError } = await supabase
+        .from('league_night_checkins')
+        .insert({
+          league_night_instance_id: instance.id,
+          user_id: player_user_id,
+          is_active: true
+        })
+        .select()
+        .single();
+
+      if (checkinError) throw checkinError;
+      checkin = newCheckin;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        checkin,
+        message: 'Player successfully checked in by admin'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error admin checking in player:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check in player'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/checkout-player - Admin checks out player
+const adminCheckOutPlayer = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { admin_user_id, player_user_id } = req.body;
+
+    if (!admin_user_id || !player_user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Admin ID and player ID are required'
+      });
+    }
+
+    // Check if admin has permission (admin or organizer)
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', admin_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins/organizers can check out players'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // First, remove any confirmed partnerships involving this player
+    const { error: partnershipError } = await supabase
+      .from('confirmed_partnerships')
+      .update({ is_active: false })
+      .eq('league_night_instance_id', instance.id)
+      .or(`player1_id.eq.${player_user_id},player2_id.eq.${player_user_id}`)
+      .eq('is_active', true);
+
+    if (partnershipError) throw partnershipError;
+
+    // Delete any pending partnership requests involving this player
+    const { error: requestError } = await supabase
+      .from('partnership_requests')
+      .delete()
+      .eq('league_night_instance_id', instance.id)
+      .or(`requester_id.eq.${player_user_id},requested_id.eq.${player_user_id}`)
+      .eq('status', 'pending');
+
+    if (requestError) throw requestError;
+
+    // Remove the check-in
+    const { error: checkinError } = await supabase
+      .from('league_night_checkins')
+      .update({ is_active: false })
+      .eq('league_night_instance_id', instance.id)
+      .eq('user_id', player_user_id)
+      .eq('is_active', true);
+
+    if (checkinError) throw checkinError;
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Player successfully checked out by admin'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error admin checking out player:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check out player'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/create-partnership - Admin creates partnership
+const adminCreatePartnership = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { admin_user_id, player1_id, player2_id } = req.body;
+
+    if (!admin_user_id || !player1_id || !player2_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Admin ID and both player IDs are required'
+      });
+    }
+
+    if (player1_id === player2_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Cannot partner a player with themselves'
+      });
+    }
+
+    // Check if admin has permission (admin or organizer)
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', admin_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins/organizers can create partnerships'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Check if both players are checked in
+    const { data: checkins, error: checkinsError } = await supabase
+      .from('league_night_checkins')
+      .select('user_id')
+      .eq('league_night_instance_id', instance.id)
+      .in('user_id', [player1_id, player2_id])
+      .eq('is_active', true);
+
+    if (checkinsError) throw checkinsError;
+
+    if (checkins.length !== 2) {
+      return res.status(400).json({
+        success: false,
+        error: 'Both players must be checked in to form a partnership'
+      });
+    }
+
+    // Check if either player already has a confirmed partnership
+    const { data: existingPartnerships, error: existingError } = await supabase
+      .from('confirmed_partnerships')
+      .select('*')
+      .eq('league_night_instance_id', instance.id)
+      .or(`player1_id.eq.${player1_id},player2_id.eq.${player1_id},player1_id.eq.${player2_id},player2_id.eq.${player2_id}`)
+      .eq('is_active', true);
+
+    if (existingError) throw existingError;
+
+    if (existingPartnerships.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'One or both players already have a confirmed partnership'
+      });
+    }
+
+    // Clean up any existing requests between these players
+    await supabase
+      .from('partnership_requests')
+      .delete()
+      .eq('league_night_instance_id', instance.id)
+      .or(`and(requester_id.eq.${player1_id},requested_id.eq.${player2_id}),and(requester_id.eq.${player2_id},requested_id.eq.${player1_id})`);
+
+    // Create confirmed partnership
+    const { data: partnership, error: partnershipError } = await supabase
+      .from('confirmed_partnerships')
+      .insert({
+        league_night_instance_id: instance.id,
+        player1_id: player1_id,
+        player2_id: player2_id,
+        is_active: true
+      })
+      .select()
+      .single();
+
+    if (partnershipError) throw partnershipError;
+
+    // Reject any other pending requests involving these players
+    await supabase
+      .from('partnership_requests')
+      .update({ status: 'declined' })
+      .eq('league_night_instance_id', instance.id)
+      .or(`requester_id.eq.${player1_id},requested_id.eq.${player1_id},requester_id.eq.${player2_id},requested_id.eq.${player2_id}`)
+      .eq('status', 'pending');
+
+    // Try to auto-assign matches if league night is active and courts are available
+    await tryAutoAssignMatches(instance.id);
+
+    res.json({
+      success: true,
+      data: {
+        partnership,
+        message: 'Partnership created successfully by admin'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error admin creating partnership:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create partnership'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/remove-partnership - Admin removes partnership
+const adminRemovePartnership = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { admin_user_id, partnership_id } = req.body;
+
+    if (!admin_user_id || !partnership_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Admin ID and partnership ID are required'
+      });
+    }
+
+    // Check if admin has permission (admin or organizer)
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', admin_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins/organizers can remove partnerships'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Deactivate the partnership (preserves historical data)
+    const { error: partnershipError } = await supabase
+      .from('confirmed_partnerships')
+      .update({ is_active: false })
+      .eq('id', partnership_id)
+      .eq('league_night_instance_id', instance.id)
+      .eq('is_active', true);
+
+    if (partnershipError) throw partnershipError;
+
+    res.json({
+      success: true,
+      data: {
+        message: 'Partnership removed successfully by admin'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error admin removing partnership:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to remove partnership'
+    });
+  }
+};
+
 // POST /api/leagues/:leagueId/nights/:nightId/toggle-auto-assignment
 const toggleAutoAssignment = async (req, res) => {
   try {
@@ -1046,6 +1421,217 @@ const toggleAutoAssignment = async (req, res) => {
   }
 };
 
+// GET /api/leagues/:leagueId/nights/:nightId/partnerships - Get all active partnerships (admin)
+const getAllPartnerships = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    const { data: partnerships, error } = await supabase
+      .from('confirmed_partnerships')
+      .select(`
+        id,
+        player1_id,
+        player2_id,
+        player1:profiles!confirmed_partnerships_player1_id_fkey (
+          id,
+          first_name,
+          last_name
+        ),
+        player2:profiles!confirmed_partnerships_player2_id_fkey (
+          id,
+          first_name,
+          last_name
+        )
+      `)
+      .eq('league_night_instance_id', instance.id)
+      .eq('is_active', true);
+
+    if (error) throw error;
+
+    res.json({
+      success: true,
+      data: partnerships || []
+    });
+
+  } catch (error) {
+    console.error('Error fetching partnerships:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch partnerships'
+    });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/create-temp-account - Admin creates temporary account
+const adminCreateTempAccount = async (req, res) => {
+  try {
+    const { leagueId } = req.params;
+    const { admin_user_id, first_name, last_name, skill_level } = req.body;
+
+    if (!admin_user_id || !first_name || !last_name || !skill_level) {
+      return res.status(400).json({
+        success: false,
+        error: 'Admin ID, first name, last name, and skill level are required'
+      });
+    }
+
+    // Check if admin has permission (admin or organizer)
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', admin_user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || !['admin', 'organizer'].includes(membership.role)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins/organizers can create temporary accounts'
+      });
+    }
+
+    // Generate random password (12 characters: alphanumeric + special chars)
+    const generatePassword = () => {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+      let password = '';
+      for (let i = 0; i < 12; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return password;
+    };
+    
+    const password = generatePassword();
+    const email = `temp-${Date.now()}-${Math.random().toString(36).substring(7)}@next-up.local`;
+
+    // Generate username from first and last name
+    const generateUsername = (firstName, lastName) => {
+      const sanitize = (str) => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const sanitizedFirst = sanitize(firstName);
+      const sanitizedLast = sanitize(lastName);
+      return `${sanitizedFirst}-${sanitizedLast}`;
+    };
+
+    const baseUsername = generateUsername(first_name, last_name);
+
+    // Check for username collisions and append number if needed
+    let username = baseUsername;
+    let counter = 1;
+    let usernameExists = true;
+
+    while (usernameExists) {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .single();
+
+      if (!existingProfile) {
+        usernameExists = false;
+      } else {
+        username = `${baseUsername}-${counter}`;
+        counter++;
+      }
+    }
+
+    // Create user in Supabase Auth using admin API
+    // Note: Database trigger will auto-create profile from user_metadata
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: email,
+      password: password,
+      email_confirm: true,
+      user_metadata: {
+        first_name: first_name,
+        last_name: last_name,
+        username: username,
+        skill_level: skill_level
+      }
+    });
+
+    if (authError) {
+      console.error('Error creating temp user in auth:', authError);
+      throw authError;
+    }
+
+    // Wait briefly for DB trigger to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Fetch the auto-created profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', authData.user.id)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      throw profileError;
+    }
+
+    // Add user to league membership
+    const { data: leagueMembership, error: leagueMembershipError } = await supabase
+      .from('league_memberships')
+      .insert({
+        league_id: leagueId,
+        user_id: authData.user.id,
+        role: 'player',
+        is_active: true
+      })
+      .select()
+      .single();
+
+    if (leagueMembershipError) {
+      console.error('Error creating league membership:', leagueMembershipError);
+      throw leagueMembershipError;
+    }
+
+    // Create initial player stats
+    const { data: initialPlayerStats, error: initialStatsError } = await supabase
+      .from('player_stats')
+      .insert({
+        user_id: authData.user.id,
+        league_id: leagueId,
+        games_played: 0,
+        games_won: 0,
+        games_lost: 0,
+        total_points: 0,
+        average_points: 0.0
+      })
+      .select()
+      .single();
+
+    if (initialStatsError) {
+      console.error('Error creating player stats:', initialStatsError);
+      throw initialStatsError;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        user: {
+          id: authData.user.id,
+          email: email,
+          first_name: first_name,
+          last_name: last_name,
+          username: username,
+          skill_level: skill_level
+        },
+        password: password
+      },
+      message: 'Temporary account created successfully'
+    });
+
+  } catch (error) {
+    console.error('Error creating temporary account:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to create temporary account'
+    });
+  }
+};
+
 module.exports = {
   getLeagueNight,
   getCheckedInPlayers,
@@ -1059,5 +1645,11 @@ module.exports = {
   startLeague,
   endLeague,
   updateCourts,
-  toggleAutoAssignment
+  toggleAutoAssignment,
+  adminCheckInPlayer,
+  adminCheckOutPlayer,
+  adminCreatePartnership,
+  adminRemovePartnership,
+  getAllPartnerships,
+  adminCreateTempAccount
 };
