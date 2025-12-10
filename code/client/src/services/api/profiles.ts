@@ -34,13 +34,13 @@ export const profilesAPI = {
   // Get profile by username
   getProfileByUsername: async (username: string): Promise<ProfileData> => {
     const response = await apiRequest<{ success: boolean; data: ProfileData }>(`/api/profiles/${username}`);
-    return response.success ? response.data : response;
+    return response.data;
   },
 
   // Get profile by user ID
   getProfileByUserId: async (userId: string): Promise<ProfileData> => {
     const response = await apiRequest<{ success: boolean; data: ProfileData }>(`/api/profiles/user/${userId}`);
-    return response.success ? response.data : response;
+    return response.data;
   },
 
   // Update profile
@@ -49,12 +49,12 @@ export const profilesAPI = {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    return response.success ? response.data : response;
+    return response.data;
   },
 
   // Get player streaks and recent form
   getPlayerStreaks: async (userId: string): Promise<PlayerStreaks> => {
     const response = await apiRequest<{ success: boolean; data: PlayerStreaks }>(`/api/profiles/${userId}/streaks`);
-    return response.success ? response.data : response;
+    return response.data;
   },
 };

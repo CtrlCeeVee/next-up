@@ -7,7 +7,7 @@
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Generic API request handler
-export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+export const apiRequest = async <T = any>(endpoint: string, options: RequestInit = {}): Promise<T> => {
   const url = `${API_BASE_URL}${endpoint}`;
   
   const config: RequestInit = {
