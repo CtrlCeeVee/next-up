@@ -15,6 +15,14 @@ if ('serviceWorker' in navigator) {
         console.error('Service Worker registration failed:', error);
       });
   });
+
+  // Handle messages from service worker (e.g., requesting auth token)
+  navigator.serviceWorker.addEventListener('message', (event) => {
+    if (event.data.type === 'GET_AUTH_TOKEN') {
+      const token = localStorage.getItem('token');
+      event.ports[0].postMessage({ token });
+    }
+  });
 }
 
 createRoot(document.getElementById('root')!).render(

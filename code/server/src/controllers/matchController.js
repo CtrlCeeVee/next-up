@@ -2,6 +2,7 @@
 // Handles all match assignment and scoring operations
 
 const { createClient } = require('@supabase/supabase-js');
+const pushNotificationService = require('../services/pushNotificationService');
 require('dotenv').config();
 
 const supabase = createClient(
@@ -291,6 +292,64 @@ const tryAutoAssignMatches = async (instanceId) => {
     }
 
     console.log(`Auto-assignment successful: Created ${createdMatches.length} matches`);
+
+    // Send push notifications to all players in the matches
+    for (const match of createdMatches) {
+      try {
+        const team1Names = [
+          `${match.partnership1.player1.first_name} ${match.partnership1.player1.last_name}`,
+          `${match.partnership1.player2.first_name} ${match.partnership1.player2.last_name}`
+        ].join(' & ');
+        
+        const team2Names = [
+          `${match.partnership2.player1.first_name} ${match.partnership2.player1.last_name}`,
+          `${match.partnership2.player2.first_name} ${match.partnership2.player2.last_name}`
+        ].join(' & ');
+
+        // Get user IDs for all 4 players
+        const { data: partnership1Data } = await supabase
+          .from('confirmed_partnerships')
+          .select('player1_id, player2_id')
+          .eq('id', match.partnership1_id)
+          .single();
+
+        const { data: partnership2Data } = await supabase
+          .from('confirmed_partnerships')
+          .select('player1_id, player2_id')
+          .eq('id', match.partnership2_id)
+          .single();
+
+        if (partnership1Data && partnership2Data) {
+          // Notify partnership 1 (their opponents are partnership 2)
+          await pushNotificationService.notifyMatchAssigned(
+            {
+              id: match.id,
+              court_number: match.court_number,
+              opponent_names: team2Names,
+              league_id: match.league_id,
+              league_night_instance_id: match.league_night_instance_id
+            },
+            [partnership1Data.player1_id, partnership1Data.player2_id]
+          );
+
+          // Notify partnership 2 (their opponents are partnership 1)
+          await pushNotificationService.notifyMatchAssigned(
+            {
+              id: match.id,
+              court_number: match.court_number,
+              opponent_names: team1Names,
+              league_id: match.league_id,
+              league_night_instance_id: match.league_night_instance_id
+            },
+            [partnership2Data.player1_id, partnership2Data.player2_id]
+          );
+        }
+      } catch (notifError) {
+        console.error('Error sending match notification:', notifError);
+        // Don't fail the whole operation if notifications fail
+      }
+    }
+    
     return {
       success: true,
       matches: createdMatches,

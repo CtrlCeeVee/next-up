@@ -56,6 +56,13 @@ useEffect(() => { stableCallbacks.current = callbacks; });
 - Players check in, form partnerships, get assigned to matches
 - Partnerships have partial unique constraint on active records only
 
+**push_subscriptions** - Web Push API subscriptions for notifications (PWA)
+- Fields: `id`, `user_id`, `endpoint`, `p256dh_key`, `auth_key`, `device_info`, `user_agent`, `is_active`, `created_at`, `last_used_at`
+- Stores browser push subscription endpoints for each user/device
+- One user can have multiple subscriptions (phone + desktop + tablet)
+- Used by backend to send push notifications via web-push library
+- Endpoints expire after ~90 days; `last_used_at` tracks active subscriptions
+
 ### Key Database Patterns
 
 **RPC Functions** (use these, not direct SQL):
