@@ -39,6 +39,14 @@ export function usePushNotifications() {
       'PushManager' in window &&
       'Notification' in window;
 
+    console.log('[Push Notifications] Support check:', {
+      serviceWorker: 'serviceWorker' in navigator,
+      PushManager: 'PushManager' in window,
+      Notification: 'Notification' in window,
+      isSupported,
+      userAgent: navigator.userAgent
+    });
+
     setState(prev => ({ 
       ...prev, 
       isSupported,
@@ -46,6 +54,7 @@ export function usePushNotifications() {
     }));
 
     if (!isSupported) {
+      console.log('[Push Notifications] Not supported on this device');
       setState(prev => ({ ...prev, isLoading: false }));
     }
   };
@@ -55,6 +64,10 @@ export function usePushNotifications() {
    */
   const checkSubscription = async () => {
     if (!state.isSupported || !user) {
+      console.log('[Push Notifications] Skipping subscription check:', { 
+        supported: state.isSupported, 
+        user: !!user 
+      });
       setState(prev => ({ ...prev, isLoading: false }));
       return;
     }
@@ -63,13 +76,15 @@ export function usePushNotifications() {
       const registration = await navigator.serviceWorker.ready;
       const subscription = await registration.pushManager.getSubscription();
       
+      console.log('[Push Notifications] Current subscription:', subscription ? 'Active' : 'None');
+      
       setState(prev => ({
         ...prev,
         isSubscribed: subscription !== null,
         isLoading: false
       }));
     } catch (error) {
-      console.error('Error checking subscription:', error);
+      console.error('[Push Notifications] Error checking subscription:', error);
       setState(prev => ({ 
         ...prev, 
         isLoading: false,

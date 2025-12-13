@@ -1,5 +1,62 @@
 # 📝 Next-Up Changelog
 
+## Version 1.3.0 - PWA + Push Notifications (December 13, 2025)
+
+### 🎉 Progressive Web App (PWA)
+
+**App Installation**
+- Full PWA support - installable on desktop and mobile devices
+- Custom app icons (192x192 and 512x512) with emerald/green branding
+- Standalone display mode (opens like native app, no browser UI)
+- Offline-ready with service worker caching
+
+**Implementation**
+- `manifest.json` with app metadata, icons, and theme colors
+- Service worker for offline caching and background functionality
+- Registered in `main.tsx` with automatic updates
+
+### 📲 Push Notifications System
+
+**Backend Infrastructure**
+- `push_subscriptions` table in Supabase for storing device subscriptions
+- `web-push` npm library integrated for sending notifications
+- VAPID keys generated for server authentication
+- `PushNotificationService` class with methods for all notification types
+
+**API Endpoints**
+- `POST /api/push/subscribe` - Subscribe user's device to notifications
+- `POST /api/push/unsubscribe` - Unsubscribe from notifications
+- `GET /api/push/vapid-public-key` - Get public key for client subscription
+- `GET /api/push/subscriptions` - List user's active subscriptions
+- `POST /api/push/test` - Send test notification (debugging)
+
+**Frontend Integration**
+- `usePushNotifications` hook for managing subscription state
+- `NotificationPermissionBanner` component (dismissible, shows on dashboard)
+- `NotificationSettingsCard` component (profile page with enable/disable + test button)
+- Service worker message handler for auth token requests
+
+**Live Notifications**
+- ✅ Match Assignment: "🏓 Match Ready! Court 3 vs [opponents]" with View/Acknowledge actions
+- ⏳ Score Submission: Ready but not yet triggered (needs integration)
+- ⏳ Partnership Requests: Ready but not yet triggered (needs integration)
+
+### Known Issues
+
+**Safari/iOS Compatibility** (IN PROGRESS)
+- Push notifications work on desktop (tested ✓)
+- Mobile Safari not receiving notifications - debugging in progress
+- `NotificationSettingsCard` loading inconsistently on mobile
+- Requires iOS 16.4+ for push notification support
+
+### Technical Notes
+- Service worker handles notification clicks and API calls autonomously
+- Auth token passed from main app to service worker via MessageChannel
+- Notifications support action buttons (Confirm, Dispute, Accept, Decline)
+- Failed subscriptions auto-deactivated (410/404 responses)
+
+---
+
 ## Version 1.2.2 - Players Without Phones Support (December 2025)
 
 ### Admin Features
