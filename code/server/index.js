@@ -7,6 +7,7 @@ const leagueRoutes = require('./src/routes/leagues');
 const leagueNightRoutes = require('./src/routes/leagueNights');
 const profileRoutes = require('./src/routes/profiles');
 const devRoutes = require('./src/routes/dev');
+const pushRoutes = require('./src/routes/push');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -48,6 +49,7 @@ app.use('/api/leagues', leagueRoutes);
 app.use('/api/leagues', leagueNightRoutes);
 app.use('/api/profiles', profileRoutes);
 app.use('/api/dev', devRoutes);
+app.use('/api/push', pushRoutes);
 
 // Start server
 app.listen(PORT, () => {

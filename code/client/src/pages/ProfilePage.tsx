@@ -5,6 +5,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { usePlayerStats, type PlayerStats, type LeagueStats } from '../hooks/usePlayerStats';
 import { usePlayerStreaks } from '../hooks/usePlayerStreaks';
 import { profilesAPI, type ProfileData } from '../services/api/profiles';
+import { NotificationSettingsCard } from '../components/NotificationPermission';
 import {
   ArrowLeft,
   Moon,
@@ -446,6 +447,13 @@ const ProfilePage = () => {
                   </p>
                 )}
               </div>
+
+              {/* Notification Settings - Only for current user */}
+              {profile.isCurrentUser && (
+                <div className="mt-6">
+                  <NotificationSettingsCard />
+                </div>
+              )}
 
               {/* Recent Achievement */}
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mt-6">

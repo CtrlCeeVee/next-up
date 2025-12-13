@@ -5,6 +5,7 @@ import { leaguesAPI } from '../services/api';
 import { membershipService } from '../services/api/membership';
 import type { League } from '../hooks/useLeagues';
 import { Zap, Trophy, Search, BarChart3, Home, Calendar, MapPin, Users, Bell, User, Plus, LogOut } from 'lucide-react';
+import { NotificationPermissionBanner } from '../components/NotificationPermission';
 
 interface LeagueWithNight extends League {
   activeNightId?: string;
@@ -120,6 +121,9 @@ export default function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* Notification Permission Banner */}
+      <NotificationPermissionBanner />
 
       {/* Main Content */}
       <div className="relative px-4 py-6 max-w-7xl mx-auto">
