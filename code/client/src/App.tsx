@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useAuth } from './hooks/useAuth'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { ToastProvider } from './contexts/ToastContext'
+import DashboardPage from './pages/DashboardPage.tsx'
+import BrowseLeaguesPage from './pages/BrowseLeaguesPage.tsx'
 import LeagueList from './pages/LeagueList.tsx'
 import LeaguePage from './pages/LeaguePage.tsx'
 import LeagueNightPage from './pages/LeagueNightPage.tsx'
@@ -28,7 +30,11 @@ function App() {
           />
           <Route
             path="/"
-            element={<LeagueList />}
+            element={isAuthenticated ? <DashboardPage /> : <LeagueList />}
+          />
+          <Route
+            path="/leagues"
+            element={isAuthenticated ? <BrowseLeaguesPage /> : <LeagueList />}
           />
           <Route
             path="/league/:leagueId"

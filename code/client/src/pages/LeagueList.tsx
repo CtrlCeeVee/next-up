@@ -1,8 +1,9 @@
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../contexts/ThemeContext'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getCurrentUserProfileUrl } from '../utils/profileUtils'
 import { Moon, Sun, Zap, Trophy, Users, MapPin, Calendar, Star, ArrowRight, Play, User } from 'lucide-react'
+import { useMemo } from 'react'
 
 // Hardcoded leagues data - update manually when leagues change
 const LEAGUES = [
@@ -83,6 +84,20 @@ function LeagueList() {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  const filter = searchParams.get('filter'); // 'tonight', 'mine', or null
+
+  // Filter leagues based on query parameter
+  const filteredLeagues = useMemo(() => {
+    if (filter === 'tonight') {
+      const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+      return LEAGUES.filter(league => league.leagueDays.includes(today));
+    }
+    // 'mine' filter requires backend - for now show all
+    // TODO: Implement user's leagues filter once membership data is available
+    return LEAGUES;
+  }, [filter]);
 
   const handleViewLeague = (leagueId: number) => {
     // Check if user is authenticated before allowing league access
@@ -376,17 +391,47 @@ function LeagueList() {
       {/* Leagues Section */}
       <section className="relative max-w-7xl mx-auto px-4 pb-16">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Active <span className="text-green-600 dark:text-green-400">Leagues</span>
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Browse leagues in your area and find the perfect fit for your skill level
-          </p>
+          {filter === 'tonight' ? (
+            <>
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Zap className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
+                  Playing <span className="text-green-600 dark:text-green-400">Tonight</span>
+                </h2>
+              </div>
+              <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                {filteredLeagues.length > 0 
+                  ? `${filteredLeagues.length} league${filteredLeagues.length !== 1 ? 's' : ''} happening today`
+                  : 'No leagues scheduled for today'}
+              </p>
+            </>
+          ) : filter === 'mine' ? (
+            <>
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <Trophy className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <h2 className="text-4xl font-bold text-gray-900 dark:text-white">
+                  Your <span className="text-green-600 dark:text-green-400">Leagues</span>
+                </h2>
+              </div>
+              <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                Leagues you're a member of
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                Active <span className="text-green-600 dark:text-green-400">Leagues</span>
+              </h2>
+              <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                Browse leagues in your area and find the perfect fit for your skill level
+              </p>
+            </>
+          )}
         </div>
 
         {/* League Cards */}
         <div className="grid gap-4 sm:gap-6 md:gap-8 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-          {LEAGUES.map((league, index) => (
+          {filteredLeagues.map((league, index) => (
             <div 
               key={league.id}
               className={`group relative overflow-hidden rounded-3xl transition-all duration-500 transform hover:scale-105 ${
