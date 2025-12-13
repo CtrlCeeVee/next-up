@@ -162,6 +162,41 @@ res.status(400).json({ success: false, error: 'Error message' });
 - **Contextual help**: Show next-step guidance ("You're checked in! Find a partner to get started!")
 - **Compact buttons**: Single-line layouts, icon-only for secondary actions
 
+### Design System
+**Glass Morphism**: `bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg`
+**Borders**: Semi-transparent `border-slate-200/50 dark:border-slate-700/50`
+**Rounded Corners**: `rounded-3xl` for cards, `rounded-2xl` for buttons
+**Color Palette**:
+- Primary: Emerald/Green (`emerald-500`, `emerald-600`, `green-600`)
+- Text gradients: `bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent`
+- Avoid: Blue for primary actions (reserve for secondary/info states)
+
+**Icons**: Lucide React only - import from `'lucide-react'`
+```typescript
+import { Zap, Trophy, Search, Calendar, MapPin, Users } from 'lucide-react'
+```
+
+**Background**: Animated gradient with floating orbs
+```typescript
+<div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900">
+  <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div className="absolute top-10 left-10 w-72 h-72 bg-green-300/10 dark:bg-green-500/5 rounded-full blur-3xl animate-float"></div>
+    <div className="absolute top-32 right-10 w-96 h-96 bg-emerald-300/10 dark:bg-emerald-500/5 rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
+  </div>
+</div>
+```
+
+**Hover Effects**:
+- Cards: `hover:scale-105 transition-all duration-300`
+- Icons: `group-hover:scale-110 transition-transform`
+- Shadow: `shadow-xl hover:shadow-2xl`
+- Emerald glow: `hover:shadow-emerald-500/20`
+
+**Button Patterns**:
+- Primary: `bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700`
+- Secondary: `bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700`
+- Active state: `active:scale-95` or `active:bg-emerald-700`
+
 ### Mobile Responsiveness (Critical)
 **Target**: iPhone 4 (320px) as minimum viable screen size
 
@@ -275,7 +310,7 @@ channel.subscribe((status) => { /* handle */ });
 4. ✅ Auto-assignment on new partnerships (currently only on league start + score submission)
 5. ✅ Score confirmation flow (opponent confirms submitted scores)
 6. 📋 Email integration (contact form functionality)
-7. 📋 Advanced admin controls (End League Night ✅, match overrides, no-shows)
+7. ✅ Advanced admin controls (End League Night ✅, match overrides, no-shows)
 
 ---
 
