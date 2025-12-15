@@ -74,6 +74,17 @@ export const NotificationSettingsCard: React.FC = () => {
   const [testLoading, setTestLoading] = React.useState(false);
   const [testResult, setTestResult] = React.useState<string | null>(null);
 
+  // Debug: Log state changes
+  React.useEffect(() => {
+    console.log('[NotificationSettingsCard] State:', {
+      isSupported,
+      isSubscribed,
+      permission,
+      isLoading,
+      error
+    });
+  }, [isSupported, isSubscribed, permission, isLoading, error]);
+
   const handleToggle = async () => {
     if (isSubscribed) {
       await unsubscribe();

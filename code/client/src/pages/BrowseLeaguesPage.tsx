@@ -5,6 +5,7 @@ import { leaguesAPI } from '../services/api';
 import { membershipService } from '../services/api/membership';
 import type { League } from '../hooks/useLeagues';
 import { Zap, Trophy, Search, MapPin, Calendar, Users, ArrowLeft, Clock, Flame } from 'lucide-react';
+import BottomNav from '../components/BottomNav';
 
 interface LeagueWithMembership extends League {
   isMember?: boolean;
@@ -128,7 +129,7 @@ export default function BrowseLeaguesPage() {
       </div>
 
       {/* Main Content */}
-      <div className="relative max-w-7xl mx-auto px-4 py-4">
+      <div className="relative max-w-7xl mx-auto px-4 py-4 pb-24">
         {/* Search Bar */}
         <div className="mb-4">
           <div className="relative">
@@ -282,6 +283,9 @@ export default function BrowseLeaguesPage() {
           </div>
         )}
       </div>
+      
+      {/* Bottom Navigation */}
+      <BottomNav />
     </div>
   );
 }

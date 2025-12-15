@@ -22,6 +22,7 @@ import {
   ChevronRight,
   ChevronLeft
 } from 'lucide-react'
+import BottomNav from '../components/BottomNav'
 
 // ===================================
 // TYPE DEFINITIONS 
@@ -373,7 +374,7 @@ function LeaguePage() {
       </header>
 
       {/* Main Content */}
-      <main className="relative max-w-7xl mx-auto px-4 py-4 sm:py-6 md:py-8 space-y-4 sm:space-y-6 md:space-y-8">
+      <main className="relative max-w-7xl mx-auto px-4 py-4 sm:py-6 md:py-8 space-y-4 sm:space-y-6 md:space-y-8 pb-24">", 
         
         {/* League Overview Hero Section */}
         <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
@@ -844,6 +845,9 @@ function LeaguePage() {
         </section>
 
       </main>
+      
+      {/* Bottom Navigation */}
+      <BottomNav />
     </div>
   )
 }

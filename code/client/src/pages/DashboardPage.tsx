@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react';
 import { leaguesAPI } from '../services/api';
 import { membershipService } from '../services/api/membership';
 import type { League } from '../hooks/useLeagues';
-import { Zap, Trophy, Search, BarChart3, Home, Calendar, MapPin, Users, Bell, User, Plus, LogOut } from 'lucide-react';
+import { Zap, Trophy, Search, BarChart3, Calendar, MapPin, Users, Bell, User, Plus, LogOut } from 'lucide-react';
 import { NotificationPermissionBanner } from '../components/NotificationPermission';
+import BottomNav from '../components/BottomNav';
 
 interface LeagueWithNight extends League {
   activeNightId?: string;
@@ -197,27 +198,27 @@ export default function DashboardPage() {
                 <Zap className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                 <h3 className="text-base min-[375px]:text-lg font-bold text-slate-900 dark:text-white">Happening Today</h3>
               </div>
-              <div className="group relative overflow-hidden bg-gradient-to-br from-emerald-500 to-green-600 dark:from-emerald-600 dark:to-green-700 rounded-3xl p-4 min-[375px]:p-6 border border-emerald-400/50 shadow-2xl hover:shadow-emerald-500/20 transition-all duration-300">
-                <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="group relative overflow-hidden bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-3xl p-4 min-[375px]:p-6 border-2 border-emerald-500/30 dark:border-emerald-400/30 shadow-xl hover:shadow-2xl hover:border-emerald-500/50 dark:hover:border-emerald-400/50 transition-all duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-green-500/5 dark:from-emerald-400/5 dark:to-green-400/5"></div>
                 <div className="relative">
-                  <h4 className="text-xl min-[375px]:text-2xl font-bold text-white mb-2">{activeTonight.name}</h4>
+                  <h4 className="text-xl min-[375px]:text-2xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 dark:from-emerald-400 dark:to-green-400 bg-clip-text text-transparent mb-2">{activeTonight.name}</h4>
                   <div className="flex flex-wrap gap-2 mb-3 min-[375px]:mb-4">
-                    <span className="px-2 min-[375px]:px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                    <span className="px-2 min-[375px]:px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold rounded-full flex items-center gap-1">
                       <Zap className="w-3 h-3" /> Today
                     </span>
-                    <span className="px-2 min-[375px]:px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                    <span className="px-2 min-[375px]:px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-full flex items-center gap-1">
                       <Calendar className="w-3 h-3" /> {activeTonight.startTime}
                     </span>
-                    <span className="px-2 min-[375px]:px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-semibold rounded-full flex items-center gap-1">
+                    <span className="px-2 min-[375px]:px-3 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-full flex items-center gap-1">
                       <Users className="w-3 h-3" /> {activeTonight.totalPlayers}
                     </span>
                   </div>
-                  <p className="text-emerald-50 text-xs min-[375px]:text-sm mb-3 min-[375px]:mb-4 flex items-center gap-1">
+                  <p className="text-slate-600 dark:text-slate-400 text-xs min-[375px]:text-sm mb-3 min-[375px]:mb-4 flex items-center gap-1">
                     <MapPin className="w-4 h-4" /> {activeTonight.location}
                   </p>
                   <button
                     onClick={() => navigate(`/league/${activeTonight.id}`)}
-                    className="w-full bg-white text-emerald-600 font-semibold py-2.5 min-[375px]:py-3 px-3 min-[375px]:px-4 rounded-2xl hover:bg-emerald-50 active:bg-emerald-100 transition-all duration-200 hover:scale-105 text-sm min-[375px]:text-base shadow-lg"
+                    className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-semibold py-2.5 min-[375px]:py-3 px-3 min-[375px]:px-4 rounded-2xl active:scale-95 transition-all duration-200 text-sm min-[375px]:text-base shadow-lg"
                   >
                     View Details
                   </button>
@@ -318,38 +319,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-200 dark:border-slate-700 px-4 py-3 safe-area-bottom shadow-lg z-50">
-        <div className="flex justify-around items-center max-w-md mx-auto">
-          <button 
-            onClick={() => navigate('/')}
-            className="flex flex-col items-center gap-1 text-emerald-600 dark:text-emerald-400 group"
-          >
-            <Home className="w-6 h-6 stroke-[2.5] group-hover:scale-110 transition-transform" />
-            <span className="text-xs font-semibold">Home</span>
-          </button>
-          <button 
-            onClick={() => navigate('/leagues?filter=tonight')}
-            className="flex flex-col items-center gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 group"
-          >
-            <Zap className="w-6 h-6 stroke-[2] group-hover:scale-110 transition-transform" />
-            <span className="text-xs">Tonight</span>
-          </button>
-          <button 
-            onClick={() => navigate('/profile')}
-            className="flex flex-col items-center gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 group"
-          >
-            <BarChart3 className="w-6 h-6 stroke-[2] group-hover:scale-110 transition-transform" />
-            <span className="text-xs">Stats</span>
-          </button>
-          <button 
-            onClick={() => navigate('/profile')}
-            className="flex flex-col items-center gap-1 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 group"
-          >
-            <User className="w-6 h-6 stroke-[2] group-hover:scale-110 transition-transform" />
-            <span className="text-xs">Profile</span>
-          </button>
-        </div>
-      </div>
+      <BottomNav />
     </div>
   );
 }
