@@ -25,6 +25,7 @@ import {
   Activity,
   Heart
 } from 'lucide-react';
+import BottomNav from '../components/BottomNav';
 
 interface PlayerProfile {
   id: string;
@@ -876,6 +877,9 @@ const ProfilePage = () => {
           </div>
         )}
       </div>
+      
+      {/* Bottom Navigation */}
+      <BottomNav />
     </div>
   );
 };

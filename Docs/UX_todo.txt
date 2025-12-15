@@ -131,3 +131,26 @@ Im going to compile a BUNCH of changes we need to do here, tick when done:
  - score should be auto confirmed after a certain amount of time has passed.
  - prevents users just leaving and not confirming a score resulting in stuck courts
  
+[DONE ✅] 15. Designing this to be more like an app
+ - currently the front page operates very much like a website
+ - has the cover page giving info (landing page of a website)
+ - I want to start pivoting more towards a app feel for when we make it a PWA
+ - The way I want to do it is as follows:
+   - Keep it the exact same landing page when the user is not signed in.
+   - When signed in:
+     - new interface thats more app style (playtonic)
+     - new clubs / you clubs / almost like a landing dashboard of some kind?
+
+
+[] 16. More helpful error messages
+  - currently if you are disconnected (i.e. i stop the server) but still use the app the and get connectivity issues it doesnt say
+  - for example if I use the app on no connection and click my profile it just says profile not found instead of just saying you internet is down:
+    - heres the error message: API Error for /api/leagues: TypeError: Failed to fetch
+    - displayed error message: profile not found
+
+
+[DONE ✅] 17. Bottom hotbar persistence
+  - part of 15 which we've partially done
+  - on the new dashboard twe have a bottom hotbar
+  - when we click "tonight" or any of the browse league features we lose it
+  - it makes the bottom of the screen feel empty but also just makes it harder to navigate

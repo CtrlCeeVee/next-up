@@ -125,7 +125,14 @@ export function usePushNotifications() {
 
       // Get VAPID public key from backend
       const keyResponse = await fetch(`${API_URL}/api/push/vapid-public-key`);
+      if (!keyResponse.ok) {
+        throw new Error('Failed to fetch VAPID public key');
+      }
+      
       const { publicKey } = await keyResponse.json();
+      if (!publicKey) {
+        throw new Error('Invalid VAPID public key received');
+      }
 
       // Get service worker registration
       const registration = await navigator.serviceWorker.ready;
@@ -253,7 +260,8 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
     .replace(/_/g, '/');
 
   const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
+  const buffer = new ArrayBuffer(rawData.length);
+  const outputArray = new Uint8Array(buffer);
 
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i);
