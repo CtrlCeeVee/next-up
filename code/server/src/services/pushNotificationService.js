@@ -113,9 +113,14 @@ class PushNotificationService {
     } catch (error) {
       console.error('Error sending to subscription:', error);
 
-      // If subscription is invalid (410 Gone), deactivate it
-      if (error.statusCode === 410 || error.statusCode === 404) {
-        console.log(`Deactivating invalid subscription ${subscription.id}`);
+      // If subscription is invalid or unreachable, deactivate it
+      if (
+        error.statusCode === 410 || 
+        error.statusCode === 404 ||
+        error.code === 'ETIMEDOUT' ||
+        error.code === 'ENETUNREACH'
+      ) {
+        console.log(`Deactivating invalid/unreachable subscription ${subscription.id} (${error.code || error.statusCode})`);
         await supabase
           .from('push_subscriptions')
           .update({ is_active: false })
