@@ -18,7 +18,7 @@ const tryAutoAssignMatches = async (instanceId) => {
     // Get league night instance to check status and auto-assignment setting
     const { data: instance, error: instanceError } = await supabase
       .from('league_night_instances')
-      .select('status, auto_assignment_enabled')
+      .select('status, auto_assignment_enabled, league_night_id, league_nights!inner(league_id)')
       .eq('id', instanceId)
       .single();
 
@@ -26,6 +26,8 @@ const tryAutoAssignMatches = async (instanceId) => {
       console.error('Error fetching league night instance:', instanceError);
       return { success: false, error: instanceError.message };
     }
+
+    const leagueId = instance.league_nights?.league_id;
 
     // Don't auto-assign if league night has been ended
     if (instance.status === 'completed') {
@@ -326,7 +328,7 @@ const tryAutoAssignMatches = async (instanceId) => {
               id: match.id,
               court_number: match.court_number,
               opponent_names: team2Names,
-              league_id: match.league_id,
+              league_id: leagueId,
               league_night_instance_id: match.league_night_instance_id
             },
             [partnership1Data.player1_id, partnership1Data.player2_id]
@@ -338,7 +340,7 @@ const tryAutoAssignMatches = async (instanceId) => {
               id: match.id,
               court_number: match.court_number,
               opponent_names: team1Names,
-              league_id: match.league_id,
+              league_id: leagueId,
               league_night_instance_id: match.league_night_instance_id
             },
             [partnership2Data.player1_id, partnership2Data.player2_id]
@@ -966,6 +968,51 @@ const submitMatchScore = async (req, res) => {
       .single();
 
     if (updateError) throw updateError;
+
+    // Send push notification to opponent partnership to confirm score
+    try {
+      const pushNotificationService = require('../services/pushNotificationService');
+      
+      // Determine opponent partnership ID
+      const opponentPartnershipId = userPartnershipId === match.partnership1.id 
+        ? match.partnership2.id 
+        : match.partnership1.id;
+      
+      // Get opponent partnership player IDs
+      const { data: opponentPartnership } = await supabase
+        .from('confirmed_partnerships')
+        .select('player1_id, player2_id')
+        .eq('id', opponentPartnershipId)
+        .single();
+
+      if (opponentPartnership) {
+        // Get submitter names
+        const { data: submitterProfile } = await supabase
+          .from('profiles')
+          .select('first_name, last_name')
+          .eq('id', user_id)
+          .single();
+        
+        const submitterName = submitterProfile 
+          ? `${submitterProfile.first_name} ${submitterProfile.last_name}`
+          : 'Your opponent';
+
+        await pushNotificationService.notifyScoreSubmitted(
+          {
+            id: updatedMatch.id,
+            submitter_names: submitterName,
+            pending_team1_score: score1,
+            pending_team2_score: score2,
+            league_id: leagueId,
+            league_night_instance_id: instance.id
+          },
+          [opponentPartnership.player1_id, opponentPartnership.player2_id]
+        );
+      }
+    } catch (notifError) {
+      console.error('Error sending score submission notification:', notifError);
+      // Don't fail the operation if notification fails
+    }
 
     res.json({
       success: true,

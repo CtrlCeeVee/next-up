@@ -46,33 +46,33 @@ export default function BottomNav() {
           }`}>Leagues</span>
         </button>
         <button 
-          onClick={() => navigate('/profile')}
+          onClick={() => navigate('/profile?tab=stats')}
           className={`flex flex-col items-center gap-1 transition-colors ${
-            location.pathname === '/profile' && !location.search
+            location.pathname === '/profile' && location.search.includes('tab=stats')
               ? 'text-emerald-600 dark:text-emerald-400' 
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           } group`}
         >
           <BarChart3 className={`w-6 h-6 group-hover:scale-110 transition-transform ${
-            location.pathname === '/profile' && !location.search ? 'stroke-[2.5]' : 'stroke-[2]'
+            location.pathname === '/profile' && location.search.includes('tab=stats') ? 'stroke-[2.5]' : 'stroke-[2]'
           }`} />
           <span className={`text-xs ${
-            location.pathname === '/profile' && !location.search ? 'font-semibold' : ''
+            location.pathname === '/profile' && location.search.includes('tab=stats') ? 'font-semibold' : ''
           }`}>Stats</span>
         </button>
         <button 
           onClick={() => navigate('/profile')}
           className={`flex flex-col items-center gap-1 transition-colors ${
-            location.pathname.startsWith('/profile/')
+            location.pathname === '/profile' && !location.search.includes('tab=')
               ? 'text-emerald-600 dark:text-emerald-400' 
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
           } group`}
         >
           <User className={`w-6 h-6 group-hover:scale-110 transition-transform ${
-            location.pathname.startsWith('/profile/') ? 'stroke-[2.5]' : 'stroke-[2]'
+            location.pathname === '/profile' && !location.search.includes('tab=') ? 'stroke-[2.5]' : 'stroke-[2]'
           }`} />
           <span className={`text-xs ${
-            location.pathname.startsWith('/profile/') ? 'font-semibold' : ''
+            location.pathname === '/profile' && !location.search.includes('tab=') ? 'font-semibold' : ''
           }`}>Profile</span>
         </button>
       </div>

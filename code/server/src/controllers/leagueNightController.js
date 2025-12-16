@@ -379,6 +379,35 @@ const createPartnershipRequest = async (req, res) => {
 
     if (insertError) throw insertError;
 
+    // Send push notification to the requested player
+    try {
+      const pushNotificationService = require('../services/pushNotificationService');
+      
+      // Get requester profile for notification
+      const { data: requesterProfile } = await supabase
+        .from('profiles')
+        .select('first_name, last_name')
+        .eq('id', requester_id)
+        .single();
+
+      const requesterName = requesterProfile 
+        ? `${requesterProfile.first_name} ${requesterProfile.last_name}`
+        : 'Someone';
+
+      await pushNotificationService.notifyPartnershipRequest(
+        {
+          id: request.id,
+          requester_name: requesterName,
+          league_id: leagueId,
+          league_night_instance_id: instance.id
+        },
+        requested_id
+      );
+    } catch (notifError) {
+      console.error('Error sending partnership request notification:', notifError);
+      // Don't fail the operation if notification fails
+    }
+
     res.json({
       success: true,
       data: {
