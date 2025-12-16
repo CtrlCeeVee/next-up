@@ -7,6 +7,55 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
+// Authentication middleware using Supabase
+const authenticateUser = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: 'No authentication token provided'
+      });
+    }
+
+    const token = authHeader.substring(7);
+    
+    // Verify token with Supabase
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid or expired token'
+      });
+    }
+    
+    req.user = { id: user.id };
+    next();
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return res.status(401).json({
+      success: false,
+      error: 'Authentication failed'
+    });
+  }
+};
+
+/**
+ * GET /api/push/vapid-public-key
+ * Get VAPID public key for client-side subscription
+ * PUBLIC - No auth required (needed before subscription)
+ */
+router.get('/vapid-public-key', (req, res) => {
+  res.json({
+    success: true,
+    publicKey: process.env.VAPID_PUBLIC_KEY
+  });
+});
+
+// Apply authentication middleware to remaining routes
+router.use(authenticateUser);
+
 /**
  * POST /api/push/subscribe
  * Subscribe to push notifications
@@ -146,17 +195,6 @@ router.post('/unsubscribe', async (req, res) => {
       error: 'Internal server error'
     });
   }
-});
-
-/**
- * GET /api/push/vapid-public-key
- * Get VAPID public key for client-side subscription
- */
-router.get('/vapid-public-key', (req, res) => {
-  res.json({
-    success: true,
-    publicKey: process.env.VAPID_PUBLIC_KEY
-  });
 });
 
 /**
