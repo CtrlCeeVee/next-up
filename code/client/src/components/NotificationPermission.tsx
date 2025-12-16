@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Bell, BellOff, X } from 'lucide-react';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { supabase } from '../services/supabase';
 
 /**
  * NotificationPermissionBanner
@@ -98,12 +99,17 @@ export const NotificationSettingsCard: React.FC = () => {
     setTestResult(null);
     
     try {
-      const token = localStorage.getItem('token');
+      // Get the current Supabase session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No valid session');
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/push/test`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${session.access_token}`
         }
       });
 

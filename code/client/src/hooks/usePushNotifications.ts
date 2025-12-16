@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
+import { supabase } from '../services/supabase';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -144,12 +145,16 @@ export function usePushNotifications() {
       });
 
       // Send subscription to backend
-      const token = localStorage.getItem('token');
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('No valid session');
+      }
+      
       const response = await fetch(`${API_URL}/api/push/subscribe`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${session.access_token}`
         },
         body: JSON.stringify({
           subscription: subscription.toJSON(),
@@ -211,17 +216,19 @@ export function usePushNotifications() {
       await subscription.unsubscribe();
 
       // Notify backend
-      const token = localStorage.getItem('token');
-      await fetch(`${API_URL}/api/push/unsubscribe`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          endpoint: subscription.endpoint
-        })
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        await fetch(`${API_URL}/api/push/unsubscribe`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            endpoint: subscription.endpoint
+          })
+        });
+      }
 
       setState(prev => ({ 
         ...prev, 
