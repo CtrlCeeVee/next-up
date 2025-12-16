@@ -129,6 +129,11 @@ export const NotificationSettingsCard: React.FC = () => {
     }
   };
 
+  // Check if user is on iOS Safari (not in standalone mode)
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+  const needsPWA = isIOS && !isStandalone;
+
   if (!isSupported) {
     return (
       <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border border-slate-200/50 dark:border-slate-700/50 rounded-2xl p-6">
@@ -138,9 +143,24 @@ export const NotificationSettingsCard: React.FC = () => {
             <h3 className="font-semibold text-slate-900 dark:text-white mb-1">
               Push Notifications
             </h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Your browser doesn't support push notifications. Try using Chrome, Firefox, or Safari.
+            <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+              {needsPWA 
+                ? 'Push notifications require the app to be installed.'
+                : "Your browser doesn't support push notifications. Try using Chrome, Firefox, or Safari."}
             </p>
+            {needsPWA && (
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-3 mt-3">
+                <p className="text-xs font-medium text-emerald-900 dark:text-emerald-100 mb-2">
+                  To enable notifications on iPhone:
+                </p>
+                <ol className="text-xs text-emerald-800 dark:text-emerald-200 space-y-1 list-decimal list-inside">
+                  <li>Tap the Share button (square with arrow) in Safari</li>
+                  <li>Scroll down and tap "Add to Home Screen"</li>
+                  <li>Tap "Add" to install the app</li>
+                  <li>Open the app from your home screen</li>
+                </ol>
+              </div>
+            )}
           </div>
         </div>
       </div>

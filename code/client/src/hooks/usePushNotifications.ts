@@ -27,8 +27,11 @@ export function usePushNotifications() {
   });
 
   useEffect(() => {
-    checkSupport();
-    checkSubscription();
+    const init = async () => {
+      const supported = checkSupport();
+      await checkSubscription(supported);
+    };
+    init();
   }, [user]);
 
   /**
@@ -58,15 +61,17 @@ export function usePushNotifications() {
       console.log('[Push Notifications] Not supported on this device');
       setState(prev => ({ ...prev, isLoading: false }));
     }
+    
+    return isSupported;
   };
 
   /**
    * Check if user is already subscribed
    */
-  const checkSubscription = async () => {
-    if (!state.isSupported || !user) {
+  const checkSubscription = async (isSupported: boolean) => {
+    if (!isSupported || !user) {
       console.log('[Push Notifications] Skipping subscription check:', { 
-        supported: state.isSupported, 
+        supported: isSupported, 
         user: !!user 
       });
       setState(prev => ({ ...prev, isLoading: false }));
@@ -125,9 +130,14 @@ export function usePushNotifications() {
       }
 
       // Get VAPID public key from backend
-      const keyResponse = await fetch(`${API_URL}/api/push/vapid-public-key`);
+      const vapidUrl = `${API_URL}/api/push/vapid-public-key`;
+      console.log('[Push Notifications] Fetching VAPID key from:', vapidUrl);
+      
+      const keyResponse = await fetch(vapidUrl);
       if (!keyResponse.ok) {
-        throw new Error('Failed to fetch VAPID public key');
+        const errorText = await keyResponse.text();
+        console.error('[Push Notifications] VAPID fetch failed:', keyResponse.status, errorText);
+        throw new Error(`Failed to fetch VAPID public key: ${keyResponse.status}`);
       }
       
       const { publicKey } = await keyResponse.json();
