@@ -3,8 +3,8 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 
-// Register service worker for PWA functionality
-if ('serviceWorker' in navigator) {
+// Register service worker for PWA functionality (only in production)
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker
       .register('/service-worker.js')
@@ -22,6 +22,14 @@ if ('serviceWorker' in navigator) {
       const token = localStorage.getItem('token');
       event.ports[0].postMessage({ token });
     }
+  });
+} else if ('serviceWorker' in navigator && import.meta.env.DEV) {
+  // Unregister any existing service workers in development
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => {
+      registration.unregister();
+      console.log('Service Worker unregistered (dev mode)');
+    });
   });
 }
 

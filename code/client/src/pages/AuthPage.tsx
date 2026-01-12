@@ -2,15 +2,28 @@
 import { useState } from 'react'
 import { SignInForm } from '../components/auth/SignInForm'
 import { SignUpForm } from '../components/auth/SignUpForm'
+import { ForgotPasswordForm } from '../components/auth/ForgotPasswordForm'
 import { Zap, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false)
+  const [isForgotPassword, setIsForgotPassword] = useState(false)
   const navigate = useNavigate()
 
   const toggleMode = () => {
     setIsSignUp(!isSignUp)
+    setIsForgotPassword(false)
+  }
+
+  const showForgotPassword = () => {
+    setIsForgotPassword(true)
+    setIsSignUp(false)
+  }
+
+  const showSignIn = () => {
+    setIsForgotPassword(false)
+    setIsSignUp(false)
   }
 
   return (
@@ -51,15 +64,22 @@ export function AuthPage() {
             </div>
             
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              {isSignUp ? 'Create your account and join the community' : 'Sign in to your Next-Up account'}
+              {isForgotPassword 
+                ? 'Reset your password' 
+                : isSignUp 
+                ? 'Create your account and join the community' 
+                : 'Sign in to your Next-Up account'
+              }
             </p>
           </div>
           
           {/* Form Container */}
-          {isSignUp ? (
+          {isForgotPassword ? (
+            <ForgotPasswordForm onBack={showSignIn} />
+          ) : isSignUp ? (
             <SignUpForm onToggle={toggleMode} />
           ) : (
-            <SignInForm onToggle={toggleMode} />
+            <SignInForm onToggle={toggleMode} onForgotPassword={showForgotPassword} />
           )}
         </div>
       </div>
