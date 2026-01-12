@@ -14,6 +14,7 @@ import PrivacyPage from './pages/PrivacyPage.tsx'
 import TermsPage from './pages/TermsPage.tsx'
 import LeaderboardPage from './pages/LeaderboardPage.tsx'
 import { AuthPage } from './pages/AuthPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
 import './App.css'
 
 function App() {
@@ -27,6 +28,10 @@ function App() {
           <Route
             path="/auth"
             element={isAuthenticated ? <Navigate to="/" replace /> : <AuthPage />}
+          />
+          <Route
+            path="/reset-password"
+            element={<ResetPasswordPage />}
           />
           <Route
             path="/"

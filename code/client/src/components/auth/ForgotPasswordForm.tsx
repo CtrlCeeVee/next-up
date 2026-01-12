@@ -1,28 +1,70 @@
-// code/client/src/components/auth/SignInForm.tsx
 import { useState } from 'react'
-import { useAuth } from '../../hooks/useAuth'
-import { Mail, Lock, LogIn, Sparkles, AlertCircle } from 'lucide-react'
+import { authService } from '../../services/auth'
+import { Mail, ArrowLeft, Sparkles, AlertCircle, CheckCircle } from 'lucide-react'
 
-interface SignInFormProps {
-  onToggle: () => void
-  onForgotPassword: () => void
+interface ForgotPasswordFormProps {
+  onBack: () => void
 }
 
-export function SignInForm({ onToggle, onForgotPassword }: SignInFormProps) {
+export function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const { signIn, loading } = useAuth()
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
     try {
-      await signIn(email, password)
+      await authService.requestPasswordReset(email)
+      setSuccess(true)
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in')
+      setError(err.message || 'Failed to send reset email')
+    } finally {
+      setLoading(false)
     }
+  }
+
+  if (success) {
+    return (
+      <div className="relative">
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-white/20 dark:border-slate-700/50 transform transition-all duration-300">
+          {/* Success Icon */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-2xl mb-4">
+              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              Check Your Email
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 text-sm">
+              We've sent a password reset link to
+            </p>
+            <p className="text-green-600 dark:text-green-400 font-semibold mt-1">
+              {email}
+            </p>
+          </div>
+
+          {/* Instructions */}
+          <div className="bg-slate-50/50 dark:bg-slate-900/50 rounded-2xl p-4 mb-6">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Click the link in the email to reset your password. The link will expire in 1 hour.
+            </p>
+          </div>
+
+          {/* Back Button */}
+          <button
+            onClick={onBack}
+            className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-4 px-6 rounded-2xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            <span>Back to Sign In</span>
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -32,13 +74,13 @@ export function SignInForm({ onToggle, onForgotPassword }: SignInFormProps) {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-2xl mb-4 transform hover:scale-110 transition-transform duration-300">
-            <LogIn className="h-8 w-8 text-green-600 dark:text-green-400" />
+            <Mail className="h-8 w-8 text-green-600 dark:text-green-400" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome Back
+            Reset Password
           </h2>
           <p className="text-gray-600 dark:text-gray-300 text-sm">
-            Sign in to continue your pickleball journey
+            Enter your email and we'll send you a reset link
           </p>
         </div>
         
@@ -75,36 +117,6 @@ export function SignInForm({ onToggle, onForgotPassword }: SignInFormProps) {
             </div>
           </div>
 
-          {/* Password Field */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Password
-              </label>
-              <button
-                type="button"
-                onClick={onForgotPassword}
-                className="text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium transition-colors duration-200"
-              >
-                Forgot Password?
-              </button>
-            </div>
-            <div className="relative group">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-gray-600 dark:text-gray-400 group-focus-within:text-green-600 dark:group-focus-within:text-green-400 transition-colors duration-200" />
-              </div>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full pl-12 pr-4 py-3 bg-white/50 dark:bg-slate-700/50 backdrop-blur-sm border border-gray-200/50 dark:border-slate-600/50 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500/50 dark:focus:ring-green-400/50 focus:border-green-500 dark:focus:border-green-400 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-300"
-                placeholder="Enter your password"
-              />
-            </div>
-          </div>
-
           {/* Submit Button */}
           <button
             type="submit"
@@ -114,28 +126,26 @@ export function SignInForm({ onToggle, onForgotPassword }: SignInFormProps) {
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-                <span>Signing In...</span>
+                <span>Sending...</span>
               </>
             ) : (
               <>
                 <Sparkles className="h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
-                <span>Sign In</span>
+                <span>Send Reset Link</span>
               </>
             )}
           </button>
         </form>
 
-        {/* Toggle to Sign Up */}
+        {/* Back to Sign In */}
         <div className="mt-8 text-center">
-          <p className="text-gray-600 dark:text-gray-300 text-sm">
-            Don't have an account?{' '}
-            <button
-              onClick={onToggle}
-              className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-semibold transition-colors duration-200 hover:underline"
-            >
-              Create one here
-            </button>
-          </p>
+          <button
+            onClick={onBack}
+            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-semibold transition-colors duration-200 hover:underline flex items-center justify-center space-x-2 mx-auto"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to Sign In</span>
+          </button>
         </div>
       </div>
     </div>

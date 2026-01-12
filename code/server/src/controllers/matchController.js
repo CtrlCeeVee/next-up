@@ -18,7 +18,7 @@ const tryAutoAssignMatches = async (instanceId) => {
     // Get league night instance to check status and auto-assignment setting
     const { data: instance, error: instanceError } = await supabase
       .from('league_night_instances')
-      .select('status, auto_assignment_enabled, league_night_id, league_nights!inner(league_id)')
+      .select('status, auto_assignment_enabled, league_id')
       .eq('id', instanceId)
       .single();
 
@@ -27,7 +27,7 @@ const tryAutoAssignMatches = async (instanceId) => {
       return { success: false, error: instanceError.message };
     }
 
-    const leagueId = instance.league_nights?.league_id;
+    const leagueId = instance.league_id;
 
     // Don't auto-assign if league night has been ended
     if (instance.status === 'completed') {
