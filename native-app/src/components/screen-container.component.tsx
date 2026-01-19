@@ -16,13 +16,12 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   scrollable = false,
   edges = [],
 }) => {
-  const { theme } = useTheme();
   const insets = useSafeAreaInsets();
   const content = (
     <View
       style={[
         styles.container,
-        { backgroundColor: theme.colors.background, paddingTop: insets.top },
+        { paddingTop: insets.top },
         style,
       ]}
     >
@@ -50,12 +49,15 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
   container: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
   scrollView: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
   scrollContent: {
     flexGrow: 1,

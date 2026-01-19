@@ -7,7 +7,7 @@ export const paddingLarge = 16;
 export const paddingXLarge = 24;
 
 // Border radius constants
-export const rounding = 8; // rounded-lg
+export const rounding = 21; // rounded-lg
 export const roundingSmall = 4; // rounded
 export const roundingLarge = 12; // rounded-xl
 export const roundingFull = 9999; // rounded-full
@@ -23,9 +23,9 @@ export const shadow = {
   },
   medium: {
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.1,
-    shadowRadius: 25,
+    shadowRadius: 30,
     elevation: 5,
   },
   hard: {

@@ -4,14 +4,18 @@ import { membershipService } from "../../../di/services.registry";
 
 export interface MembershipState {
   membersByLeague: Record<string, LeagueMember[]>;
-  isMember: boolean;
-  membership: Membership | null;
+  memberships: Record<string, Membership | null>; // Store memberships by leagueId
   loading: boolean;
+  joining: boolean;
+  leaving: boolean;
   error: string | null;
 
   // Actions
+isMember: (leagueId: string) => boolean;
   checkMembership: (leagueId: string, userId: string) => Promise<void>;
+  fetchMembership: (leagueId: string, userId: string) => Promise<void>;
   joinLeague: (leagueId: string, userId: string) => Promise<void>;
+  leaveLeague: (leagueId: string, userId: string) => Promise<void>;
   fetchMembersByLeagueId: (leagueId: string) => Promise<void>;
   clearError: () => void;
   reset: () => void;
@@ -21,18 +25,26 @@ export const useMembershipState = create<MembershipState>((set, get) => {
 
   return {
     membersByLeague: {},
-    isMember: false,
-    membership: null,
+    memberships: {},
     loading: false,
+    joining: false,
+    leaving: false,
     error: null,
+
+    isMember: (leagueId: string) => {
+      const membership = get().memberships[leagueId.toString()];
+      return !!membership;
+    },
 
     checkMembership: async (leagueId: string, userId: string) => {
       set({ loading: true, error: null });
       try {
-        const result = await membershipService.checkMembership(Number(leagueId), userId);
+        const result = await membershipService.checkMembership(leagueId, userId);
         set({
-          isMember: result.isMember,
-          membership: result.membership,
+          memberships: {
+            ...get().memberships,
+            [leagueId]: result.membership,
+          },
           loading: false,
         });
       } catch (error) {
@@ -46,20 +58,65 @@ export const useMembershipState = create<MembershipState>((set, get) => {
       }
     },
 
-    joinLeague: async (leagueId: string, userId: string) => {
+    fetchMembership: async (leagueId: string, userId: string) => {
       set({ loading: true, error: null });
       try {
-        const result = await membershipService.joinLeague(Number(leagueId), userId);
+        const result = await membershipService.checkMembership(leagueId, userId);
         set({
-          membership: result.membership,
-          isMember: true,
+          memberships: {
+            ...get().memberships,
+            [leagueId.toString()]: result.membership,
+          },
           loading: false,
         });
       } catch (error) {
         set({
           error:
-            error instanceof Error ? error.message : "Failed to join league",
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch membership",
           loading: false,
+        });
+      }
+    },
+
+    joinLeague: async (leagueId: string, userId: string) => {
+      set({ joining: true, error: null });
+      try {
+        const result = await membershipService.joinLeague(leagueId, userId);
+        set({
+          memberships: {
+            ...get().memberships,
+            [leagueId.toString()]: result.membership,
+          },
+          joining: false,
+        });
+      } catch (error) {
+        set({
+          error:
+            error instanceof Error ? error.message : "Failed to join league",
+          joining: false,
+        });
+        throw error;
+      }
+    },
+
+    leaveLeague: async (leagueId: string, userId: string) => {
+      set({ leaving: true, error: null });
+      try {
+        await membershipService.leaveLeague(leagueId, userId);
+        set({
+          memberships: {
+            ...get().memberships,
+            [leagueId.toString()]: null,
+          },
+          leaving: false,
+        });
+      } catch (error) {
+        set({
+          error:
+            error instanceof Error ? error.message : "Failed to leave league",
+          leaving: false,
         });
         throw error;
       }
@@ -68,7 +125,7 @@ export const useMembershipState = create<MembershipState>((set, get) => {
     fetchMembersByLeagueId: async (leagueId: string) => {
       set({ loading: true, error: null });
       try {
-        const members = await membershipService.getLeagueMembers(Number(leagueId));
+        const members = await membershipService.getLeagueMembers(leagueId);
         set({ membersByLeague: { ...get().membersByLeague, [leagueId]: members }, loading: false });
       } catch (error) {
         set({
@@ -83,9 +140,11 @@ export const useMembershipState = create<MembershipState>((set, get) => {
 
     reset: () =>
       set({
-        isMember: false,
         membersByLeague: {},
+        memberships: {},
         loading: false,
+        joining: false,
+        leaving: false,
         error: null,
       }),
   };

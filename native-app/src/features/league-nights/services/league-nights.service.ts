@@ -5,6 +5,7 @@ import type {
   PartnershipRequest,
   Partnership,
   PartnershipRequestsResponse,
+  ConfirmedPartnership,
 } from "../types";
 
 export class LeagueNightsService extends BaseService {
@@ -14,7 +15,7 @@ export class LeagueNightsService extends BaseService {
 
   // Get league night details
   async getLeagueNight(
-    leagueId: number,
+    leagueId: string,
     nightId: string
   ): Promise<LeagueNightInstance> {
     const response = await this.get<any>(
@@ -25,7 +26,7 @@ export class LeagueNightsService extends BaseService {
 
   // Get checked-in players for a league night
   async getCheckedInPlayers(
-    leagueId: number,
+    leagueId: string,
     nightId: string
   ): Promise<CheckedInPlayer[]> {
     const response = await this.get<any>(
@@ -36,7 +37,7 @@ export class LeagueNightsService extends BaseService {
 
   // Check in a player to a league night
   async checkInPlayer(
-    leagueId: number,
+    leagueId: string,
     nightId: string,
     userId: string
   ): Promise<void> {
@@ -47,7 +48,7 @@ export class LeagueNightsService extends BaseService {
 
   // Uncheck a player from a league night
   async uncheckPlayer(
-    leagueId: number,
+    leagueId: string,
     nightId: string,
     userId: string
   ): Promise<void> {
@@ -59,7 +60,7 @@ export class LeagueNightsService extends BaseService {
 
   // Send a partnership request
   async sendPartnershipRequest(
-    leagueId: number,
+    leagueId: string,
     nightId: string,
     requesterId: string,
     requestedId: string
@@ -76,7 +77,7 @@ export class LeagueNightsService extends BaseService {
 
   // Accept a partnership request
   async acceptPartnershipRequest(
-    leagueId: number,
+    leagueId: string,
     nightId: string,
     requestId: number,
     userId: string
@@ -93,7 +94,7 @@ export class LeagueNightsService extends BaseService {
 
   // Reject a partnership request
   async rejectPartnershipRequest(
-    leagueId: number,
+    leagueId: string,
     nightId: string,
     requestId: number,
     userId: string
@@ -107,47 +108,82 @@ export class LeagueNightsService extends BaseService {
     );
   }
 
-  // Get partnership requests for a user
+  // Get partnership requests for a league night
   async getPartnershipRequests(
-    leagueId: number,
+    leagueId: string,
+    nightId: string
+  ): Promise<PartnershipRequest[]> {
+    const response = await this.get<any>(
+      `/api/leagues/${leagueId}/nights/${nightId}/partnership-requests`
+    );
+    return response.data;
+  }
+
+  // Get user's confirmed partnership
+  async getConfirmedPartnership(
+    leagueId: string,
     nightId: string,
     userId: string
-  ): Promise<PartnershipRequestsResponse> {
+  ): Promise<ConfirmedPartnership | null> {
     const response = await this.get<any>(
-      `/api/leagues/${leagueId}/nights/${nightId}/partnership-requests?user_id=${userId}`
+      `/api/leagues/${leagueId}/nights/${nightId}/confirmed-partnership?user_id=${userId}`
+    );
+    return response.data;
+  }
+
+  // Get user's current match
+  async getCurrentMatch(
+    leagueId: string,
+    nightId: string,
+    partnershipId: string
+  ): Promise<any | null> {
+    const response = await this.get<any>(
+      `/api/leagues/${leagueId}/nights/${nightId}/current-match?partnership_id=${partnershipId}`
+    );
+    return response.data;
+  }
+
+  // Get tonight's stats for a user
+  async getMyStats(
+    leagueId: string,
+    nightId: string,
+    userId: string
+  ): Promise<any> {
+    const response = await this.get<any>(
+      `/api/leagues/${leagueId}/nights/${nightId}/my-stats?userId=${userId}`
     );
     return response.data;
   }
 
   // Remove a partnership
   async removePartnership(
-    leagueId: number,
+    leagueId: string,
     nightId: string,
     userId: string
   ): Promise<void> {
-    await this.request(`/api/leagues/${leagueId}/nights/${nightId}/partnership`, {
-      method: "DELETE",
-      body: JSON.stringify({ user_id: userId }),
-    });
-  }
-
-  // Start league night (admin only)
-  async startLeague(
-    leagueId: number,
-    nightId: string,
-    userId: string
-  ): Promise<void> {
-    await this.post(
-      `/api/leagues/${leagueId}/nights/${nightId}/start-league`,
+    await this.request(
+      `/api/leagues/${leagueId}/nights/${nightId}/partnership`,
       {
-        user_id: userId,
+        method: "DELETE",
+        body: JSON.stringify({ user_id: userId }),
       }
     );
   }
 
+  // Start league night (admin only)
+  async startLeague(
+    leagueId: string,
+    nightId: string,
+    userId: string
+  ): Promise<void> {
+    await this.post(`/api/leagues/${leagueId}/nights/${nightId}/start-league`, {
+      user_id: userId,
+    });
+  }
+
   // End league night (admin only)
   async endLeague(
-    leagueId: number,
+    leagueId: string,
     nightId: string,
     userId: string
   ): Promise<void> {
@@ -158,7 +194,7 @@ export class LeagueNightsService extends BaseService {
 
   // Update court configuration (admin only)
   async updateCourts(
-    leagueId: number,
+    leagueId: string,
     nightId: string,
     userId: string,
     courtLabels: string[]
@@ -174,27 +210,24 @@ export class LeagueNightsService extends BaseService {
 
   // Submit match score (creates pending score)
   async submitMatchScore(
-    leagueId: number,
+    leagueId: string,
     nightId: string,
     matchId: number,
     team1Score: number,
     team2Score: number,
     userId: string
   ): Promise<void> {
-    await this.post(
-      `/api/leagues/${leagueId}/nights/${nightId}/submit-score`,
-      {
-        match_id: matchId,
-        team1_score: team1Score,
-        team2_score: team2Score,
-        user_id: userId,
-      }
-    );
+    await this.post(`/api/leagues/${leagueId}/nights/${nightId}/submit-score`, {
+      match_id: matchId,
+      team1_score: team1Score,
+      team2_score: team2Score,
+      user_id: userId,
+    });
   }
 
   // Confirm opponent's submitted score
   async confirmMatchScore(
-    leagueId: number,
+    leagueId: string,
     nightId: string,
     matchId: number,
     userId: string
@@ -210,7 +243,7 @@ export class LeagueNightsService extends BaseService {
 
   // Dispute opponent's submitted score
   async disputeMatchScore(
-    leagueId: number,
+    leagueId: string,
     nightId: string,
     matchId: number,
     userId: string
@@ -226,7 +259,7 @@ export class LeagueNightsService extends BaseService {
 
   // Admin: Create temporary account for player without phone
   async createTempAccount(
-    leagueId: number,
+    leagueId: string,
     nightId: string,
     adminUserId: string,
     firstName: string,

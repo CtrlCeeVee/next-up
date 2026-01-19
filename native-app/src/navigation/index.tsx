@@ -24,6 +24,7 @@ export const NavigationProvider = () => {
   return (
     <NavigationContainer
       ref={navigationRef}
+      theme={navigationTheme}
       linking={linking}
     >
       <RootNavigator />

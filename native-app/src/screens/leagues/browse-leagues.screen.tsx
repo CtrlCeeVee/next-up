@@ -24,6 +24,7 @@ import { League } from "../../features/leagues/types";
 import { LeaguesStackParamList } from "../../navigation/types";
 import { GlobalStyles, TextStyle } from "../../core/styles";
 import { Routes } from "../../navigation/routes";
+import { BadgeComponent } from "../../components/badge.component";
 
 type NavigationProp = NativeStackNavigationProp<LeaguesStackParamList>;
 
@@ -31,7 +32,7 @@ type FilterType = "all" | "tonight" | "mine";
 
 export const BrowseLeaguesScreen = () => {
   const navigation = useNavigation<NavigationProp>();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { user } = useAuthState();
   const { leagues, loading, fetchLeagues } = useLeaguesState();
   const { isMember, checkMembership } = useMembershipState();
@@ -70,64 +71,33 @@ export const BrowseLeaguesScreen = () => {
 
     return (
       <TouchableOpacity
-        onPress={() => navigation.navigate(Routes.LeagueDetail, { leagueId: Number(league.id) })}
+        onPress={() =>
+          navigation.navigate(Routes.LeagueDetail, { leagueId: league.id })
+        }
       >
-        <Card style={styles.leagueCard}>
+        <Card style={styles.leagueCard} variant="elevated">
           {/* Header */}
           <View style={styles.cardHeader}>
             <View style={styles.cardHeaderLeft}>
-              <View
-                style={[
-                  styles.iconBadge,
-                ]}
-              >
-                <Icon name="trophy" size={20} color={theme.colors.primary} />
-              </View>
               <View style={styles.cardTitleContainer}>
-                <ThemedText textStyle={TextStyle.Body} style={styles.leagueName}>
+                <View style={styles.badgeContainer}>
+                  {tonight && <BadgeComponent icon="zap" text="Tonight" />}
+                  {isMember(league.id) && (
+                    <BadgeComponent
+                      icon="check-circle"
+                      text="Member"
+                      color={isDark ? "#6497f5" : "#2862c9"}
+                    />
+                  )}
+                </View>
+                <ThemedText
+                  textStyle={TextStyle.Body}
+                  style={styles.leagueName}
+                >
                   {league.name}
                 </ThemedText>
-                {isMember && (
-                  <View
-                    style={[
-                      styles.badge,
-                      { backgroundColor: theme.colors.primary },
-                    ]}
-                  >
-                    <Icon
-                      name="check-circle"
-                      size={12}
-                      color={theme.colors.primary}
-                    />
-                    <ThemedText
-                      textStyle={TextStyle.BodySmall}
-                      style={[
-                        styles.badgeText,
-                        { color: theme.colors.primary },
-                      ]}
-                    >
-                      Member
-                    </ThemedText>
-                  </View>
-                )}
               </View>
             </View>
-            {tonight && (
-              <View
-                style={[
-                  styles.tonightBadge,
-                  { backgroundColor: theme.colors.notification + "20" },
-                ]}
-              >
-                <Icon name="flame" size={14} color={theme.colors.notification} />
-                <ThemedText
-                  textStyle={TextStyle.BodySmall}
-                  style={[styles.badgeText, { color: theme.colors.notification }]}
-                >
-                  Tonight
-                </ThemedText>
-              </View>
-            )}
           </View>
 
           {/* Description */}
@@ -149,7 +119,10 @@ export const BrowseLeaguesScreen = () => {
                   size={16}
                   color={theme.colors.text + "80"}
                 />
-                <ThemedText textStyle={TextStyle.BodySmall} style={styles.infoText}>
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  style={styles.infoText}
+                >
                   {league.location}
                 </ThemedText>
               </View>
@@ -161,7 +134,10 @@ export const BrowseLeaguesScreen = () => {
                   size={16}
                   color={theme.colors.text + "80"}
                 />
-                <ThemedText textStyle={TextStyle.BodySmall} style={styles.infoText}>
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  style={styles.infoText}
+                >
                   {league.leagueDays.join(", ")}
                 </ThemedText>
               </View>
@@ -169,7 +145,10 @@ export const BrowseLeaguesScreen = () => {
             {league.startTime && (
               <View style={styles.infoRow}>
                 <Icon name="clock" size={16} color={theme.colors.text + "80"} />
-                <ThemedText textStyle={TextStyle.BodySmall} style={styles.infoText}>
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  style={styles.infoText}
+                >
                   {league.startTime}
                 </ThemedText>
               </View>
@@ -177,7 +156,10 @@ export const BrowseLeaguesScreen = () => {
             {league.totalPlayers !== undefined && (
               <View style={styles.infoRow}>
                 <Icon name="users" size={16} color={theme.colors.text + "80"} />
-                <ThemedText textStyle={TextStyle.BodySmall} style={styles.infoText}>
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  style={styles.infoText}
+                >
                   {league.totalPlayers} players
                 </ThemedText>
               </View>
@@ -193,74 +175,81 @@ export const BrowseLeaguesScreen = () => {
   };
 
   return (
-    <ScreenContainer style={{padding: 10,}}>
+    <ScreenContainer style={{ padding: 10 }}>
       <View>
-            <View style={[styles.searchContainer, {
-                    backgroundColor: theme.componentBackground,
-                    borderColor: theme.colors.border,
-                  }]}>
-              <Icon
-                name="search"
-                size={20}
-                color={theme.colors.text + "60"}
-              />
-              <TextInput
-                style={[
-                  styles.searchInput,
-                  { color: theme.colors.text },
-                ]}
-                placeholder="Search leagues, locations..."
-                placeholderTextColor={theme.colors.text + "60"}
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
+        <View
+          style={[
+            styles.searchContainer,
+            {
+              backgroundColor: theme.componentBackground,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          <Icon name="search" size={20} color={theme.colors.text + "60"} />
+          <TextInput
+            style={[styles.searchInput, { color: theme.colors.text }]}
+            placeholder="Search leagues, locations..."
+            placeholderTextColor={theme.colors.text + "60"}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
 
-            <View style={styles.filterContainer}>
-              {[
-                { value: "all" as const, label: "All Leagues", icon: "trophy" as const },
-                { value: "tonight" as const, label: "Tonight", icon: "zap" as const },
-                { value: "mine" as const, label: "My Leagues", icon: "user" as const },
-              ].map((f) => (
-                <TouchableOpacity
-                  key={f.value}
-                  onPress={() => setFilter(f.value)}
-                  style={[
-                    styles.filterPill,
-                    {
-                      backgroundColor:
-                        filter === f.value
-                          ? theme.colors.primary
-                          : theme.componentBackground,
-                      borderColor:
-                        filter === f.value
-                          ? theme.colors.primary
-                          : theme.colors.border,
-                    },
-                  ]}
-                >
-                  <Icon
-                    name={f.icon}
-                    size={16}
-                    color={
-                      filter === f.value ? "#FFFFFF" : theme.colors.text
-                    }
-                  />
-                  <ThemedText
-                    textStyle={TextStyle.BodySmall}
-                    style={[
-                      styles.filterText,
-                      {
-                        color:
-                          filter === f.value ? "#FFFFFF" : theme.colors.text,
-                      },
-                    ]}
-                  >
-                    {f.label}
-                  </ThemedText>
-                </TouchableOpacity>
-              ))}
-            </View>
+        <View style={styles.filterContainer}>
+          {[
+            {
+              value: "all" as const,
+              label: "All Leagues",
+              icon: "trophy" as const,
+            },
+            {
+              value: "tonight" as const,
+              label: "Tonight",
+              icon: "zap" as const,
+            },
+            {
+              value: "mine" as const,
+              label: "My Leagues",
+              icon: "user" as const,
+            },
+          ].map((f) => (
+            <TouchableOpacity
+              key={f.value}
+              onPress={() => setFilter(f.value)}
+              style={[
+                styles.filterPill,
+                {
+                  backgroundColor:
+                    filter === f.value
+                      ? theme.colors.primary
+                      : theme.componentBackground,
+                  borderColor:
+                    filter === f.value
+                      ? theme.colors.primary
+                      : theme.colors.border,
+                },
+              ]}
+            >
+              <Icon
+                name={f.icon}
+                size={16}
+                color={filter === f.value ? "#FFFFFF" : theme.colors.text}
+              />
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={[
+                  styles.filterText,
+                  {
+                    color: filter === f.value ? "#FFFFFF" : theme.colors.text,
+                  },
+                ]}
+              >
+                {f.label}
+              </ThemedText>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
       <FlatList
         data={filteredLeagues}
@@ -271,7 +260,7 @@ export const BrowseLeaguesScreen = () => {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Icon name="search" size={48} color={theme.colors.text + "40"} />
-              <ThemedText textStyle={TextStyle.Body} style={styles.emptyText}>
+            <ThemedText textStyle={TextStyle.Body} style={styles.emptyText}>
               No leagues found
             </ThemedText>
           </View>
@@ -279,11 +268,11 @@ export const BrowseLeaguesScreen = () => {
         refreshing={loading}
         onRefresh={fetchLeagues}
         refreshControl={
-          <RefreshControl 
-            refreshing={loading} 
-            onRefresh={fetchLeagues} 
-            tintColor={theme.colors.primary} 
-            colors={[theme.colors.primary]} 
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={fetchLeagues}
+            tintColor={theme.colors.primary}
+            colors={[theme.colors.primary]}
             progressBackgroundColor={theme.componentBackground}
           />
         }
@@ -339,7 +328,6 @@ const styles = StyleSheet.create({
   },
   leagueCard: {
     marginBottom: 16,
-    padding: 16,
   },
   cardHeader: {
     flexDirection: "row",
@@ -364,6 +352,11 @@ const styles = StyleSheet.create({
   },
   leagueName: {
     fontWeight: "700",
+  },
+  badgeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   badge: {
     flexDirection: "row",

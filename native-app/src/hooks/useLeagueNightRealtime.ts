@@ -32,7 +32,7 @@ interface UseLeagueNightRealtimeReturn {
  * ```
  */
 export const useLeagueNightRealtime = (
-  leagueNightInstanceId: number,
+  leagueNightInstanceId: string,
   userId: string,
   callbacks: LeagueNightRealtimeCallbacks
 ): UseLeagueNightRealtimeReturn => {
@@ -61,7 +61,7 @@ export const useLeagueNightRealtime = (
 
   const setupSubscriptions = useCallback(() => {
     // Don't setup if no valid instance ID
-    if (!leagueNightInstanceId || leagueNightInstanceId <= 0) {
+    if (!leagueNightInstanceId) {
       return;
     }
 

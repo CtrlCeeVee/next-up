@@ -12,7 +12,7 @@ export interface LeaguesState {
 
   // Actions
   fetchLeagues: () => Promise<void>;
-  fetchLeague: (leagueId: number) => Promise<void>;
+  fetchLeague: (leagueId: string) => Promise<void>;
   fetchTopPlayers: (leagueId: string, userEmail: string) => Promise<void>;
   fetchStats: (leagueId: string) => Promise<void>;
   clearError: () => void;
@@ -42,7 +42,7 @@ export const useLeaguesState = create<LeaguesState>((set, get) => {
       }
     },
 
-    fetchLeague: async (leagueId: number) => {
+    fetchLeague: async (leagueId: string) => {
       set({ loading: true, error: null });
       try {
         const league = await leaguesService.getById(leagueId);

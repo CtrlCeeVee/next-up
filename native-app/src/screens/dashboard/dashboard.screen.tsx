@@ -18,22 +18,28 @@ import { useMembershipState } from "../../features/membership/state";
 import { AppTabParamList } from "../../navigation/types";
 import { Routes } from "../../navigation/routes";
 import type { League } from "../../features/leagues/types";
+import { BadgeComponent } from "../../components/badge.component";
 
 type NavigationProp = NativeStackNavigationProp<AppTabParamList>;
 
-interface LeagueWithNight extends League {
+interface LeagueWithNight extends Omit<League, "startTime" | "totalPlayers"> {
   hasNightToday?: boolean;
+  nightId?: string;
+  startTime?: string;
+  totalPlayers?: number;
 }
 
 export const DashboardScreen = () => {
   const navigation = useNavigation<NavigationProp>();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const { user } = useAuthState();
-  const {membersByLeague, fetchMembersByLeagueId} = useMembershipState();
+  const { membersByLeague, fetchMembersByLeagueId } = useMembershipState();
   const { leagues, fetchLeagues, loading: leaguesLoading } = useLeaguesState();
 
   const [myLeagues, setMyLeagues] = useState<LeagueWithNight[]>([]);
-  const [activeTonight, setActiveTonight] = useState<LeagueWithNight | null>(null);
+  const [activeTonight, setActiveTonight] = useState<LeagueWithNight | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
 
   // Extract first name from user metadata
@@ -48,7 +54,6 @@ export const DashboardScreen = () => {
 
         // Fetch all leagues
         await fetchLeagues();
-
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -61,7 +66,7 @@ export const DashboardScreen = () => {
 
   useEffect(() => {
     if (!user) return;
-    leagues.forEach(league => {
+    leagues.forEach((league) => {
       fetchMembersByLeagueId(league.id);
     });
   }, [user, leagues]);
@@ -71,15 +76,25 @@ export const DashboardScreen = () => {
     if (!leagues || !user) return;
 
     const userLeagues = leagues
-      .filter((league) => membersByLeague[league.id]?.some(member => member.id === user.id))
+      .filter((league) =>
+        membersByLeague[league.id]?.some((member) => member.id === user.id)
+      )
       .map((league) => {
         // Check if league has a night happening today
-        const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+        const today = new Date().toLocaleDateString("en-US", {
+          weekday: "long",
+        });
         const hasNightToday = league.leagueDays?.includes(today) ?? false;
+
+        // Generate nightId for today (format: YYYY-MM-DD)
+        const todayDate = new Date().toISOString().split("T")[0];
 
         return {
           ...league,
           hasNightToday,
+          nightId: todayDate,
+          startTime: "7:00 PM", // TODO: Get from league night instance
+          totalPlayers: 0, // TODO: Fetch from API
         };
       });
 
@@ -102,13 +117,15 @@ export const DashboardScreen = () => {
       icon: "trophy" as const,
       label: "My Leagues",
       gradient: ["#a855f7", "#9333ea"],
-      onPress: () => navigation.navigate(Routes.Leagues, { screen: Routes.BrowseLeagues }),
+      onPress: () =>
+        navigation.navigate(Routes.Leagues, { screen: Routes.BrowseLeagues }),
     },
     {
       icon: "search" as const,
       label: "Browse",
       gradient: ["#3b82f6", "#2563eb"],
-      onPress: () => navigation.navigate(Routes.Leagues, { screen: Routes.BrowseLeagues }),
+      onPress: () =>
+        navigation.navigate(Routes.Leagues, { screen: Routes.BrowseLeagues }),
     },
     {
       icon: "bar-chart" as const,
@@ -137,7 +154,7 @@ export const DashboardScreen = () => {
             </ThemedText>
           </ThemedText>
           <ThemedText textStyle={TextStyle.Body} style={styles.greetingText}>
-          Ready to play?
+            Ready to play?
           </ThemedText>
         </View>
 
@@ -158,7 +175,10 @@ export const DashboardScreen = () => {
               >
                 <Icon name={action.icon} size={28} color="#FFFFFF" />
               </View>
-              <ThemedText textStyle={TextStyle.BodySmall} style={styles.quickActionLabel}>
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={styles.quickActionLabel}
+              >
                 {action.label}
               </ThemedText>
             </TouchableOpacity>
@@ -176,49 +196,49 @@ export const DashboardScreen = () => {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Icon name="zap" size={20} color={theme.colors.primary} />
-                <ThemedText textStyle={TextStyle.Subheader}>Happening Today</ThemedText>
+                <ThemedText textStyle={TextStyle.Subheader}>Next Up</ThemedText>
               </View>
               <Card
                 style={styles.activeCard}
+                linearGradientColors={
+                  isDark
+                    ? ["rgb(74 222 128 / .05)", "rgb(52 211 153 / .1)"]
+                    : undefined
+                }
               >
-                <View
-                  style={styles.activeCardGradient}
-                />
                 <View style={styles.activeCardContent}>
                   <ThemedText
                     textStyle={TextStyle.Header}
-                    style={[styles.activeCardTitle, { color: theme.colors.primary }]}
+                    style={[
+                      styles.activeCardTitle,
+                      { color: theme.colors.primary },
+                    ]}
                   >
                     {activeTonight.name}
                   </ThemedText>
                   <View style={styles.activeCardBadges}>
-                    <View
-                      style={styles.badge}
-                    >
-                      <Icon name="zap" size={12} color={theme.colors.primary} />
-                      <ThemedText
-                        textStyle={TextStyle.BodySmall}
-                        style={[styles.badgeText, { color: theme.colors.primary }]}
-                      >
-                        Today
-                      </ThemedText>
-                    </View>
-                    <View style={styles.badge}>
-                      <Icon name="clock" size={12} color={theme.colors.text} />
-                      <ThemedText textStyle={TextStyle.BodySmall} style={styles.badgeText}>
-                        {activeTonight.startTime}
-                      </ThemedText>
-                    </View>
-                    <View style={styles.badge}>
-                      <Icon name="users" size={12} color={theme.colors.text} />
-                      <ThemedText textStyle={TextStyle.BodySmall} style={styles.badgeText}>
-                        {activeTonight.totalPlayers}
-                      </ThemedText>
-                    </View>
+                    <BadgeComponent icon="zap" text="Today" />
+                    <BadgeComponent
+                      icon="clock"
+                      text={activeTonight.startTime || ""}
+                      color={theme.colors.text}
+                    />
+                    <BadgeComponent
+                      icon="users"
+                      text={activeTonight.totalPlayers?.toString() || ""}
+                      color={theme.colors.text}
+                    />
                   </View>
                   <View style={styles.locationRow}>
-                    <Icon name="map-pin" size={16} color={theme.colors.text + "80"} />
-                    <ThemedText textStyle={TextStyle.Body} style={styles.locationText}>
+                    <Icon
+                      name="map-pin"
+                      size={16}
+                      color={theme.colors.text + "80"}
+                    />
+                    <ThemedText
+                      textStyle={TextStyle.Body}
+                      style={styles.locationText}
+                    >
                       {activeTonight.location}
                     </ThemedText>
                   </View>
@@ -228,11 +248,22 @@ export const DashboardScreen = () => {
                       { backgroundColor: theme.colors.primary },
                     ]}
                     onPress={() => {
-                      // Navigate to league detail
+                      if (activeTonight?.nightId) {
+                        (navigation as any).navigate(Routes.Leagues, {
+                          screen: Routes.LeagueNight,
+                          params: {
+                            leagueId: activeTonight.id,
+                            nightId: activeTonight.nightId,
+                          },
+                        });
+                      }
                     }}
                     activeOpacity={0.8}
                   >
-                    <ThemedText textStyle={TextStyle.Button} style={styles.viewDetailsText}>
+                    <ThemedText
+                      textStyle={TextStyle.Button}
+                      style={styles.viewDetailsText}
+                    >
                       View Details
                     </ThemedText>
                   </TouchableOpacity>
@@ -242,14 +273,24 @@ export const DashboardScreen = () => {
           ) : (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Icon name="calendar" size={20} color={theme.colors.text + "60"} />
+                <Icon
+                  name="calendar"
+                  size={20}
+                  color={theme.colors.text + "60"}
+                />
                 <ThemedText textStyle={TextStyle.Body}>Next Up</ThemedText>
               </View>
               <Card style={styles.emptyCard}>
-                <ThemedText textStyle={TextStyle.Body} style={styles.emptyCardText}>
+                <ThemedText
+                  textStyle={TextStyle.Body}
+                  style={styles.emptyCardText}
+                >
                   No games scheduled for today
                 </ThemedText>
-                  <ThemedText textStyle={TextStyle.BodySmall} style={styles.emptyCardSubtext}>
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  style={styles.emptyCardSubtext}
+                >
                   Check your leagues below for upcoming games
                 </ThemedText>
               </Card>
@@ -261,10 +302,18 @@ export const DashboardScreen = () => {
             <View style={styles.sectionHeaderRow}>
               <View style={styles.sectionHeader}>
                 <Icon name="trophy" size={20} color={theme.colors.primary} />
-                <ThemedText textStyle={TextStyle.Body}>Your Leagues</ThemedText>
+                <ThemedText textStyle={TextStyle.Subheader}>
+                  Your Leagues
+                </ThemedText>
               </View>
               {myLeagues.length > 0 && (
-                <TouchableOpacity onPress={() => navigation.navigate(Routes.Leagues, { screen: Routes.BrowseLeagues })}>
+                <TouchableOpacity
+                  onPress={() =>
+                    navigation.navigate(Routes.Leagues, {
+                      screen: Routes.BrowseLeagues,
+                    })
+                  }
+                >
                   <ThemedText
                     textStyle={TextStyle.BodySmall}
                     style={[styles.seeAllText, { color: theme.colors.primary }]}
@@ -290,13 +339,16 @@ export const DashboardScreen = () => {
                     key={league.id}
                     style={styles.leagueCard}
                     onPress={() => {
-                      // Navigate to league detail
+                      navigation.navigate(Routes.Leagues, {
+                        screen: Routes.LeagueDetail,
+                        params: {
+                          leagueId: league.id,
+                        },
+                      });
                     }}
                     activeOpacity={0.7}
                   >
-                    <Card
-                      style={styles.leagueCardInner}
-                    >
+                    <Card style={styles.leagueCardInner}>
                       <View style={styles.leagueCardContent}>
                         <View style={styles.leagueCardLeft}>
                           <ThemedText
@@ -320,29 +372,20 @@ export const DashboardScreen = () => {
                           </View>
                           <View style={styles.leagueCardDays}>
                             {league.leagueDays?.map((day) => (
-                              <View
+                              <BadgeComponent
                                 key={day}
-                                style={[
-                                  styles.dayBadge,
-                                  { backgroundColor: theme.colors.text + "10" },
-                                ]}
-                              >
-                                <Icon
-                                  name="calendar"
-                                  size={14}
-                                  color={theme.colors.primary}
-                                />
-                                <ThemedText
-                                  textStyle={TextStyle.BodySmall}
-                                  style={styles.dayBadgeText}
-                                >
-                                  {day}s {league.startTime}
-                                </ThemedText>
-                              </View>
+                                icon="calendar"
+                                text={day + "s " + league.startTime}
+                                color={theme.colors.text}
+                              />
                             ))}
                           </View>
                         </View>
-                        <Icon name="trophy" size={28} color={theme.colors.primary} />
+                        <Icon
+                          name="trophy"
+                          size={28}
+                          color={theme.colors.primary}
+                        />
                       </View>
                     </Card>
                   </TouchableOpacity>
@@ -351,23 +394,37 @@ export const DashboardScreen = () => {
                 {/* Join More Leagues Card */}
                 <TouchableOpacity
                   style={styles.joinMoreCard}
-                  onPress={() => navigation.navigate(Routes.Leagues, { screen: Routes.BrowseLeagues })}
+                  onPress={() =>
+                    navigation.navigate(Routes.Leagues, {
+                      screen: Routes.BrowseLeagues,
+                    })
+                  }
                   activeOpacity={0.7}
                 >
-                  <Card
-                    style={styles.joinMoreCardInner}
-                  >
-                    <Icon name="plus" size={32} color={theme.colors.text + "40"} />
-                    <ThemedText textStyle={TextStyle.Body} style={styles.joinMoreText}>
-                      Browse More Leagues
-                    </ThemedText>
+                  <Card style={styles.joinMoreCardInner}>
+                    <View style={styles.joinMoreCardContent}>
+                      <Icon
+                        name="plus"
+                        size={32}
+                        color={theme.colors.text + "40"}
+                      />
+                      <ThemedText
+                        textStyle={TextStyle.Body}
+                        style={styles.joinMoreText}
+                      >
+                        Browse More Leagues
+                      </ThemedText>
+                    </View>
                   </Card>
                 </TouchableOpacity>
               </View>
             ) : (
               <Card style={styles.emptyLeaguesCard}>
                 <Icon name="zap" size={28} color={theme.colors.text + "40"} />
-                <ThemedText textStyle={TextStyle.BodyMedium} style={styles.emptyLeaguesText}>
+                <ThemedText
+                  textStyle={TextStyle.BodyMedium}
+                  style={styles.emptyLeaguesText}
+                >
                   You haven't joined any leagues yet
                 </ThemedText>
                 <TouchableOpacity
@@ -375,10 +432,17 @@ export const DashboardScreen = () => {
                     styles.browseButton,
                     { backgroundColor: theme.colors.primary },
                   ]}
-                  onPress={() => navigation.navigate(Routes.Leagues, { screen: Routes.BrowseLeagues })}
+                  onPress={() =>
+                    navigation.navigate(Routes.Leagues, {
+                      screen: Routes.BrowseLeagues,
+                    })
+                  }
                   activeOpacity={0.8}
                 >
-                  <ThemedText textStyle={TextStyle.Button} style={styles.browseButtonText}>
+                  <ThemedText
+                    textStyle={TextStyle.Button}
+                    style={styles.browseButtonText}
+                  >
                     Browse Leagues
                   </ThemedText>
                 </TouchableOpacity>
@@ -438,6 +502,7 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   section: {
+    width: "100%",
     gap: 12,
   },
   sectionHeader: {
@@ -461,17 +526,13 @@ const styles = StyleSheet.create({
   },
   activeCard: {
     ...GlobalStyles.container,
-    overflow: "hidden",
-  },
-  activeCardGradient: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    borderWidth: 1,
+    borderColor: "#34d3994d",
   },
   activeCardContent: {
     gap: 12,
+    padding: padding,
+    width: "100%",
   },
   activeCardTitle: {
     fontSize: 24,
@@ -481,18 +542,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
-  },
-  badge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    gap: 4,
-  },
-  badgeText: {
-    fontWeight: "600",
-    fontSize: 11,
   },
   locationRow: {
     flexDirection: "row",
@@ -538,6 +587,7 @@ const styles = StyleSheet.create({
     ...GlobalStyles.container,
   },
   leagueCardContent: {
+    padding: padding,
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
@@ -559,26 +609,23 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   leagueCardDays: {
-    flexDirection: "row",
+    flexDirection: "column",
     flexWrap: "wrap",
+    alignItems: "flex-start",
     gap: 6,
-  },
-  dayBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    gap: 6,
-  },
-  dayBadgeText: {
-    fontWeight: "500",
   },
   joinMoreCard: {},
   joinMoreCardInner: {
     ...GlobalStyles.container,
     alignItems: "center",
+    justifyContent: "center",
     gap: 12,
+  },
+  joinMoreCardContent: {
+    ...GlobalStyles.container,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
   },
   joinMoreText: {
     fontWeight: "600",

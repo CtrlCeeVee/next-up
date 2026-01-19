@@ -47,6 +47,7 @@ export const IconMap: Record<IconName, string> = {
   "search": "search",
   "plus": "add",
   "minus": "remove",
+  "x": "close",
   "logout": "log-out",
   "send": "send",
   "edit": "create",
@@ -87,6 +88,7 @@ export const IconMap: Record<IconName, string> = {
   "file-text": "document-text",
   "image": "image",
   "video": "videocam",
+  "list": "list",
   
   // Settings
   "settings": "settings",

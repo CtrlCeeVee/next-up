@@ -4,7 +4,7 @@ import { AppTabParamList } from "../types";
 import { Routes } from "../routes";
 import { useTheme } from "../../core/theme";
 import { DashboardScreen } from "../../screens/dashboard/dashboard.screen";
-import { BrowseLeaguesScreen } from "../../screens/leagues/browse-leagues.screen";
+import { LeaguesNavigator } from "../leagues/leagues.navigator";
 import { ProfileScreen } from "../../screens/profile/profile.screen";
 import { StatsScreen } from "../../screens/stats/stats.screen";
 import { AboutScreen } from "../../screens/info/about.screen";
@@ -40,11 +40,12 @@ export const AppNavigator = () => {
       />
       <Tab.Screen
         name={Routes.Leagues}
-        component={BrowseLeaguesScreen}
+        component={LeaguesNavigator}
         options={{
           tabBarLabel: "Leagues",
           title: "Leagues",
           tabBarIcon: ({ color, size }) => <Icon name="tennis-ball" color={color} size={size} />,
+          headerShown: false,
         }}
       />
       <Tab.Screen

@@ -35,10 +35,13 @@ export const Screen = () => {
 
   return (
     <SafeAreaProvider>
-      <LinearGradient
-        colors={theme.backgroundGradient}
-        style={styles.gradient}
-      >
+      <View style={styles.container}>
+        <LinearGradient
+          colors={theme.backgroundGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        />
         <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
           <StatusBar
             barStyle={isDark ? "light-content" : "dark-content"}
@@ -48,14 +51,21 @@ export const Screen = () => {
           <NavigationProvider />
           <ToastContainer />
         </SafeAreaView>
-      </LinearGradient>
+      </View>
     </SafeAreaProvider>
   );
 };
 
 const styles = StyleSheet.create({
-  gradient: {
+  container: {
     flex: 1,
+  },
+  gradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
   },
   safeArea: {
     flex: 1,

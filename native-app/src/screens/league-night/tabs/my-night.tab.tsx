@@ -1,15 +1,17 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { ThemedText, Button, Card } from "../../../components";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
-import { GlobalStyles, padding } from "../../../core/styles";
+import { GlobalStyles, padding, TextStyle } from "../../../core/styles";
 import type {
   CheckedInPlayer,
   PartnershipRequest,
@@ -17,6 +19,15 @@ import type {
   LeagueNightInstance,
 } from "../../../features/league-nights/types";
 import type { League } from "../../../features/leagues/types";
+import { leagueNightsService } from "../../../di/services.registry";
+
+interface TonightStats {
+  gamesPlayed: number;
+  gamesWon: number;
+  gamesLost: number;
+  totalPoints: number;
+  averagePoints: number;
+}
 
 interface MyNightTabProps {
   user: any;
@@ -46,6 +57,8 @@ interface MyNightTabProps {
 
 export const MyNightTab: React.FC<MyNightTabProps> = ({
   user,
+  leagueId,
+  nightId,
   isCheckedIn,
   checkedInPlayers,
   partnershipRequests,
@@ -66,22 +79,42 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
 }) => {
   const { theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
+  const [tonightStats, setTonightStats] = useState<TonightStats | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+
+  // Fetch tonight's stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user?.id || !isCheckedIn) return;
+
+      setLoadingStats(true);
+      try {
+        const response = await leagueNightsService.getMyStats(leagueId, nightId, user.id);
+        setTonightStats(response.stats);
+      } catch (error) {
+        console.error("Error fetching tonight's stats:", error);
+      } finally {
+        setLoadingStats(false);
+      }
+    };
+
+    fetchStats();
+  }, [user?.id, leagueId, nightId, isCheckedIn, currentMatch]);
 
   // Filter available partners
   const availablePartners = useMemo(() => {
     if (!isCheckedIn) return [];
 
     return checkedInPlayers.filter((player) => {
-      // Exclude self
       if (player.userId === user?.id) return false;
-
-      // Exclude if already has partnership
       if (player.hasPartnership) return false;
 
-      // Apply search filter
       if (searchQuery) {
         const fullName = `${player.firstName} ${player.lastName}`.toLowerCase();
-        return fullName.includes(searchQuery.toLowerCase());
+        return (
+          fullName.includes(searchQuery.toLowerCase()) ||
+          player.skillLevel.toLowerCase().includes(searchQuery.toLowerCase())
+        );
       }
 
       return true;
@@ -102,6 +135,11 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
     );
   }, [partnershipRequests, user]);
 
+  // Check if request sent to partner
+  const hasSentRequest = (partnerId: string) => {
+    return outgoingRequests.some((req) => req.requestedId === partnerId);
+  };
+
   // Render check-in section
   const renderCheckInSection = () => {
     if (!isCheckedIn) {
@@ -109,9 +147,9 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <Icon name="user-check" size={24} color={theme.colors.primary} />
-            <ThemedText styleType="Subheader">Check In</ThemedText>
+            <ThemedText textStyle={TextStyle.Subheader}>Check In</ThemedText>
           </View>
-          <ThemedText styleType="Body" style={styles.cardDescription}>
+          <ThemedText textStyle={TextStyle.Body} style={styles.description}>
             Check in to let others know you're here and ready to play!
           </ThemedText>
           <Button
@@ -130,11 +168,11 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
       <Card style={styles.card}>
         <View style={styles.cardHeader}>
           <Icon name="check-circle" size={24} color={theme.colors.success} />
-          <ThemedText styleType="Subheader">You're Checked In!</ThemedText>
+          <ThemedText textStyle={TextStyle.Subheader}>You're Checked In!</ThemedText>
         </View>
-        <ThemedText styleType="Body" style={styles.cardDescription}>
-          {checkedInPlayers.length} {checkedInPlayers.length === 1 ? "player" : "players"} checked
-          in
+        <ThemedText textStyle={TextStyle.Body} style={styles.description}>
+          {checkedInPlayers.length} {checkedInPlayers.length === 1 ? "player" : "players"}{" "}
+          checked in
         </ThemedText>
         <Button
           text="Check Out"
@@ -146,10 +184,72 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
           style={styles.button}
         />
         {confirmedPartnership && (
-          <ThemedText styleType="BodySmall" style={styles.warningText}>
+          <ThemedText textStyle={TextStyle.BodySmall} style={styles.warning}>
             Remove your partnership before checking out
           </ThemedText>
         )}
+      </Card>
+    );
+  };
+
+  // Render tonight's stats
+  const renderTonightStats = () => {
+    if (!isCheckedIn || !confirmedPartnership) return null;
+
+    if (loadingStats) {
+      return (
+        <Card style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Icon name="bar-chart" size={24} color={theme.colors.primary} />
+            <ThemedText textStyle={TextStyle.Subheader}>Tonight's Stats</ThemedText>
+          </View>
+          <ActivityIndicator size="small" color={theme.colors.primary} />
+        </Card>
+      );
+    }
+
+    if (!tonightStats || tonightStats.gamesPlayed === 0) return null;
+
+    const winRate =
+      tonightStats.gamesPlayed > 0
+        ? ((tonightStats.gamesWon / tonightStats.gamesPlayed) * 100).toFixed(0)
+        : "0";
+
+    return (
+      <Card style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Icon name="bar-chart" size={24} color={theme.colors.primary} />
+          <ThemedText textStyle={TextStyle.Subheader}>Tonight's Stats</ThemedText>
+        </View>
+        <View style={styles.statsGrid}>
+          <View style={styles.statItem}>
+            <ThemedText textStyle={TextStyle.Header} style={styles.statValue}>
+              {tonightStats.gamesPlayed}
+            </ThemedText>
+            <ThemedText textStyle={TextStyle.BodySmall} style={styles.statLabel}>
+              Games
+            </ThemedText>
+          </View>
+          <View style={styles.statItem}>
+            <ThemedText
+              textStyle={TextStyle.Header}
+              style={[styles.statValue, { color: theme.colors.success }]}
+            >
+              {winRate}%
+            </ThemedText>
+            <ThemedText textStyle={TextStyle.BodySmall} style={styles.statLabel}>
+              Win Rate
+            </ThemedText>
+          </View>
+          <View style={styles.statItem}>
+            <ThemedText textStyle={TextStyle.Header} style={styles.statValue}>
+              {tonightStats.averagePoints.toFixed(1)}
+            </ThemedText>
+            <ThemedText textStyle={TextStyle.BodySmall} style={styles.statLabel}>
+              Avg Points
+            </ThemedText>
+          </View>
+        </View>
       </Card>
     );
   };
@@ -169,20 +269,20 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <Icon name="users" size={24} color={theme.colors.primary} />
-            <ThemedText styleType="Subheader">Your Partnership</ThemedText>
+            <ThemedText textStyle={TextStyle.Subheader}>Your Partnership</ThemedText>
           </View>
-          <View style={styles.partnerCard}>
+          <View style={[styles.partnerCard, { backgroundColor: theme.colors.success + "20", borderColor: theme.colors.success + "40" }]}>
             <View style={styles.partnerInfo}>
-              <ThemedText styleType="BodyLarge" style={styles.partnerName}>
+              <ThemedText textStyle={TextStyle.BodyLarge} style={styles.partnerName}>
                 {partner.firstName} {partner.lastName}
               </ThemedText>
-              <ThemedText styleType="BodySmall" style={styles.partnerSkill}>
+              <ThemedText textStyle={TextStyle.BodySmall} style={styles.partnerSkill}>
                 Skill: {partner.skillLevel}
               </ThemedText>
             </View>
             <Button
               text="Remove"
-              variant="ghost"
+              variant="outline"
               onPress={onRemovePartnership}
               loading={removingPartnership}
               disabled={removingPartnership}
@@ -200,15 +300,15 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <Icon name="bell" size={24} color={theme.colors.primary} />
-            <ThemedText styleType="Subheader">Partnership Requests</ThemedText>
+            <ThemedText textStyle={TextStyle.Subheader}>Partnership Requests</ThemedText>
           </View>
           {incomingRequests.map((request) => (
-            <View key={request.id} style={styles.requestCard}>
+            <View key={request.id} style={[styles.requestCard, { backgroundColor: theme.colors.primary + "10", borderColor: theme.colors.primary + "30" }]}>
               <View style={styles.requestInfo}>
-                <ThemedText styleType="Body">
+                <ThemedText textStyle={TextStyle.Body}>
                   {request.requesterName} wants to partner with you
                 </ThemedText>
-                <ThemedText styleType="BodySmall" style={styles.requestSkill}>
+                <ThemedText textStyle={TextStyle.BodySmall} style={styles.requestSkill}>
                   Skill: {request.requesterSkillLevel}
                 </ThemedText>
               </View>
@@ -220,10 +320,11 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
                   loading={acceptingRequest === request.id}
                   disabled={!!acceptingRequest}
                   leftIcon="check"
+                  style={styles.acceptButton}
                 />
                 <Button
                   text="Decline"
-                  variant="ghost"
+                  variant="outline"
                   size="small"
                   onPress={() => onRejectPartnershipRequest(request.id)}
                   loading={rejectingRequest === request.id}
@@ -242,21 +343,25 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
       return (
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
-            <Icon name="clock" size={24} color={theme.colors.primary} />
-            <ThemedText styleType="Subheader">Pending Requests</ThemedText>
+            <Icon name="clock" size={24} color={theme.colors.text + "80"} />
+            <ThemedText textStyle={TextStyle.Subheader}>Pending Requests</ThemedText>
           </View>
           {outgoingRequests.map((request) => (
-            <View key={request.id} style={styles.requestCard}>
+            <View key={request.id} style={[styles.requestCard, { backgroundColor: theme.colors.text + "05", borderColor: theme.colors.text + "10" }]}>
               <View style={styles.requestInfo}>
-                <ThemedText styleType="Body">
+                <ThemedText textStyle={TextStyle.Body}>
                   Waiting for {request.requestedName} to respond
                 </ThemedText>
-                <ThemedText styleType="BodySmall" style={styles.requestSkill}>
+                <ThemedText textStyle={TextStyle.BodySmall} style={styles.requestSkill}>
                   Skill: {request.requestedSkillLevel}
                 </ThemedText>
               </View>
+              <Icon name="clock" size={20} color={theme.colors.text + "60"} />
             </View>
           ))}
+          <ThemedText textStyle={TextStyle.BodySmall} style={styles.helpText}>
+            You can search for other partners below while waiting
+          </ThemedText>
         </Card>
       );
     }
@@ -265,38 +370,73 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
     return (
       <Card style={styles.card}>
         <View style={styles.cardHeader}>
-          <Icon name="user-plus" size={24} color={theme.colors.primary} />
-          <ThemedText styleType="Subheader">Find a Partner</ThemedText>
+          <Icon name="user-add" size={24} color={theme.colors.primary} />
+          <ThemedText textStyle={TextStyle.Subheader}>Find a Partner</ThemedText>
         </View>
-        <ThemedText styleType="Body" style={styles.cardDescription}>
+        
+        {/* Search Bar */}
+        <View style={[styles.searchContainer, { backgroundColor: theme.componentBackground, borderColor: theme.colors.border }]}>
+          <Icon name="search" size={16} color={theme.colors.text + "60"} />
+          <TextInput
+            style={[styles.searchInput, { color: theme.colors.text }]}
+            placeholder="Search by name or skill level..."
+            placeholderTextColor={theme.colors.text + "60"}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        <ThemedText textStyle={TextStyle.BodySmall} style={styles.description}>
           {availablePartners.length} {availablePartners.length === 1 ? "player" : "players"}{" "}
           available
         </ThemedText>
-        <FlatList
-          data={availablePartners}
-          keyExtractor={(item) => item.userId}
-          renderItem={({ item }) => (
-            <View style={styles.partnerCard}>
-              <View style={styles.partnerInfo}>
-                <ThemedText styleType="Body">
-                  {item.firstName} {item.lastName}
-                </ThemedText>
-                <ThemedText styleType="BodySmall" style={styles.partnerSkill}>
-                  Skill: {item.skillLevel}
-                </ThemedText>
-              </View>
-              <Button
-                text="Request"
-                size="small"
-                onPress={() => onSendPartnershipRequest(item.userId)}
-                loading={sendingRequest === item.userId}
-                disabled={!!sendingRequest}
-                leftIcon="send"
-              />
-            </View>
-          )}
-          scrollEnabled={false}
-        />
+
+        {availablePartners.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Icon name="users" size={32} color={theme.colors.text + "40"} />
+            <ThemedText textStyle={TextStyle.Body} style={styles.emptyText}>
+              {searchQuery ? "No players match your search" : "No available partners yet"}
+            </ThemedText>
+            <ThemedText textStyle={TextStyle.BodySmall} style={styles.emptySubtext}>
+              {searchQuery ? "Try a different search" : "More players may check in soon!"}
+            </ThemedText>
+          </View>
+        ) : (
+          <FlatList
+            data={availablePartners}
+            keyExtractor={(item) => item.userId}
+            renderItem={({ item }) => {
+              const requestSent = hasSentRequest(item.userId);
+              return (
+                <View style={[styles.partnerListCard, { backgroundColor: theme.componentBackground, borderColor: theme.colors.border }]}>
+                  <View style={styles.partnerInfo}>
+                    <ThemedText textStyle={TextStyle.Body}>
+                      {item.firstName} {item.lastName}
+                    </ThemedText>
+                    <ThemedText textStyle={TextStyle.BodySmall} style={styles.partnerSkill}>
+                      Skill: {item.skillLevel}
+                    </ThemedText>
+                  </View>
+                  <Button
+                    text={requestSent ? "Sent" : "Request"}
+                    size="small"
+                    variant={requestSent ? "outline" : "primary"}
+                    onPress={() => onSendPartnershipRequest(item.userId)}
+                    loading={sendingRequest === item.userId}
+                    disabled={!!sendingRequest || requestSent}
+                    leftIcon={requestSent ? "clock" : "send"}
+                  />
+                </View>
+              );
+            }}
+            scrollEnabled={false}
+            ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+          />
+        )}
+
+        <ThemedText textStyle={TextStyle.BodySmall} style={styles.helpText}>
+          Don't see your partner? They may already be paired or not checked in yet.
+        </ThemedText>
       </Card>
     );
   };
@@ -305,19 +445,71 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
   const renderCurrentMatchSection = () => {
     if (!currentMatch || !confirmedPartnership) return null;
 
+    const scoreStatus = currentMatch.score_status || "none";
+    const isUserPartnership = 
+      currentMatch.partnership1?.id === confirmedPartnership.id ||
+      currentMatch.partnership2?.id === confirmedPartnership.id;
+
     return (
       <Card style={styles.card}>
         <View style={styles.cardHeader}>
           <Icon name="trophy" size={24} color={theme.colors.primary} />
-          <ThemedText styleType="Subheader">Current Match</ThemedText>
+          <ThemedText textStyle={TextStyle.Subheader}>Your Match</ThemedText>
         </View>
-        <View style={styles.matchInfo}>
-          <ThemedText styleType="Body">Court {currentMatch.courtNumber}</ThemedText>
-          <ThemedText styleType="BodySmall" style={styles.matchStatus}>
-            Status: {currentMatch.status}
-          </ThemedText>
+        
+        <View style={[styles.matchCard, { backgroundColor: theme.colors.primary + "10", borderColor: theme.colors.primary }]}>
+          <View style={styles.matchHeader}>
+            <View style={[styles.courtBadge, { backgroundColor: theme.colors.primary }]}>
+              <ThemedText textStyle={TextStyle.BodySmall} style={{ color: "#FFF", fontWeight: "700" }}>
+                {currentMatch.court_label || `Court ${currentMatch.court_number}`}
+              </ThemedText>
+            </View>
+            {scoreStatus === "pending" && (
+              <View style={[styles.statusBadge, { backgroundColor: "#f59e0b" }]}>
+                <ThemedText textStyle={TextStyle.BodySmall} style={{ color: "#FFF", fontSize: 11 }}>
+                  Score Pending
+                </ThemedText>
+              </View>
+            )}
+            {scoreStatus === "disputed" && (
+              <View style={[styles.statusBadge, { backgroundColor: theme.colors.error }]}>
+                <ThemedText textStyle={TextStyle.BodySmall} style={{ color: "#FFF", fontSize: 11 }}>
+                  Disputed
+                </ThemedText>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.matchTeams}>
+            <View style={styles.matchTeam}>
+              <ThemedText textStyle={TextStyle.BodySmall} style={styles.teamLabel}>
+                Your Team
+              </ThemedText>
+              <ThemedText textStyle={TextStyle.Body} style={styles.teamPlayers}>
+                {confirmedPartnership.player1.firstName} & {confirmedPartnership.player2.firstName}
+              </ThemedText>
+            </View>
+            <ThemedText textStyle={TextStyle.Header} style={{ color: theme.colors.text + "40" }}>
+              vs
+            </ThemedText>
+            <View style={styles.matchTeam}>
+              <ThemedText textStyle={TextStyle.BodySmall} style={styles.teamLabel}>
+                Opponents
+              </ThemedText>
+              <ThemedText textStyle={TextStyle.Body} style={styles.teamPlayers}>
+                {/* TODO: Get opponent names from match data */}
+                Opponents
+              </ThemedText>
+            </View>
+          </View>
+
+          {/* TODO: Add score submission component */}
+          {scoreStatus === "none" && (
+            <ThemedText textStyle={TextStyle.BodySmall} style={styles.helpText}>
+              Submit your score when the match is complete
+            </ThemedText>
+          )}
         </View>
-        {/* TODO: Add score submission component */}
       </Card>
     );
   };
@@ -326,6 +518,7 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         {renderCheckInSection()}
+        {renderTonightStats()}
         {renderPartnershipSection()}
         {renderCurrentMatchSection()}
       </View>
@@ -340,9 +533,10 @@ const styles = StyleSheet.create({
   content: {
     padding: padding,
     gap: 16,
+    paddingBottom: 100,
   },
   card: {
-    ...GlobalStyles.padding,
+    ...GlobalStyles.container,
     gap: 12,
   },
   cardHeader: {
@@ -350,38 +544,80 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-  cardDescription: {
+  description: {
     opacity: 0.7,
   },
   button: {
     marginTop: 8,
   },
-  warningText: {
+  warning: {
     opacity: 0.7,
     textAlign: "center",
     marginTop: 4,
+    fontSize: 12,
+  },
+  statsGrid: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    paddingVertical: 8,
+  },
+  statItem: {
+    alignItems: "center",
+    gap: 4,
+  },
+  statValue: {
+    fontSize: 28,
+    fontWeight: "700",
+  },
+  statLabel: {
+    opacity: 0.7,
+    fontSize: 11,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    padding: 0,
   },
   partnerCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.1)",
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+  },
+  partnerListCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
   },
   partnerInfo: {
     flex: 1,
+    gap: 2,
   },
   partnerName: {
-    marginBottom: 4,
+    fontWeight: "600",
   },
   partnerSkill: {
     opacity: 0.7,
+    fontSize: 12,
   },
   requestCard: {
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.1)",
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
     gap: 12,
   },
   requestInfo: {
@@ -389,15 +625,70 @@ const styles = StyleSheet.create({
   },
   requestSkill: {
     opacity: 0.7,
+    fontSize: 12,
   },
   requestActions: {
     flexDirection: "row",
     gap: 8,
   },
-  matchInfo: {
-    gap: 4,
+  acceptButton: {
+    flex: 1,
   },
-  matchStatus: {
+  helpText: {
+    opacity: 0.6,
+    fontSize: 12,
+    fontStyle: "italic",
+    marginTop: 4,
+  },
+  emptyState: {
+    alignItems: "center",
+    padding: 24,
+    gap: 8,
+  },
+  emptyText: {
     opacity: 0.7,
+    textAlign: "center",
+  },
+  emptySubtext: {
+    opacity: 0.5,
+    textAlign: "center",
+    fontSize: 12,
+  },
+  matchCard: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    gap: 12,
+  },
+  matchHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  courtBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  matchTeams: {
+    gap: 8,
+    alignItems: "center",
+  },
+  matchTeam: {
+    gap: 4,
+    alignItems: "center",
+  },
+  teamLabel: {
+    opacity: 0.7,
+    fontSize: 11,
+  },
+  teamPlayers: {
+    fontWeight: "600",
+    textAlign: "center",
   },
 });

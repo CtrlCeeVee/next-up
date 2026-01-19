@@ -1,7 +1,7 @@
 import { BaseModel } from "../../../core/models";
 
 export interface Membership extends BaseModel {
-  league_id: number;
+  league_id: string;
   user_id: string;
   role: "player" | "admin";
   is_active: boolean;

@@ -1,24 +1,37 @@
 import { Theme } from "@react-navigation/native";
 
+type FontWeight =
+  | "normal"
+  | "bold"
+  | "100"
+  | "200"
+  | "300"
+  | "400"
+  | "500"
+  | "600"
+  | "700"
+  | "800"
+  | "900";
+
 export interface ThemeCoreColours extends Theme {
-  backgroundGradient: [string, string];
+  backgroundGradient: [string, string, string];
   componentBackground: string;
   fonts: {
     regular: {
       fontFamily: string;
-      fontWeight: string;
+      fontWeight: FontWeight;
     };
     medium: {
       fontFamily: string;
-      fontWeight: string;
+      fontWeight: FontWeight;
     };
     bold: {
       fontFamily: string;
-      fontWeight: string;
+      fontWeight: FontWeight;
     };
     heavy: {
       fontFamily: string;
-      fontWeight: string;
+      fontWeight: FontWeight;
     };
   };
 }
@@ -44,7 +57,7 @@ export interface AppThemeCoreColours extends ThemeCoreColours {
     warning: string;
     info: string;
   } & ThemeCoreColours["colors"];
-};
+}
 
 // Default fonts (will be replaced with Inter font)
 const defaultFonts: AppThemeCoreColours["fonts"] = {
@@ -67,11 +80,11 @@ const defaultFonts: AppThemeCoreColours["fonts"] = {
 };
 
 export const DarkTheme: AppThemeCoreColours = {
-  backgroundGradient: ["#18181b", "#09090b"], // secondary-900 to 950
+  backgroundGradient: ["#0f172a", "#1e293b", "#064e3b"], // slate-900 → slate-800 → emerald-900
   componentBackground: "#27272a", // secondary-800
   colors: {
-    background: "#09090b", // secondary-950
-    border: "transparent",
+    background: "#283142", // secondary-950
+    border: "#29364d",
     card: "#27272a", // secondary-800
     text: "#F0F0F0", // Light gray
     notification: "#F0F0F0",
@@ -86,12 +99,12 @@ export const DarkTheme: AppThemeCoreColours = {
 };
 
 export const LightTheme: AppThemeCoreColours = {
-  backgroundGradient: ["#FFFFFF", "#fafafa"], // white to secondary-50
-  componentBackground: "#f5f5f5",
+  backgroundGradient: ["#d1fae5", "#f0fdf4", "#f8fafc"], // slate-50 → green-50 → emerald-50
+  componentBackground: "#ffffff",
   colors: {
-    background: "#FFFFFF",
-    border: "transparent",
-    card: "#f0f0f0", //slightly-darker white
+    background: "#f0f0f0",
+    border: "#f0f0f0",
+    card: "#FFFFFF", //slightly-darker white
     text: "#18181b", // secondary-900
     notification: "#18181b",
     primary: SharedTheme.primary,

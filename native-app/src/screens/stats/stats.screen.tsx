@@ -34,8 +34,13 @@ const StatCard: React.FC<StatCardProps> = ({
   const cardColor = color || theme.colors.primary;
 
   return (
-    <Card style={styles.statCard}>
-      <View style={[styles.statIconContainer, { backgroundColor: cardColor + "20" }]}>
+    <Card style={styles.statCardInner}>
+      <View
+        style={[
+          styles.statIconContainer,
+          { backgroundColor: cardColor + "20" },
+        ]}
+      >
         <Icon name={icon} size={24} color={cardColor} />
       </View>
       <View style={styles.statContent}>
@@ -43,19 +48,37 @@ const StatCard: React.FC<StatCardProps> = ({
           {label}
         </ThemedText>
         <View style={styles.statValueRow}>
-          <ThemedText textStyle={TextStyle.Header} style={[styles.statValue, { color: cardColor }]}>
+          <ThemedText
+            textStyle={TextStyle.Header}
+            style={[styles.statValue, { color: cardColor }]}
+          >
             {value}
           </ThemedText>
           {trend && (
             <Icon
-              name={trend === "up" ? "trending-up" : trend === "down" ? "trending-down" : "minus"}
+              name={
+                trend === "up"
+                  ? "trending-up"
+                  : trend === "down"
+                    ? "trending-down"
+                    : "minus"
+              }
               size={20}
-              color={trend === "up" ? theme.colors.success : trend === "down" ? theme.colors.error : theme.colors.text}
+              color={
+                trend === "up"
+                  ? theme.colors.success
+                  : trend === "down"
+                    ? theme.colors.error
+                    : theme.colors.text
+              }
             />
           )}
         </View>
         {subValue && (
-          <ThemedText textStyle={TextStyle.BodySmall} style={styles.statSubValue}>
+          <ThemedText
+            textStyle={TextStyle.BodySmall}
+            style={styles.statSubValue}
+          >
             {subValue}
           </ThemedText>
         )}
@@ -67,7 +90,8 @@ const StatCard: React.FC<StatCardProps> = ({
 export const StatsScreen = () => {
   const { theme } = useTheme();
   const { user } = useAuthState();
-  const { stats, streaks, fetchStats, fetchStreaks, loading } = useProfilesState();
+  const { stats, streaks, fetchStats, fetchStreaks, loading } =
+    useProfilesState();
 
   useEffect(() => {
     if (user) {
@@ -97,303 +121,373 @@ export const StatsScreen = () => {
   const renderStats = () => {
     return (
       <View>
-<View style={styles.section}>
-<View style={styles.sectionHeader}>
-  <Icon name="trophy" size={20} color={theme.colors.primary} />
-  <ThemedText textStyle={TextStyle.Subheader}>Overall Performance</ThemedText>
-</View>
-
-<View style={styles.statsGrid}>
-  <StatCard
-    icon="trophy"
-    label="Total Games"
-    value={stats?.totalGames || 0}
-    color={theme.colors.primary}
-  />
-  <StatCard
-    icon="check-circle"
-    label="Wins"
-    value={stats?.wins || 0}
-    subValue={`${winRate}% win rate`}
-    color={theme.colors.success}
-  />
-  <StatCard
-    icon="alert-circle"
-    label="Losses"
-    value={stats?.losses || 0}
-    color={theme.colors.error}
-  />
-  <StatCard
-    icon="target"
-    label="Avg Points"
-    value={avgPoints}
-    subValue={`${stats?.totalPoints || 0} total`}
-    color="#f97316"
-  />
-</View>
-</View>
-
-{/* Streaks Section */}
-<View style={styles.section}>
-<View style={styles.sectionHeader}>
-  <Icon name="flame" size={20} color="#f97316" />
-  <ThemedText textStyle={TextStyle.Subheader}>Streaks</ThemedText>
-</View>
-
-<Card style={styles.streakCard}>
-  <View style={styles.streakRow}>
-    <View style={styles.streakItem}>
-      <View
-        style={[
-          styles.streakIconContainer,
-          {
-            backgroundColor:
-              currentStreak > 0
-                ? theme.colors.success + "20"
-                : currentStreak < 0
-                ? theme.colors.error + "20"
-                : theme.colors.text + "10",
-          },
-        ]}
-      >
-        <Icon
-          name={currentStreak > 0 ? "trending-up" : currentStreak < 0 ? "trending-down" : "minus"}
-          size={28}
-          color={
-            currentStreak > 0
-              ? theme.colors.success
-              : currentStreak < 0
-              ? theme.colors.error
-              : theme.colors.text
-          }
-        />
-      </View>
-      <ThemedText textStyle={TextStyle.BodySmall} style={styles.streakLabel}>
-        Current Streak
-      </ThemedText>
-      <ThemedText
-        textStyle={TextStyle.Header}
-        style={[
-          styles.streakValue,
-          {
-            color:
-              currentStreak > 0
-                ? theme.colors.success
-                : currentStreak < 0
-                ? theme.colors.error
-                : theme.colors.text,
-          },
-        ]}
-      >
-        {Math.abs(currentStreak)}
-      </ThemedText>
-      <ThemedText textStyle={TextStyle.BodySmall} style={styles.streakSubValue}>
-        {currentStreak > 0 ? "wins" : currentStreak < 0 ? "losses" : "games"}
-      </ThemedText>
-    </View>
-
-    <View style={[styles.divider, { backgroundColor: theme.colors.text + "20" }]} />
-
-    <View style={styles.streakItem}>
-      <View
-        style={[
-          styles.streakIconContainer,
-          { backgroundColor: "#a855f7" + "20" },
-        ]}
-      >
-        <Icon name="star" size={28} color="#a855f7" />
-      </View>
-      <ThemedText textStyle={TextStyle.BodySmall} style={styles.streakLabel}>
-        Best Streak
-      </ThemedText>
-      <ThemedText
-        textStyle={TextStyle.Header}
-        style={[styles.streakValue, { color: "#a855f7" }]}
-      >
-        {bestStreak}
-      </ThemedText>
-      <ThemedText textStyle={TextStyle.BodySmall} style={styles.streakSubValue}>
-        wins
-      </ThemedText>
-    </View>
-  </View>
-</Card>
-</View>
-
-{/* League Stats Section */}
-<View style={styles.section}>
-<View style={styles.sectionHeader}>
-  <Icon name="users" size={20} color={theme.colors.primary} />
-  <ThemedText textStyle={TextStyle.Subheader}>League Activity</ThemedText>
-</View>
-
-<View style={styles.leagueStatsGrid}>
-  <Card style={styles.leagueStatCard}>
-    <Icon name="trophy" size={24} color={theme.colors.primary} />
-    <ThemedText textStyle={TextStyle.Header} style={styles.leagueStatValue}>
-      {stats?.leaguesJoined || 0}
-    </ThemedText>
-    <ThemedText textStyle={TextStyle.BodySmall} style={styles.leagueStatLabel}>
-      Leagues Joined
-    </ThemedText>
-  </Card>
-
-  <Card style={styles.leagueStatCard}>
-    <Icon name="zap" size={24} color={theme.colors.success} />
-    <ThemedText textStyle={TextStyle.Header} style={styles.leagueStatValue}>
-      {stats?.activeLeagues || 0}
-    </ThemedText>
-    <ThemedText textStyle={TextStyle.BodySmall} style={styles.leagueStatLabel}>
-      Active Now
-    </ThemedText>
-  </Card>
-</View>
-</View>
-
-{/* Performance Insights */}
-<View style={styles.section}>
-<View style={styles.sectionHeader}>
-  <Icon name="trending-up" size={20} color={theme.colors.primary} />
-  <ThemedText textStyle={TextStyle.Subheader}>Insights</ThemedText>
-</View>
-
-<Card style={styles.insightsCard}>
-  {stats && stats.totalGames > 0 ? (
-    <>
-      {stats.winRate >= 50 && (
-        <View style={styles.insightRow}>
-          <View
-            style={[
-              styles.insightIcon,
-              { backgroundColor: theme.colors.success + "20" },
-            ]}
-          >
-            <Icon name="trending-up" size={20} color={theme.colors.success} />
-          </View>
-          <View style={styles.insightContent}>
-            <ThemedText textStyle={TextStyle.Body} style={styles.insightText}>
-              Great performance! You're winning more than half your games.
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Icon name="trophy" size={20} color={theme.colors.primary} />
+            <ThemedText textStyle={TextStyle.Subheader}>
+              Overall Performance
             </ThemedText>
           </View>
-        </View>
-      )}
 
-      {currentStreak >= 3 && (
-        <View style={styles.insightRow}>
-          <View
-            style={[
-              styles.insightIcon,
-              { backgroundColor: "#f97316" + "20" },
-            ]}
-          >
+          <View style={styles.statsGrid}>
+            <StatCard
+              icon="trophy"
+              label="Total Games"
+              value={stats?.totalGames || 0}
+              color={theme.colors.primary}
+            />
+            <StatCard
+              icon="check-circle"
+              label="Wins"
+              value={stats?.wins || 0}
+              subValue={`${winRate}% win rate`}
+              color={theme.colors.success}
+            />
+            <StatCard
+              icon="alert-circle"
+              label="Losses"
+              value={stats?.losses || 0}
+              color={theme.colors.error}
+            />
+            <StatCard
+              icon="target"
+              label="Avg Points"
+              value={avgPoints}
+              subValue={`${stats?.totalPoints || 0} total`}
+              color="#f97316"
+            />
+          </View>
+        </View>
+
+        {/* Streaks Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
             <Icon name="flame" size={20} color="#f97316" />
+            <ThemedText textStyle={TextStyle.Subheader}>Streaks</ThemedText>
           </View>
-          <View style={styles.insightContent}>
-            <ThemedText textStyle={TextStyle.Body} style={styles.insightText}>
-              You're on fire! Keep up the winning streak!
-            </ThemedText>
-          </View>
-        </View>
-      )}
 
-      {stats.averagePoints >= 10 && (
-        <View style={styles.insightRow}>
-          <View
-            style={[
-              styles.insightIcon,
-              { backgroundColor: theme.colors.primary + "20" },
-            ]}
-          >
-            <Icon name="target" size={20} color={theme.colors.primary} />
-          </View>
-          <View style={styles.insightContent}>
-            <ThemedText textStyle={TextStyle.Body} style={styles.insightText}>
-              Impressive scoring! You're averaging double digits per game.
-            </ThemedText>
-          </View>
-        </View>
-      )}
+          <Card style={styles.streakCard}>
+            <View style={styles.streakRow}>
+              <View style={styles.streakItem}>
+                <View
+                  style={[
+                    styles.streakIconContainer,
+                    {
+                      backgroundColor:
+                        currentStreak > 0
+                          ? theme.colors.success + "20"
+                          : currentStreak < 0
+                            ? theme.colors.error + "20"
+                            : theme.colors.text + "10",
+                    },
+                  ]}
+                >
+                  <Icon
+                    name={
+                      currentStreak > 0
+                        ? "trending-up"
+                        : currentStreak < 0
+                          ? "trending-down"
+                          : "minus"
+                    }
+                    size={28}
+                    color={
+                      currentStreak > 0
+                        ? theme.colors.success
+                        : currentStreak < 0
+                          ? theme.colors.error
+                          : theme.colors.text
+                    }
+                  />
+                </View>
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  style={styles.streakLabel}
+                >
+                  Current Streak
+                </ThemedText>
+                <ThemedText
+                  textStyle={TextStyle.Header}
+                  style={[
+                    styles.streakValue,
+                    {
+                      color:
+                        currentStreak > 0
+                          ? theme.colors.success
+                          : currentStreak < 0
+                            ? theme.colors.error
+                            : theme.colors.text,
+                    },
+                  ]}
+                >
+                  {Math.abs(currentStreak)}
+                </ThemedText>
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  style={styles.streakSubValue}
+                >
+                  {currentStreak > 0
+                    ? "wins"
+                    : currentStreak < 0
+                      ? "losses"
+                      : "games"}
+                </ThemedText>
+              </View>
 
-      {stats.totalGames >= 50 && (
-        <View style={styles.insightRow}>
-          <View
-            style={[
-              styles.insightIcon,
-              { backgroundColor: "#a855f7" + "20" },
-            ]}
-          >
-            <Icon name="star" size={20} color="#a855f7" />
-          </View>
-          <View style={styles.insightContent}>
-            <ThemedText textStyle={TextStyle.Body} style={styles.insightText}>
-              Veteran player! You've played {stats.totalGames} games.
-            </ThemedText>
-          </View>
-        </View>
-      )}
+              <View
+                style={[
+                  styles.divider,
+                  { backgroundColor: theme.colors.text + "20" },
+                ]}
+              />
 
-      {stats.winRate < 50 && stats.totalGames >= 5 && (
-        <View style={styles.insightRow}>
-          <View
-            style={[
-              styles.insightIcon,
-              { backgroundColor: theme.colors.primary + "20" },
-            ]}
-          >
-            <Icon name="heart" size={20} color={theme.colors.primary} />
-          </View>
-          <View style={styles.insightContent}>
-            <ThemedText textStyle={TextStyle.Body} style={styles.insightText}>
-              Keep practicing! Every game makes you better.
+              <View style={styles.streakItem}>
+                <View
+                  style={[
+                    styles.streakIconContainer,
+                    { backgroundColor: "#a855f7" + "20" },
+                  ]}
+                >
+                  <Icon name="star" size={28} color="#a855f7" />
+                </View>
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  style={styles.streakLabel}
+                >
+                  Best Streak
+                </ThemedText>
+                <ThemedText
+                  textStyle={TextStyle.Header}
+                  style={[styles.streakValue, { color: "#a855f7" }]}
+                >
+                  {bestStreak}
+                </ThemedText>
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  style={styles.streakSubValue}
+                >
+                  wins
+                </ThemedText>
+              </View>
+            </View>
+          </Card>
+        </View>
+
+        {/* League Stats Section */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Icon name="users" size={20} color={theme.colors.primary} />
+            <ThemedText textStyle={TextStyle.Subheader}>
+              League Activity
             </ThemedText>
           </View>
+
+          <View style={styles.leagueStatsGrid}>
+            <Card style={styles.leagueStatCard}>
+              <Icon name="trophy" size={24} color={theme.colors.primary} />
+              <ThemedText
+                textStyle={TextStyle.Header}
+                style={styles.leagueStatValue}
+              >
+                {stats?.leaguesJoined || 0}
+              </ThemedText>
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={styles.leagueStatLabel}
+              >
+                Leagues Joined
+              </ThemedText>
+            </Card>
+
+            <Card style={styles.leagueStatCard}>
+              <Icon name="zap" size={24} color={theme.colors.success} />
+              <ThemedText
+                textStyle={TextStyle.Header}
+                style={styles.leagueStatValue}
+              >
+                {stats?.activeLeagues || 0}
+              </ThemedText>
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={styles.leagueStatLabel}
+              >
+                Active Now
+              </ThemedText>
+            </Card>
+          </View>
         </View>
-      )}
-    </>
-  ) : (
-    <View style={styles.emptyInsights}>
-      <Icon name="info" size={32} color={theme.colors.text + "40"} />
-      <ThemedText textStyle={TextStyle.Body} style={styles.emptyInsightsText}>
-        Play more games to unlock personalized insights!
-      </ThemedText>
-    </View>
-  )}
-</Card>
-</View>
-</View>
-  )
-  }
+
+        {/* Performance Insights */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Icon name="trending-up" size={20} color={theme.colors.primary} />
+            <ThemedText textStyle={TextStyle.Subheader}>Insights</ThemedText>
+          </View>
+
+          <Card style={styles.insightsCard}>
+            {stats && stats.totalGames > 0 ? (
+              <>
+                {stats.winRate >= 50 && (
+                  <View style={styles.insightRow}>
+                    <View
+                      style={[
+                        styles.insightIcon,
+                        { backgroundColor: theme.colors.success + "20" },
+                      ]}
+                    >
+                      <Icon
+                        name="trending-up"
+                        size={20}
+                        color={theme.colors.success}
+                      />
+                    </View>
+                    <View style={styles.insightContent}>
+                      <ThemedText
+                        textStyle={TextStyle.Body}
+                        style={styles.insightText}
+                      >
+                        Great performance! You're winning more than half your
+                        games.
+                      </ThemedText>
+                    </View>
+                  </View>
+                )}
+
+                {currentStreak >= 3 && (
+                  <View style={styles.insightRow}>
+                    <View
+                      style={[
+                        styles.insightIcon,
+                        { backgroundColor: "#f97316" + "20" },
+                      ]}
+                    >
+                      <Icon name="flame" size={20} color="#f97316" />
+                    </View>
+                    <View style={styles.insightContent}>
+                      <ThemedText
+                        textStyle={TextStyle.Body}
+                        style={styles.insightText}
+                      >
+                        You're on fire! Keep up the winning streak!
+                      </ThemedText>
+                    </View>
+                  </View>
+                )}
+
+                {stats.averagePoints >= 10 && (
+                  <View style={styles.insightRow}>
+                    <View
+                      style={[
+                        styles.insightIcon,
+                        { backgroundColor: theme.colors.primary + "20" },
+                      ]}
+                    >
+                      <Icon
+                        name="target"
+                        size={20}
+                        color={theme.colors.primary}
+                      />
+                    </View>
+                    <View style={styles.insightContent}>
+                      <ThemedText
+                        textStyle={TextStyle.Body}
+                        style={styles.insightText}
+                      >
+                        Impressive scoring! You're averaging double digits per
+                        game.
+                      </ThemedText>
+                    </View>
+                  </View>
+                )}
+
+                {stats.totalGames >= 50 && (
+                  <View style={styles.insightRow}>
+                    <View
+                      style={[
+                        styles.insightIcon,
+                        { backgroundColor: "#a855f7" + "20" },
+                      ]}
+                    >
+                      <Icon name="star" size={20} color="#a855f7" />
+                    </View>
+                    <View style={styles.insightContent}>
+                      <ThemedText
+                        textStyle={TextStyle.Body}
+                        style={styles.insightText}
+                      >
+                        Veteran player! You've played {stats.totalGames} games.
+                      </ThemedText>
+                    </View>
+                  </View>
+                )}
+
+                {stats.winRate < 50 && stats.totalGames >= 5 && (
+                  <View style={styles.insightRow}>
+                    <View
+                      style={[
+                        styles.insightIcon,
+                        { backgroundColor: theme.colors.primary + "20" },
+                      ]}
+                    >
+                      <Icon
+                        name="heart"
+                        size={20}
+                        color={theme.colors.primary}
+                      />
+                    </View>
+                    <View style={styles.insightContent}>
+                      <ThemedText
+                        textStyle={TextStyle.Body}
+                        style={styles.insightText}
+                      >
+                        Keep practicing! Every game makes you better.
+                      </ThemedText>
+                    </View>
+                  </View>
+                )}
+              </>
+            ) : (
+              <View style={styles.emptyInsights}>
+                <Icon name="info" size={32} color={theme.colors.text + "40"} />
+                <ThemedText
+                  textStyle={TextStyle.Body}
+                  style={styles.emptyInsightsText}
+                >
+                  Play more games to unlock personalized insights!
+                </ThemedText>
+              </View>
+            )}
+          </Card>
+        </View>
+      </View>
+    );
+  };
 
   const renderNoStats = () => {
     return (
       <View style={styles.emptyStateContainer}>
-    <Icon name="bar-chart" size={48} color={theme.colors.text + "40"} />
-    <ThemedText textStyle={TextStyle.Subheader} style={styles.emptyStateTitle}>
-      No Stats Yet
-    </ThemedText>
-    <ThemedText textStyle={TextStyle.Body} style={styles.emptyStateText}>
-      Join a league and play some games to see your statistics here!
-    </ThemedText>
-  </View>
-  )
-  }
+        <Icon name="bar-chart" size={48} color={theme.colors.text + "40"} />
+        <ThemedText
+          textStyle={TextStyle.Subheader}
+          style={styles.emptyStateTitle}
+        >
+          No Stats Yet
+        </ThemedText>
+        <ThemedText textStyle={TextStyle.Body} style={styles.emptyStateText}>
+          Join a league and play some games to see your statistics here!
+        </ThemedText>
+      </View>
+    );
+  };
 
   const render = () => {
     return (
       <>
-    {(stats || streaks) && (
-      <View>
-        {renderStats()}
-      </View>
-    )}
-    {(!stats || stats.totalGames === 0) && (
-      <View>
-        {renderNoStats()}
-      </View>
-    )}
-    </>
-  )
-  }
+        {(stats || streaks) && <View>{renderStats()}</View>}
+        {(!stats || stats.totalGames === 0) && <View>{renderNoStats()}</View>}
+      </>
+    );
+  };
 
   return (
     <ScreenContainer>
@@ -405,7 +499,7 @@ export const StatsScreen = () => {
         {render()}
       </ScrollView>
     </ScreenContainer>
-  )
+  );
 };
 
 const styles = StyleSheet.create({
@@ -452,17 +546,16 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
-    rowGap: 12,
+    gap: 12,
+    alignItems: "stretch",
   },
-  statCard: {
-    ...GlobalStyles.container,
+  statCardInner: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    width: "48.5%",
-    minWidth: "48.5%",
-    maxWidth: "48.5%",
+    width: "48%",
+    minWidth: "48%",
+    maxWidth: "48%",
   },
   statIconContainer: {
     width: 48,

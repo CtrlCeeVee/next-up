@@ -8,25 +8,12 @@ export class LeaguesService extends BaseService {
 
   // Get all leagues
   async getAll(): Promise<League[]> {
-    // const response = await this.get<any>("/api/leagues");
-    // return response.success ? response.data : response;
-    return Promise.resolve([
-      {
-        id: "1",
-        name: "Northcliff Night League",
-        description: "Premier pickleball league at Northcliff Country Club featuring competitive play for passionate players of all skill levels",
-        location: "Northcliff Country Club",
-        address: "271 Pendoring Rd, Northcliff, Randburg, 2115",
-        leagueDays: ["Monday", "Wednesday"],
-        startTime: "18:30",
-        totalPlayers: 10,
-        isActive: true,
-      },
-    ]);
+    const response = await this.get<any>("/api/leagues");
+    return response.success ? response.data : response;
   }
 
   // Get league by ID
-  async getById(id: number): Promise<League> {
+  async getById(id: string): Promise<League> {
     const response = await this.get<any>(`/api/leagues/${id}`);
     return response.success ? response.data : response;
   }

@@ -41,6 +41,7 @@ export type IconName =
   | "search"
   | "plus"
   | "minus"
+  | "x"
   | "logout"
   | "send"
   | "edit"
@@ -75,6 +76,7 @@ export type IconName =
   | "file-text"
   | "image"
   | "video"
+  | "list"
   // Settings
   | "settings"
   | "sliders"

@@ -230,15 +230,15 @@ export const ProfileScreen = () => {
 
           {/* Quick Stats */}
           <View style={styles.quickStatsGrid}>
-            <View style={[styles.quickStatCard, { backgroundColor: theme.componentBackground + "99" }]}>
+            <Card style={styles.quickStatCard}>
               <ThemedText textStyle={TextStyle.Header} style={styles.quickStatValue}>
                 {stats?.totalGames || 0}
               </ThemedText>
               <ThemedText textStyle={TextStyle.BodySmall} style={styles.quickStatLabel}>
                 Games
               </ThemedText>
-            </View>
-            <View style={[styles.quickStatCard, { backgroundColor: theme.componentBackground + "99" }]}>
+            </Card>
+            <Card style={styles.quickStatCard}>
               <ThemedText
                 textStyle={TextStyle.Header}
                 style={[styles.quickStatValue, { color: theme.colors.success }]}
@@ -248,15 +248,15 @@ export const ProfileScreen = () => {
               <ThemedText textStyle={TextStyle.BodySmall} style={styles.quickStatLabel}>
                 Win Rate
               </ThemedText>
-            </View>
-            <View style={[styles.quickStatCard, { backgroundColor: theme.componentBackground + "99" }]}>
+            </Card>
+            <Card style={styles.quickStatCard}>
               <ThemedText textStyle={TextStyle.Header} style={styles.quickStatValue}>
                 {stats?.activeLeagues || 0}
               </ThemedText>
               <ThemedText textStyle={TextStyle.BodySmall} style={styles.quickStatLabel}>
                 Leagues
               </ThemedText>
-            </View>
+            </Card>
           </View>
         </View>
 

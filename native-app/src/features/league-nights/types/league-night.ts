@@ -24,7 +24,7 @@ export interface CheckedInPlayer {
 }
 
 export interface Partnership {
-  id: number;
+  id: string;
   player1_id: string;
   player2_id: string;
   confirmed_at: string;
@@ -32,8 +32,8 @@ export interface Partnership {
 }
 
 export interface PartnershipRequest {
-  id: number;
-  league_night_instance_id: number;
+  id: string;
+  league_night_instance_id: string;
   requester_id: string;
   requested_id: string;
   status: "pending" | "accepted" | "declined";
@@ -53,8 +53,8 @@ export interface PartnershipRequest {
 }
 
 export interface ConfirmedPartnership {
-  id: number;
-  league_night_instance_id: number;
+  id: string;
+  league_night_instance_id: string;
   player1_id: string;
   player2_id: string;
   is_active: boolean;

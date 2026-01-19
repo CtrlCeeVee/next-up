@@ -12,9 +12,9 @@ export type AuthStackParamList = {
 // Leagues Stack Param List
 export type LeaguesStackParamList = {
   [Routes.BrowseLeagues]: undefined;
-  [Routes.LeagueDetail]: { leagueId: number };
-  [Routes.LeagueNight]: { leagueId: number; nightId: string };
-  [Routes.Leaderboard]: { leagueId: number };
+  [Routes.LeagueDetail]: { leagueId: string };
+  [Routes.LeagueNight]: { leagueId: string; nightId: string };
+  [Routes.Leaderboard]: { leagueId: string };
 };
 
 // Profile Stack Param List
