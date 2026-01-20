@@ -9,37 +9,16 @@ import {
 import { ThemedText, Button, Card } from "../../../components";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
-import { GlobalStyles, padding } from "../../../core/styles";
+import { GlobalStyles, padding, TextStyle } from "../../../core/styles";
 import { leagueNightsService } from "../../../di/services.registry";
-import type { LeagueNightInstance } from "../../../features/league-nights/types";
-
-interface Match {
-  id: number;
-  courtNumber: number;
-  courtLabel?: string;
-  status: "active" | "completed" | "cancelled";
-  team1Score?: number;
-  team2Score?: number;
-  pendingTeam1Score?: number;
-  pendingTeam2Score?: number;
-  scoreStatus?: "none" | "pending" | "confirmed" | "disputed";
-  createdAt: string;
-  completedAt?: string;
-  partnership1: {
-    id: number;
-    player1: { id: string; firstName: string; lastName: string; skillLevel: string };
-    player2: { id: string; firstName: string; lastName: string; skillLevel: string };
-  };
-  partnership2: {
-    id: number;
-    player1: { id: string; firstName: string; lastName: string; skillLevel: string };
-    player2: { id: string; firstName: string; lastName: string; skillLevel: string };
-  };
-}
+import type {
+  LeagueNightInstance,
+  Match,
+} from "../../../features/league-nights/types";
 
 interface MatchesQueueTabProps {
   user: any;
-  leagueId: number;
+  leagueId: string;
   nightId: string;
   leagueNight: LeagueNightInstance;
   matchesRefreshTrigger: number;
@@ -59,7 +38,11 @@ export const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
   const fetchMatches = async () => {
     try {
       setLoading(true);
-      const matchesData = await leagueNightsService.getMatches(leagueId, nightId);
+      const matchesData = await leagueNightsService.getMatches(
+        leagueId,
+        nightId,
+        user.id
+      );
       setMatches(matchesData);
     } catch (error) {
       console.error("Error fetching matches:", error);
@@ -74,23 +57,21 @@ export const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
 
   const renderMatch = ({ item: match }: { item: Match }) => {
     const isUserMatch =
-      match.partnership1.player1.id === user?.id ||
-      match.partnership1.player2.id === user?.id ||
-      match.partnership2.player1.id === user?.id ||
-      match.partnership2.player2.id === user?.id;
+      match.team1_player1_id === user?.id ||
+      match.team1_player2_id === user?.id ||
+      match.team2_player1_id === user?.id ||
+      match.team2_player2_id === user?.id;
 
     return (
-      <Card
-        style={[
-          styles.matchCard,
-          isUserMatch && { borderColor: theme.colors.primary, borderWidth: 2 },
-        ]}
-      >
+      <Card style={styles.matchCard}>
         <View style={styles.matchHeader}>
           <View style={styles.courtBadge}>
             <Icon name="map-pin" size={16} color={theme.colors.primary} />
-            <ThemedText styleType="BodySmall" style={styles.courtText}>
-              {match.courtLabel || `Court ${match.courtNumber}`}
+            <ThemedText
+              textStyle={TextStyle.BodySmall}
+              style={styles.courtText}
+            >
+              {match.court_label}
             </ThemedText>
           </View>
           <View
@@ -98,15 +79,18 @@ export const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
               styles.statusBadge,
               {
                 backgroundColor:
-                  match.status === "active"
+                  match.status === "in_progress"
                     ? theme.colors.success + "20"
                     : match.status === "completed"
-                    ? theme.colors.text + "20"
-                    : theme.colors.error + "20",
+                      ? theme.colors.text + "20"
+                      : theme.colors.error + "20",
               },
             ]}
           >
-            <ThemedText styleType="BodySmall" style={styles.statusText}>
+            <ThemedText
+              textStyle={TextStyle.BodySmall}
+              style={styles.statusText}
+            >
               {match.status.toUpperCase()}
             </ThemedText>
           </View>
@@ -115,16 +99,16 @@ export const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
         {/* Team 1 */}
         <View style={styles.teamContainer}>
           <View style={styles.teamInfo}>
-            <ThemedText styleType="Body">
-              {match.partnership1.player1.firstName} {match.partnership1.player1.lastName}
+            <ThemedText textStyle={TextStyle.Body}>
+              {match.team1_player1_id} {match.team1_player2_id}
             </ThemedText>
-            <ThemedText styleType="Body">
-              {match.partnership1.player2.firstName} {match.partnership1.player2.lastName}
+            <ThemedText textStyle={TextStyle.Body}>
+              {match.team1_player2_id} {match.team1_player2_id}
             </ThemedText>
           </View>
-          {match.team1Score !== undefined && (
-            <ThemedText styleType="BodyLarge" style={styles.score}>
-              {match.team1Score}
+          {match.team1_score !== undefined && (
+            <ThemedText textStyle={TextStyle.Body} style={styles.score}>
+              {match.team1_score}
             </ThemedText>
           )}
         </View>
@@ -134,24 +118,27 @@ export const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
         {/* Team 2 */}
         <View style={styles.teamContainer}>
           <View style={styles.teamInfo}>
-            <ThemedText styleType="Body">
-              {match.partnership2.player1.firstName} {match.partnership2.player1.lastName}
+            <ThemedText textStyle={TextStyle.Body}>
+              {match.team2_player1_id} {match.team2_player1_id}
             </ThemedText>
-            <ThemedText styleType="Body">
-              {match.partnership2.player2.firstName} {match.partnership2.player2.lastName}
+            <ThemedText textStyle={TextStyle.Body}>
+              {match.team2_player2_id} {match.team2_player2_id}
             </ThemedText>
           </View>
-          {match.team2Score !== undefined && (
-            <ThemedText styleType="BodyLarge" style={styles.score}>
-              {match.team2Score}
+          {match.team2_score !== undefined && (
+            <ThemedText textStyle={TextStyle.Body} style={styles.score}>
+              {match.team2_score}
             </ThemedText>
           )}
         </View>
 
-        {match.scoreStatus === "pending" && (
+        {match.pending_score_submitted_by === user?.id && (
           <View style={styles.pendingScoreNotice}>
             <Icon name="clock" size={16} color={theme.colors.warning} />
-            <ThemedText styleType="BodySmall" style={styles.pendingScoreText}>
+            <ThemedText
+              textStyle={TextStyle.BodySmall}
+              style={styles.pendingScoreText}
+            >
               Score pending confirmation
             </ThemedText>
           </View>
@@ -164,7 +151,7 @@ export const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-        <ThemedText styleType="Body" style={styles.loadingText}>
+        <ThemedText textStyle={TextStyle.Body} style={styles.loadingText}>
           Loading matches...
         </ThemedText>
       </View>
@@ -175,10 +162,10 @@ export const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
     return (
       <View style={styles.emptyContainer}>
         <Icon name="trophy" size={48} color={theme.colors.text + "40"} />
-        <ThemedText styleType="Subheader" style={styles.emptyTitle}>
+        <ThemedText textStyle={TextStyle.Subheader} style={styles.emptyTitle}>
           No Matches Yet
         </ThemedText>
-        <ThemedText styleType="Body" style={styles.emptyDescription}>
+        <ThemedText textStyle={TextStyle.Body} style={styles.emptyDescription}>
           Matches will appear here once they're created
         </ThemedText>
       </View>
@@ -186,7 +173,7 @@ export const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
   }
 
   // Separate active and completed matches
-  const activeMatches = matches.filter((m) => m.status === "active");
+  const activeMatches = matches.filter((m) => m.status === "in_progress");
   const completedMatches = matches.filter((m) => m.status === "completed");
 
   return (
@@ -196,7 +183,9 @@ export const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Icon name="trophy" size={20} color={theme.colors.primary} />
-              <ThemedText styleType="Subheader">Active Matches</ThemedText>
+              <ThemedText textStyle={TextStyle.Subheader}>
+                Active Matches
+              </ThemedText>
             </View>
             <FlatList
               data={activeMatches}
@@ -210,8 +199,14 @@ export const MatchesQueueTab: React.FC<MatchesQueueTabProps> = ({
         {completedMatches.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Icon name="check-circle" size={20} color={theme.colors.success} />
-              <ThemedText styleType="Subheader">Completed Matches</ThemedText>
+              <Icon
+                name="check-circle"
+                size={20}
+                color={theme.colors.success}
+              />
+              <ThemedText textStyle={TextStyle.Subheader}>
+                Completed Matches
+              </ThemedText>
             </View>
             <FlatList
               data={completedMatches}
@@ -267,7 +262,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   matchCard: {
-    ...GlobalStyles.padding,
+    padding: padding,
     gap: 12,
     marginBottom: 12,
   },

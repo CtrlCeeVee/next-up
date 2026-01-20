@@ -15,10 +15,10 @@ import { LeaguesStackParamList } from "../../navigation/types";
 import { Routes } from "../../navigation/routes";
 
 // Import tab screens
-import { MyNightTab } from "./tabs/my-night.tab";
+import { MyNightTab, MyNightTabProps } from "./tabs/my-night.tab";
 import { MatchesQueueTab } from "./tabs/matches-queue.tab";
 import { LeagueInfoTab } from "./tabs/league-info.tab";
-import { AdminTab } from "./tabs/admin.tab";
+import { AdminTab, AdminTabProps } from "./tabs/admin.tab";
 import { Membership } from "../../features/membership/types";
 
 const Tab = createMaterialTopTabNavigator();
@@ -130,11 +130,11 @@ export const LeagueNightScreen = () => {
     if (user) sendPartnershipRequest(leagueId, nightId, user.id, partnerId);
   };
 
-  const handleAcceptPartnershipRequest = (requestId: number) => {
+  const handleAcceptPartnershipRequest = (requestId: string) => {
     if (user) acceptPartnershipRequest(leagueId, nightId, requestId, user.id);
   };
 
-  const handleRejectPartnershipRequest = (requestId: number) => {
+  const handleRejectPartnershipRequest = (requestId: string) => {
     if (user) rejectPartnershipRequest(leagueId, nightId, requestId, user.id);
   };
 
@@ -178,9 +178,9 @@ export const LeagueNightScreen = () => {
   }
 
   // Common props for all tabs
-  const tabProps = {
+  const tabProps: MyNightTabProps = {
     user,
-    leagueId: Number(leagueId),
+    leagueId,
     nightId,
     league: currentLeague,
     leagueNight,
@@ -204,7 +204,7 @@ export const LeagueNightScreen = () => {
     onScoreSubmitted: handleScoreSubmitted,
   };
 
-  const adminTabProps = {
+  const adminTabProps: AdminTabProps = {
     ...tabProps,
     isAdmin,
     startingLeague,

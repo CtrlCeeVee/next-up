@@ -31,6 +31,11 @@ export interface Partnership {
   is_active: boolean;
 }
 
+export interface PartnershipRequestResponse {
+  confirmedPartnership: ConfirmedPartnership | null;
+  requests: PartnershipRequest[];
+}
+
 export interface PartnershipRequest {
   id: string;
   league_night_instance_id: string;

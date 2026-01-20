@@ -3,13 +3,13 @@ import { View, ScrollView, StyleSheet, Alert } from "react-native";
 import { ThemedText, Button, Card } from "../../../components";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
-import { GlobalStyles, padding } from "../../../core/styles";
+import { GlobalStyles, padding, TextStyle } from "../../../core/styles";
 import { leagueNightsService } from "../../../di/services.registry";
 import type { LeagueNightInstance } from "../../../features/league-nights/types";
 
-interface AdminTabProps {
+export interface AdminTabProps {
   user: any;
-  leagueId: number;
+  leagueId: string;
   nightId: string;
   leagueNight: LeagueNightInstance;
   isAdmin: boolean;
@@ -39,11 +39,18 @@ export const AdminTab: React.FC<AdminTabProps> = ({
     return (
       <View style={styles.container}>
         <View style={styles.emptyContainer}>
-          <Icon name="shield-alert" size={48} color={theme.colors.text + "40"} />
-          <ThemedText styleType="Subheader" style={styles.emptyTitle}>
+          <Icon
+            name="shield-alert"
+            size={48}
+            color={theme.colors.text + "40"}
+          />
+          <ThemedText textStyle={TextStyle.Subheader} style={styles.emptyTitle}>
             Admin Access Required
           </ThemedText>
-          <ThemedText styleType="Body" style={styles.emptyDescription}>
+          <ThemedText
+            textStyle={TextStyle.Body}
+            style={styles.emptyDescription}
+          >
             You need admin privileges to access this section
           </ThemedText>
         </View>
@@ -126,49 +133,59 @@ export const AdminTab: React.FC<AdminTabProps> = ({
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <Icon name="settings" size={24} color={theme.colors.primary} />
-            <ThemedText styleType="Subheader">League Night Status</ThemedText>
+            <ThemedText textStyle={TextStyle.Subheader}>
+              League Night Status
+            </ThemedText>
           </View>
 
           <View
             style={[
               styles.statusBadge,
               {
-                backgroundColor:
-                  isActive
-                    ? theme.colors.success + "20"
-                    : isCompleted
+                backgroundColor: isActive
+                  ? theme.colors.success + "20"
+                  : isCompleted
                     ? theme.colors.text + "20"
                     : theme.colors.primary + "20",
               },
             ]}
           >
-            <ThemedText styleType="Body" style={styles.statusText}>
+            <ThemedText textStyle={TextStyle.Body} style={styles.statusText}>
               {leagueNight.status.toUpperCase()}
             </ThemedText>
           </View>
 
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
-              <ThemedText styleType="BodyLarge" style={styles.statValue}>
+              <ThemedText textStyle={TextStyle.Body} style={styles.statValue}>
                 {leagueNight.checkedInCount || 0}
               </ThemedText>
-              <ThemedText styleType="BodySmall" style={styles.statLabel}>
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={styles.statLabel}
+              >
                 Checked In
               </ThemedText>
             </View>
             <View style={styles.statItem}>
-              <ThemedText styleType="BodyLarge" style={styles.statValue}>
+              <ThemedText textStyle={TextStyle.Body} style={styles.statValue}>
                 {leagueNight.partnershipsCount || 0}
               </ThemedText>
-              <ThemedText styleType="BodySmall" style={styles.statLabel}>
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={styles.statLabel}
+              >
                 Partnerships
               </ThemedText>
             </View>
             <View style={styles.statItem}>
-              <ThemedText styleType="BodyLarge" style={styles.statValue}>
+              <ThemedText textStyle={TextStyle.Body} style={styles.statValue}>
                 {leagueNight.possibleGames || 0}
               </ThemedText>
-              <ThemedText styleType="BodySmall" style={styles.statLabel}>
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={styles.statLabel}
+              >
                 Possible Games
               </ThemedText>
             </View>
@@ -179,12 +196,17 @@ export const AdminTab: React.FC<AdminTabProps> = ({
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <Icon name="zap" size={24} color={theme.colors.primary} />
-            <ThemedText styleType="Subheader">Admin Actions</ThemedText>
+            <ThemedText textStyle={TextStyle.Subheader}>
+              Admin Actions
+            </ThemedText>
           </View>
 
           {isScheduled && (
             <>
-              <ThemedText styleType="Body" style={styles.actionDescription}>
+              <ThemedText
+                textStyle={TextStyle.Body}
+                style={styles.actionDescription}
+              >
                 Start the league night when players have arrived and checked in
               </ThemedText>
               <Button
@@ -200,21 +222,29 @@ export const AdminTab: React.FC<AdminTabProps> = ({
 
           {isActive && (
             <>
-              <ThemedText styleType="Body" style={styles.actionDescription}>
+              <ThemedText
+                textStyle={TextStyle.Body}
+                style={styles.actionDescription}
+              >
                 Create matches for all confirmed partnerships
               </ThemedText>
               <Button
                 text="Create Matches"
                 onPress={handleCreateMatches}
                 loading={creatingMatches}
-                disabled={creatingMatches || (leagueNight.partnershipsCount || 0) < 2}
+                disabled={
+                  creatingMatches || (leagueNight.partnershipsCount || 0) < 2
+                }
                 leftIcon="plus"
                 style={styles.button}
               />
 
               <View style={styles.divider} />
 
-              <ThemedText styleType="Body" style={styles.actionDescription}>
+              <ThemedText
+                textStyle={TextStyle.Body}
+                style={styles.actionDescription}
+              >
                 End the league night when all matches are complete
               </ThemedText>
               <Button
@@ -231,8 +261,15 @@ export const AdminTab: React.FC<AdminTabProps> = ({
 
           {isCompleted && (
             <View style={styles.completedContainer}>
-              <Icon name="check-circle" size={48} color={theme.colors.success} />
-              <ThemedText styleType="Body" style={styles.completedText}>
+              <Icon
+                name="check-circle"
+                size={48}
+                color={theme.colors.success}
+              />
+              <ThemedText
+                textStyle={TextStyle.Body}
+                style={styles.completedText}
+              >
                 This league night has ended
               </ThemedText>
             </View>
@@ -243,14 +280,16 @@ export const AdminTab: React.FC<AdminTabProps> = ({
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <Icon name="map-pin" size={24} color={theme.colors.primary} />
-            <ThemedText styleType="Subheader">Court Management</ThemedText>
+            <ThemedText textStyle={TextStyle.Subheader}>
+              Court Management
+            </ThemedText>
           </View>
 
           <View style={styles.infoRow}>
-            <ThemedText styleType="Body" style={styles.infoLabel}>
+            <ThemedText textStyle={TextStyle.Body} style={styles.infoLabel}>
               Courts Available:
             </ThemedText>
-            <ThemedText styleType="Body" style={styles.infoValue}>
+            <ThemedText textStyle={TextStyle.Body} style={styles.infoValue}>
               {leagueNight.courtsAvailable}
             </ThemedText>
           </View>
@@ -259,7 +298,9 @@ export const AdminTab: React.FC<AdminTabProps> = ({
             <View style={styles.courtLabelsContainer}>
               {leagueNight.courtLabels.map((label, index) => (
                 <View key={index} style={styles.courtLabel}>
-                  <ThemedText styleType="BodySmall">{label}</ThemedText>
+                  <ThemedText textStyle={TextStyle.BodySmall}>
+                    {label}
+                  </ThemedText>
                 </View>
               ))}
             </View>
@@ -270,17 +311,22 @@ export const AdminTab: React.FC<AdminTabProps> = ({
         <Card style={styles.card}>
           <View style={styles.cardHeader}>
             <Icon name="sliders" size={24} color={theme.colors.primary} />
-            <ThemedText styleType="Subheader">Settings</ThemedText>
+            <ThemedText textStyle={TextStyle.Subheader}>Settings</ThemedText>
           </View>
 
           <View style={styles.settingRow}>
             <View style={styles.settingInfo}>
-              <ThemedText styleType="Body">Auto-Assignment</ThemedText>
-              <ThemedText styleType="BodySmall" style={styles.settingDescription}>
+              <ThemedText textStyle={TextStyle.Body}>
+                Auto-Assignment
+              </ThemedText>
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={styles.settingDescription}
+              >
                 Automatically assign players to courts
               </ThemedText>
             </View>
-            <ThemedText styleType="Body" style={styles.settingValue}>
+            <ThemedText textStyle={TextStyle.Body} style={styles.settingValue}>
               {leagueNight.autoAssignmentEnabled ? "Enabled" : "Disabled"}
             </ThemedText>
           </View>
@@ -313,7 +359,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   card: {
-    ...GlobalStyles.padding,
+    padding: padding,
     gap: 16,
   },
   cardHeader: {

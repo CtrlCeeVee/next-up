@@ -99,12 +99,12 @@ export const LeagueDetailScreen = () => {
       weekday: "long",
     });
 
-    const nights: LeagueNight[] = currentLeague.leagueDays.map((day) => {
+    const nights: LeagueNight[] = currentLeague.leagueDays.map((day, index) => {
       const nextDate = getNextDateForDay(day);
       const isToday = day === todayName;
 
       return {
-        id: nextDate.toISOString().split("T")[0],
+        id: `night-${index}`,
         day,
         date: nextDate.toLocaleDateString("en-US", {
           month: "short",

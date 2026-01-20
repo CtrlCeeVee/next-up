@@ -20,8 +20,8 @@ interface LeagueNightState {
   checkingIn: boolean;
   unchecking: boolean;
   sendingRequest: string | null;
-  acceptingRequest: number | null;
-  rejectingRequest: number | null;
+  acceptingRequest: string | null;
+  rejectingRequest: string | null;
   removingPartnership: boolean;
   startingLeague: boolean;
   endingLeague: boolean;
@@ -60,13 +60,13 @@ interface LeagueNightState {
   acceptPartnershipRequest: (
     leagueId: string,
     nightId: string,
-    requestId: number,
+    requestId: string,
     userId: string
   ) => Promise<void>;
   rejectPartnershipRequest: (
     leagueId: string,
     nightId: string,
-    requestId: number,
+    requestId: string,
     userId: string
   ) => Promise<void>;
   removePartnership: (
@@ -152,24 +152,18 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
     try {
       const requests = await leagueNightsService.getPartnershipRequests(
         leagueId,
-        nightId
-      );
-      set({ partnershipRequests: requests });
-
-      // Get confirmed partnership
-      const partnership = await leagueNightsService.getConfirmedPartnership(
-        leagueId,
         nightId,
         userId
       );
-      set({ confirmedPartnership: partnership });
+      set({ partnershipRequests: requests.requests });
+      set({ confirmedPartnership: requests.confirmedPartnership });
 
       // Get current match if partnership exists
-      if (partnership) {
+      if (requests.confirmedPartnership) {
         const match = await leagueNightsService.getCurrentMatch(
           leagueId,
           nightId,
-          partnership.id
+          requests.confirmedPartnership.id
         );
         set({ currentMatch: match });
       } else {
@@ -247,7 +241,7 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
   acceptPartnershipRequest: async (
     leagueId: string,
     nightId: string,
-    requestId: number,
+    requestId: string,
     userId: string
   ) => {
     set({ acceptingRequest: requestId, error: null });
@@ -277,7 +271,7 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
   rejectPartnershipRequest: async (
     leagueId: string,
     nightId: string,
-    requestId: number,
+    requestId: string,
     userId: string
   ) => {
     set({ rejectingRequest: requestId, error: null });

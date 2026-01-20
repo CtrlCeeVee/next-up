@@ -6,6 +6,8 @@ import type {
   Partnership,
   PartnershipRequestsResponse,
   ConfirmedPartnership,
+  PartnershipRequestResponse,
+  Match,
 } from "../types";
 
 export class LeagueNightsService extends BaseService {
@@ -79,7 +81,7 @@ export class LeagueNightsService extends BaseService {
   async acceptPartnershipRequest(
     leagueId: string,
     nightId: string,
-    requestId: number,
+    requestId: string,
     userId: string
   ): Promise<Partnership> {
     const response = await this.post<any>(
@@ -96,7 +98,7 @@ export class LeagueNightsService extends BaseService {
   async rejectPartnershipRequest(
     leagueId: string,
     nightId: string,
-    requestId: number,
+    requestId: string,
     userId: string
   ): Promise<void> {
     await this.post(
@@ -111,10 +113,11 @@ export class LeagueNightsService extends BaseService {
   // Get partnership requests for a league night
   async getPartnershipRequests(
     leagueId: string,
-    nightId: string
-  ): Promise<PartnershipRequest[]> {
+    nightId: string,
+    userId: string
+  ): Promise<PartnershipRequestResponse> {
     const response = await this.get<any>(
-      `/api/leagues/${leagueId}/nights/${nightId}/partnership-requests`
+      `/api/leagues/${leagueId}/nights/${nightId}/partnership-requests?user_id=${userId}`
     );
     return response.data;
   }
@@ -139,6 +142,17 @@ export class LeagueNightsService extends BaseService {
   ): Promise<any | null> {
     const response = await this.get<any>(
       `/api/leagues/${leagueId}/nights/${nightId}/current-match?partnership_id=${partnershipId}`
+    );
+    return response.data;
+  }
+
+  async getMatches(
+    leagueId: string,
+    nightId: string,
+    userId: string
+  ): Promise<Match[]> {
+    const response = await this.get<any>(
+      `/api/leagues/${leagueId}/nights/${nightId}/matches?user_id=${userId}`
     );
     return response.data;
   }
