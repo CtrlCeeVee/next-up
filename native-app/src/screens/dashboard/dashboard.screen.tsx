@@ -11,7 +11,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ThemedText, Card, ScreenContainer } from "../../components";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
-import { GlobalStyles, padding, TextStyle } from "../../core/styles";
+import { GlobalStyles, padding, TextStyle, spacing, gap, roundingLarge } from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
 import { useLeaguesState } from "../../features/leagues/state";
 import { useMembershipState } from "../../features/membership/state";
@@ -461,10 +461,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: padding,
-    paddingBottom: padding * 4,
+    paddingBottom: spacing.xxxl + spacing.lg,
   },
   greeting: {
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   greetingText: {
     flexWrap: "wrap",
@@ -475,11 +475,11 @@ const styles = StyleSheet.create({
   quickActions: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 32,
+    marginBottom: spacing.xxl,
   },
   quickAction: {
     alignItems: "center",
-    gap: 8,
+    gap: gap.sm,
     flex: 1,
   },
   quickActionIcon: {
@@ -499,16 +499,16 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   sections: {
-    gap: 24,
+    gap: gap.xl,
   },
   section: {
     width: "100%",
-    gap: 12,
+    gap: gap.md,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: gap.sm,
   },
   sectionHeaderRow: {
     flexDirection: "row",
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
     borderColor: "#34d3994d",
   },
   activeCardContent: {
-    gap: 12,
+    gap: gap.md,
     padding: padding,
     width: "100%",
   },
@@ -541,19 +541,19 @@ const styles = StyleSheet.create({
   activeCardBadges: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: gap.sm,
   },
   locationRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: gap.xs,
   },
   locationText: {
     opacity: 0.7,
   },
   viewDetailsButton: {
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: spacing.md,
+    borderRadius: roundingLarge,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
   emptyCard: {
     ...GlobalStyles.container,
     alignItems: "center",
-    gap: 8,
+    gap: gap.sm,
   },
   emptyCardText: {
     textAlign: "center",
@@ -577,10 +577,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   loadingList: {
-    gap: 12,
+    gap: gap.md,
   },
   leaguesList: {
-    gap: 12,
+    gap: gap.md,
   },
   leagueCard: {},
   leagueCardInner: {
@@ -590,11 +590,11 @@ const styles = StyleSheet.create({
     padding: padding,
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
+    gap: gap.md,
   },
   leagueCardLeft: {
     flex: 1,
-    gap: 8,
+    gap: gap.sm,
   },
   leagueCardTitle: {
     fontWeight: "600",
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
   leagueCardLocation: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: gap.xs,
   },
   leagueCardLocationText: {
     opacity: 0.7,
@@ -612,20 +612,20 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     flexWrap: "wrap",
     alignItems: "flex-start",
-    gap: 6,
+    gap: gap.sm - 2,
   },
   joinMoreCard: {},
   joinMoreCardInner: {
     ...GlobalStyles.container,
     alignItems: "center",
     justifyContent: "center",
-    gap: 12,
+    gap: gap.md,
   },
   joinMoreCardContent: {
     ...GlobalStyles.container,
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    gap: gap.sm,
   },
   joinMoreText: {
     fontWeight: "600",
@@ -634,16 +634,16 @@ const styles = StyleSheet.create({
   emptyLeaguesCard: {
     ...GlobalStyles.container,
     alignItems: "center",
-    gap: 16,
+    gap: gap.lg,
   },
   emptyLeaguesText: {
     textAlign: "center",
     opacity: 0.7,
   },
   browseButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderRadius: roundingLarge,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,

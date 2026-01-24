@@ -1,10 +1,30 @@
 import { StyleSheet } from "react-native";
 
 // Global spacing constants (from Tailwind config)
-export const padding = 12;
-export const paddingSmall = 8;
-export const paddingLarge = 16;
-export const paddingXLarge = 24;
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  xxl: 32,
+  xxxl: 40,
+};
+
+// Legacy spacing exports (for backward compatibility)
+export const padding = spacing.md; // 12
+export const paddingSmall = spacing.sm; // 8
+export const paddingLarge = spacing.lg; // 16
+export const paddingXLarge = spacing.xl; // 24
+
+// Gap constants
+export const gap = {
+  xs: spacing.xs, // 4
+  sm: spacing.sm, // 8
+  md: spacing.md, // 12
+  lg: spacing.lg, // 16
+  xl: spacing.xl, // 24
+};
 
 // Border radius constants
 export const rounding = 21; // rounded-lg

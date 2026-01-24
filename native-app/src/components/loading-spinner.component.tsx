@@ -2,7 +2,7 @@ import React from "react";
 import { View, ActivityIndicator, StyleSheet, ViewStyle } from "react-native";
 import { useTheme } from "../core/theme";
 import { ThemedText } from "./themed-text.component";
-import { TextStyle } from "../core/styles/text";
+import { TextStyle, spacing } from "../core/styles";
 
 interface LoadingSpinnerProps {
   message?: string;
@@ -34,10 +34,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 20,
+    padding: spacing.lg + 4,
   },
   message: {
-    marginTop: 12,
+    marginTop: spacing.md,
     textAlign: "center",
   },
 });

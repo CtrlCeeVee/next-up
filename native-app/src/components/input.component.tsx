@@ -51,7 +51,9 @@ export const Input: React.FC<InputProps> = ({
             <Icon
               name={leftIcon}
               size={20}
-              color={isFocused ? theme.colors.primary : theme.colors.text + "60"}
+              color={
+                isFocused ? theme.colors.primary : theme.colors.text + "60"
+              }
             />
           </View>
         )}
@@ -59,12 +61,12 @@ export const Input: React.FC<InputProps> = ({
           style={[
             styles.input,
             {
-              backgroundColor: theme.componentBackground,
+              backgroundColor: theme.colors.inputBackground,
               borderColor: error
                 ? "#ef4444"
                 : isFocused
-                ? theme.colors.primary
-                : theme.colors.text + "20",
+                  ? theme.colors.primary
+                  : theme.colors.text + "20",
               color: theme.colors.text,
               fontFamily: PrimaryFont.Regular,
               paddingLeft: leftIcon ? 44 : padding,

@@ -16,6 +16,7 @@ export const LeaguesNavigator = () => {
       screenOptions={{
         headerShown: false,
       }}
+      initialRouteName={Routes.BrowseLeagues}
     >
       <Stack.Screen
         name={Routes.BrowseLeagues}

@@ -9,11 +9,13 @@ import { ProfileScreen } from "../../screens/profile/profile.screen";
 import { StatsScreen } from "../../screens/stats/stats.screen";
 import { AboutScreen } from "../../screens/info/about.screen";
 import { Icon } from "../../icons/icon.component";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
 export const AppNavigator = () => {
   const { theme } = useTheme();
+  const { bottom } = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -22,9 +24,9 @@ export const AppNavigator = () => {
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.text + "80", // 50% opacity
         tabBarStyle: {
-          backgroundColor: theme.componentBackground,
-          borderTopColor: theme.colors.border,
-          paddingBottom: 8,
+          backgroundColor: theme.navigationBarBackground,
+          boxShadow: `0 0 10px 0 ${theme.colors.border}`,
+          height: bottom + 60,
           paddingTop: 8,
         },
       }}
@@ -35,7 +37,9 @@ export const AppNavigator = () => {
         options={{
           tabBarLabel: "Home",
           title: "Home",
-          tabBarIcon: ({ color, size }) => <Icon name="home" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="home" color={color} size={size} />
+          ),
         }}
       />
       <Tab.Screen
@@ -44,9 +48,29 @@ export const AppNavigator = () => {
         options={{
           tabBarLabel: "Leagues",
           title: "Leagues",
-          tabBarIcon: ({ color, size }) => <Icon name="tennis-ball" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="trophy" color={color} size={size} />
+          ),
           headerShown: false,
         }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            const state = navigation.getState();
+            const leaguesRoute = state.routes.find(
+              (r) => r.name === Routes.Leagues
+            );
+            
+            if (
+              leaguesRoute?.state?.index !== undefined &&
+              leaguesRoute.state.index > 0
+            ) {
+              e.preventDefault();
+              navigation.navigate(Routes.Leagues, {
+                screen: Routes.BrowseLeagues,
+              });
+            }
+          },
+        })}
       />
       <Tab.Screen
         name={Routes.Stats}
@@ -54,7 +78,9 @@ export const AppNavigator = () => {
         options={{
           tabBarLabel: "Stats",
           title: "Statistics",
-          tabBarIcon: ({ color, size }) => <Icon name="bar-chart" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="bar-chart" color={color} size={size} />
+          ),
         }}
       />
       <Tab.Screen
@@ -63,7 +89,9 @@ export const AppNavigator = () => {
         options={{
           tabBarLabel: "Profile",
           title: "Profile",
-          tabBarIcon: ({ color, size }) => <Icon name="user" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => (
+            <Icon name="user" color={color} size={size} />
+          ),
         }}
       />
     </Tab.Navigator>

@@ -12,6 +12,7 @@ import { useTheme } from "../../core/theme";
 import { Toast, ToastType } from "../../features/toast/types";
 import { TextStyle } from "../../core/styles";
 import { ThemeCoreColours } from "../../core/theme/theme";
+import { spacing, gap, roundingLarge } from "../../core/styles/global";
 
 interface ToastItemProps {
   toast: Toast;
@@ -151,16 +152,16 @@ export const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss }) => {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: 16,
-    marginBottom: 8,
-    borderRadius: 12,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    borderRadius: roundingLarge,
     justifyContent: "center",
   },
   content: {
     flexDirection: "row",
     alignItems: "flex-start",
-    padding: 16,
-    gap: 12,
+    padding: spacing.lg,
+    gap: gap.md,
   },
   textContainer: {
     flex: 1,
@@ -169,11 +170,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   message: {
-    marginTop: 4,
+    marginTop: spacing.xs,
     opacity: 0.9,
   },
   closeButton: {
-    padding: 4,
+    padding: spacing.xs,
     justifyContent: "center",
     alignItems: "center",
   },

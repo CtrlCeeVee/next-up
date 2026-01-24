@@ -1,24 +1,45 @@
 import React from "react";
-import { ScrollView, RefreshControl, StyleSheet } from "react-native";
+import { FlatList, RefreshControl, StyleSheet, ViewStyle } from "react-native";
 import { useTheme } from "../core/theme";
 
-interface RefreshProps {
-  children: React.ReactNode;
+interface RefreshProps<T> {
+  data: T[];
+  renderItem: (item: { item: T; index: number }) => React.ReactElement | null;
+  keyExtractor: (item: T, index: number) => string;
   refreshing: boolean;
   onRefresh: () => void;
+  ListHeaderComponent?: React.ComponentType<any> | React.ReactElement | null;
+  ListFooterComponent?: React.ComponentType<any> | React.ReactElement | null;
+  ListEmptyComponent?: React.ComponentType<any> | React.ReactElement | null;
+  contentContainerStyle?: ViewStyle;
+  style?: ViewStyle;
+  onEndReached?: () => void;
+  onEndReachedThreshold?: number;
 }
 
-export const Refresh: React.FC<RefreshProps> = ({
-  children,
+export const Refresh = <T,>({
+  data,
+  renderItem,
+  keyExtractor,
   refreshing,
   onRefresh,
-}) => {
+  ListHeaderComponent,
+  ListFooterComponent,
+  ListEmptyComponent,
+  contentContainerStyle,
+  style,
+  onEndReached,
+  onEndReachedThreshold = 0.5,
+}: RefreshProps<T>) => {
   const { theme } = useTheme();
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
+    <FlatList
+      data={data}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      style={[styles.container, style]}
+      contentContainerStyle={[styles.content, contentContainerStyle]}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -28,9 +49,12 @@ export const Refresh: React.FC<RefreshProps> = ({
         />
       }
       showsVerticalScrollIndicator={false}
-    >
-      {children}
-    </ScrollView>
+      ListHeaderComponent={ListHeaderComponent}
+      ListFooterComponent={ListFooterComponent}
+      ListEmptyComponent={ListEmptyComponent}
+      onEndReached={onEndReached}
+      onEndReachedThreshold={onEndReachedThreshold}
+    />
   );
 };
 

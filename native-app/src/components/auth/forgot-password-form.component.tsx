@@ -8,7 +8,7 @@ import { Input } from "../input.component";
 import { Card } from "../card.component";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
-import { GlobalStyles } from "../../core/styles";
+import { GlobalStyles, spacing, gap, roundingLarge } from "../../core/styles";
 
 interface ForgotPasswordFormProps {
   onBack: () => void;
@@ -179,35 +179,35 @@ const styles = StyleSheet.create({
   },
   card: {
     ...GlobalStyles.padding,
-    marginHorizontal: 16,
+    marginHorizontal: spacing.lg,
   },
   header: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   iconContainer: {
     width: 64,
     height: 64,
-    borderRadius: 16,
+    borderRadius: spacing.lg,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   title: {
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     textAlign: "center",
     opacity: 0.7,
   },
   email: {
-    marginTop: 8,
+    marginTop: spacing.sm,
     fontWeight: "600",
   },
   instructions: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+    borderRadius: roundingLarge,
+    padding: spacing.lg,
+    marginBottom: spacing.xl,
   },
   instructionsText: {
     opacity: 0.7,
@@ -215,19 +215,19 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-    gap: 8,
+    padding: spacing.md,
+    borderRadius: roundingLarge,
+    marginBottom: spacing.lg,
+    gap: gap.sm,
   },
   errorText: {
     flex: 1,
   },
   form: {
-    gap: 16,
+    gap: gap.lg,
   },
   footer: {
     alignItems: "center",
-    marginTop: 24,
+    marginTop: spacing.xl,
   },
 });

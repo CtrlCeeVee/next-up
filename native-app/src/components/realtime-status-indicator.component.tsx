@@ -3,6 +3,7 @@ import { View, StyleSheet, Animated } from "react-native";
 import { ThemedText } from "./themed-text.component";
 import { Icon } from "../icons";
 import { useTheme } from "../core/theme";
+import { spacing, gap, roundingLarge } from "../core/styles/global";
 
 interface RealtimeStatusIndicatorProps {
   isConnected: boolean;
@@ -97,15 +98,15 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    gap: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm - 2,
+    borderRadius: roundingLarge,
+    gap: gap.sm - 2,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: spacing.sm,
+    height: spacing.sm,
+    borderRadius: spacing.xs,
   },
   text: {
     fontWeight: "600",

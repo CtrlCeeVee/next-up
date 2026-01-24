@@ -52,8 +52,8 @@ export const Button: React.FC<ButtonProps> = ({
     // Size
     const sizeStyle: ViewStyle = {
       small: { paddingVertical: padding / 2, paddingHorizontal: padding },
-      medium: { paddingVertical: padding, paddingHorizontal: padding * 1.5 },
-      large: { paddingVertical: padding * 1.5, paddingHorizontal: padding * 2 },
+      medium: { paddingVertical: padding, paddingHorizontal: padding + 6 },
+      large: { paddingVertical: padding + 6, paddingHorizontal: padding * 2 },
     }[size];
 
     // Variant
@@ -144,6 +144,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   leftIcon: {
-    marginRight: 8,
+    marginRight: paddingSmall,
   },
 });

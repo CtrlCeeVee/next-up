@@ -7,7 +7,8 @@ import { Input } from "../input.component";
 import { Card } from "../card.component";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
-import { GlobalStyles } from "../../core/styles";
+import { GlobalStyles, padding, TextStyle, spacing, gap, roundingLarge } from "../../core/styles";
+import { AppIcon } from "../app-icon.component";
 
 interface SignInFormProps {
   onToggle: () => void;
@@ -20,7 +21,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
 }) => {
   const { theme } = useTheme();
   const { signIn, loading, error: authError } = useAuthState();
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -45,18 +46,12 @@ export const SignInForm: React.FC<SignInFormProps> = ({
       <Card style={styles.card}>
         {/* Header */}
         <View style={styles.header}>
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: theme.colors.primaryFaded },
-            ]}
-          >
-            <Icon name="user" size={32} color={theme.colors.primary} />
+          <View style={[styles.iconContainer]}>
+            {/* <Icon name="user" size={32} color={theme.colors.primary} /> */}
+            <AppIcon size={48} />
           </View>
-          <ThemedText styleType="Subheader" style={styles.title}>
-            Welcome Back
-          </ThemedText>
-          <ThemedText styleType="Body" style={styles.subtitle}>
+          <ThemedText textStyle={TextStyle.Header}>Welcome Back</ThemedText>
+          <ThemedText textStyle={TextStyle.Body}>
             Sign in to continue your pickleball journey
           </ThemedText>
         </View>
@@ -71,7 +66,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({
           >
             <Icon name="alert-circle" size={16} color={theme.colors.error} />
             <ThemedText
-              styleType="BodySmall"
+              textStyle={TextStyle.BodySmall}
               style={[styles.errorText, { color: theme.colors.error }]}
             >
               {displayError}
@@ -118,18 +113,18 @@ export const SignInForm: React.FC<SignInFormProps> = ({
             style={styles.submitButton}
           />
         </View>
-
-        {/* Toggle to Sign Up */}
-        <View style={styles.footer}>
-          <ThemedText styleType="Body">Don't have an account? </ThemedText>
-          <Button
-            text="Create one here"
-            variant="link"
-            onPress={onToggle}
-            disabled={loading}
-          />
-        </View>
       </Card>
+      <View style={styles.footer}>
+        <ThemedText textStyle={TextStyle.Body}>
+          Don't have an account?{" "}
+        </ThemedText>
+        <Button
+          text="Create one here"
+          variant="link"
+          onPress={onToggle}
+          disabled={loading}
+        />
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -138,25 +133,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
+    paddingHorizontal: padding,
   },
   card: {
-    ...GlobalStyles.padding,
-    marginHorizontal: 16,
+    paddingHorizontal: padding,
+    paddingVertical: spacing.xl,
   },
   header: {
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   iconContainer: {
     width: 64,
     height: 64,
-    borderRadius: 16,
+    borderRadius: spacing.lg,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   title: {
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   subtitle: {
     textAlign: "center",
@@ -165,28 +161,28 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-    gap: 8,
+    padding: spacing.md,
+    borderRadius: roundingLarge,
+    marginBottom: spacing.lg,
+    gap: gap.sm,
   },
   errorText: {
     flex: 1,
   },
   form: {
-    gap: 16,
+    gap: gap.lg,
   },
   forgotButton: {
     alignSelf: "flex-end",
-    marginTop: -8,
+    marginTop: -spacing.sm,
   },
   submitButton: {
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   footer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 24,
+    marginTop: spacing.md,
   },
 });

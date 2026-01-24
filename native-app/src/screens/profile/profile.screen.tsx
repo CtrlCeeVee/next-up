@@ -19,12 +19,19 @@ import { useTheme } from "../../core/theme";
 import { useAuthState } from "../../features/auth/state";
 import { useProfilesState } from "../../features/profiles/state";
 import { useToastState } from "../../features/toast/state";
-import { GlobalStyles, TextStyle, padding } from "../../core/styles";
+import { GlobalStyles, TextStyle, padding, spacing, gap, roundingLarge } from "../../core/styles";
 
 export const ProfileScreen = () => {
   const { theme, isDark } = useTheme();
   const { user, signOut } = useAuthState();
-  const { profile, stats, loading, fetchProfileByUserId, fetchStats, updateProfile } = useProfilesState();
+  const {
+    profile,
+    stats,
+    loading,
+    fetchProfileByUserId,
+    fetchStats,
+    updateProfile,
+  } = useProfilesState();
   const { showToast } = useToastState();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -103,6 +110,13 @@ export const ProfileScreen = () => {
   if (!profile || !user) {
     return (
       <ScreenContainer>
+        <Button
+          text="Sign Out"
+          variant="outline"
+          onPress={handleSignOut}
+          leftIcon="logout"
+          style={styles.signOutButton}
+        />
         <View style={styles.centerContainer}>
           <Icon name="user" size={48} color={theme.colors.text + "40"} />
           <ThemedText textStyle={TextStyle.Body} style={styles.emptyText}>
@@ -124,9 +138,7 @@ export const ProfileScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Hero Section with Gradient */}
-        <View
-          style={styles.heroSection}
-        >
+        <View style={styles.heroSection}>
           {/* Edit Button */}
           {!isEditing && (
             <TouchableOpacity
@@ -141,7 +153,10 @@ export const ProfileScreen = () => {
           <View style={styles.avatarContainer}>
             <LinearGradient
               colors={isDark ? ["#475569", "#334155"] : ["#ffffff", "#f1f5f9"]}
-              style={[styles.avatar, { borderColor: theme.colors.primary + "40" }]}
+              style={[
+                styles.avatar,
+                { borderColor: theme.colors.primary + "40" },
+              ]}
             >
               <Icon name="user" size={48} color={theme.colors.text + "80"} />
             </LinearGradient>
@@ -154,7 +169,12 @@ export const ProfileScreen = () => {
 
           {isEditing ? (
             <View style={styles.heroEditContainer}>
-              <View style={[styles.heroEditInput, { backgroundColor: theme.componentBackground + "CC" }]}>
+              <View
+                style={[
+                  styles.heroEditInput,
+                  { backgroundColor: theme.componentBackground + "CC" },
+                ]}
+              >
                 <Icon name="trophy" size={14} color={theme.colors.primary} />
                 <View style={styles.skillLevelInlineContainer}>
                   {["Beginner", "Intermediate", "Advanced"].map((level) => (
@@ -174,7 +194,10 @@ export const ProfileScreen = () => {
                       <ThemedText
                         textStyle={TextStyle.BodySmall}
                         style={{
-                          color: editSkillLevel === level ? "#FFFFFF" : theme.colors.text,
+                          color:
+                            editSkillLevel === level
+                              ? "#FFFFFF"
+                              : theme.colors.text,
                           fontSize: 12,
                         }}
                       >
@@ -198,7 +221,12 @@ export const ProfileScreen = () => {
           )}
 
           {isEditing ? (
-            <View style={[styles.heroEditInput, { backgroundColor: theme.componentBackground + "CC" }]}>
+            <View
+              style={[
+                styles.heroEditInput,
+                { backgroundColor: theme.componentBackground + "CC" },
+              ]}
+            >
               <Icon name="map-pin" size={14} color={theme.colors.text + "80"} />
               <TextInput
                 style={[styles.inlineInput, { color: theme.colors.text }]}
@@ -211,8 +239,15 @@ export const ProfileScreen = () => {
           ) : (
             profile.location && (
               <View style={styles.heroDetailRow}>
-                <Icon name="map-pin" size={14} color={theme.colors.text + "80"} />
-                <ThemedText textStyle={TextStyle.BodyMedium} style={styles.heroDetailText}>
+                <Icon
+                  name="map-pin"
+                  size={14}
+                  color={theme.colors.text + "80"}
+                />
+                <ThemedText
+                  textStyle={TextStyle.BodyMedium}
+                  style={styles.heroDetailText}
+                >
                   {profile.location}
                 </ThemedText>
               </View>
@@ -221,8 +256,15 @@ export const ProfileScreen = () => {
 
           {profile.createdAt && (
             <View style={styles.heroDetailRow}>
-              <Icon name="calendar" size={14} color={theme.colors.text + "80"} />
-              <ThemedText textStyle={TextStyle.BodyMedium} style={styles.heroDetailText}>
+              <Icon
+                name="calendar"
+                size={14}
+                color={theme.colors.text + "80"}
+              />
+              <ThemedText
+                textStyle={TextStyle.BodyMedium}
+                style={styles.heroDetailText}
+              >
                 Joined {new Date(profile.createdAt).toLocaleDateString()}
               </ThemedText>
             </View>
@@ -231,10 +273,16 @@ export const ProfileScreen = () => {
           {/* Quick Stats */}
           <View style={styles.quickStatsGrid}>
             <Card style={styles.quickStatCard}>
-              <ThemedText textStyle={TextStyle.Header} style={styles.quickStatValue}>
+              <ThemedText
+                textStyle={TextStyle.Header}
+                style={styles.quickStatValue}
+              >
                 {stats?.totalGames || 0}
               </ThemedText>
-              <ThemedText textStyle={TextStyle.BodySmall} style={styles.quickStatLabel}>
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={styles.quickStatLabel}
+              >
                 Games
               </ThemedText>
             </Card>
@@ -245,15 +293,24 @@ export const ProfileScreen = () => {
               >
                 {winRate}%
               </ThemedText>
-              <ThemedText textStyle={TextStyle.BodySmall} style={styles.quickStatLabel}>
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={styles.quickStatLabel}
+              >
                 Win Rate
               </ThemedText>
             </Card>
             <Card style={styles.quickStatCard}>
-              <ThemedText textStyle={TextStyle.Header} style={styles.quickStatValue}>
+              <ThemedText
+                textStyle={TextStyle.Header}
+                style={styles.quickStatValue}
+              >
                 {stats?.activeLeagues || 0}
               </ThemedText>
-              <ThemedText textStyle={TextStyle.BodySmall} style={styles.quickStatLabel}>
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={styles.quickStatLabel}
+              >
                 Leagues
               </ThemedText>
             </Card>
@@ -322,22 +379,36 @@ export const ProfileScreen = () => {
           <Card style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
               <Icon name="trending-up" size={20} color={theme.colors.success} />
-              <ThemedText textStyle={TextStyle.Subheader}>Performance</ThemedText>
+              <ThemedText textStyle={TextStyle.Subheader}>
+                Performance
+              </ThemedText>
             </View>
             <View style={styles.performanceGrid}>
               <View style={styles.performanceItem}>
-                <ThemedText textStyle={TextStyle.BodySmall} style={styles.performanceLabel}>
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  style={styles.performanceLabel}
+                >
                   Avg Points
                 </ThemedText>
-                <ThemedText textStyle={TextStyle.Header} style={styles.performanceValue}>
+                <ThemedText
+                  textStyle={TextStyle.Header}
+                  style={styles.performanceValue}
+                >
                   {avgPoints}
                 </ThemedText>
               </View>
               <View style={styles.performanceItem}>
-                <ThemedText textStyle={TextStyle.BodySmall} style={styles.performanceLabel}>
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  style={styles.performanceLabel}
+                >
                   Total Points
                 </ThemedText>
-                <ThemedText textStyle={TextStyle.Header} style={styles.performanceValue}>
+                <ThemedText
+                  textStyle={TextStyle.Header}
+                  style={styles.performanceValue}
+                >
                   {stats?.totalPoints || 0}
                 </ThemedText>
               </View>
@@ -358,8 +429,15 @@ export const ProfileScreen = () => {
             </View>
             {profile.location && (
               <View style={styles.contactRow}>
-                <Icon name="map-pin" size={16} color={theme.colors.text + "80"} />
-                <ThemedText textStyle={TextStyle.Body} style={styles.contactText}>
+                <Icon
+                  name="map-pin"
+                  size={16}
+                  color={theme.colors.text + "80"}
+                />
+                <ThemedText
+                  textStyle={TextStyle.Body}
+                  style={styles.contactText}
+                >
                   {profile.location}
                 </ThemedText>
               </View>
@@ -393,7 +471,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    gap: 16,
+    gap: gap.lg,
   },
   loadingText: {
     opacity: 0.7,
@@ -402,16 +480,16 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   heroSection: {
-    paddingTop: 40,
-    marginBottom: 20,
+    paddingTop: spacing.xxxl,
+    marginBottom: spacing.lg + 4,
     paddingHorizontal: padding,
     alignItems: "center",
     position: "relative",
   },
   editIconButton: {
     position: "absolute",
-    top: 16,
-    right: 16,
+    top: spacing.lg,
+    right: spacing.lg,
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -420,7 +498,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   avatarContainer: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   avatar: {
     width: 96,
@@ -433,14 +511,14 @@ const styles = StyleSheet.create({
   heroName: {
     fontSize: 28,
     fontWeight: "700",
-    marginBottom: 8,
+    marginBottom: spacing.sm,
     textAlign: "center",
   },
   heroSkillBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 8,
+    gap: gap.sm - 2,
+    marginBottom: spacing.sm,
   },
   heroSkillText: {
     fontWeight: "600",
@@ -448,51 +526,51 @@ const styles = StyleSheet.create({
   heroDetailRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginBottom: 4,
+    gap: gap.sm - 2,
+    marginBottom: spacing.xs,
   },
   heroDetailText: {
     opacity: 0.8,
   },
   heroEditContainer: {
     width: "100%",
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   heroEditInput: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
+    gap: gap.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: roundingLarge,
   },
   skillLevelInlineContainer: {
     flexDirection: "row",
     flex: 1,
-    gap: 4,
+    gap: gap.xs,
   },
   skillChip: {
     flex: 1,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+    paddingVertical: spacing.sm - 2,
+    paddingHorizontal: spacing.sm,
+    borderRadius: spacing.sm,
     alignItems: "center",
   },
   inlineInput: {
     flex: 1,
     fontSize: 14,
-    paddingVertical: 4,
+    paddingVertical: spacing.xs,
   },
   quickStatsGrid: {
     flexDirection: "row",
-    gap: 12,
-    marginTop: 24,
+    gap: gap.md,
+    marginTop: spacing.xl,
     width: "100%",
   },
   quickStatCard: {
     flex: 1,
-    padding: 16,
-    borderRadius: 16,
+    padding: spacing.lg,
+    borderRadius: spacing.lg,
     alignItems: "center",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
@@ -500,7 +578,7 @@ const styles = StyleSheet.create({
   quickStatValue: {
     fontSize: 24,
     fontWeight: "700",
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   quickStatLabel: {
     opacity: 0.7,
@@ -508,28 +586,28 @@ const styles = StyleSheet.create({
   },
   contentSection: {
     paddingHorizontal: padding,
-    gap: 16,
+    gap: gap.lg,
   },
   editActions: {
     flexDirection: "row",
-    gap: 12,
+    gap: gap.md,
   },
   editActionButton: {
     flex: 1,
   },
   sectionCard: {
     ...GlobalStyles.container,
-    gap: 16,
+    gap: gap.lg,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: gap.sm,
   },
   bioInput: {
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: roundingLarge,
+    padding: spacing.md + 2,
     fontSize: 16,
     height: 100,
     textAlignVertical: "top",
@@ -540,12 +618,12 @@ const styles = StyleSheet.create({
   },
   performanceGrid: {
     flexDirection: "row",
-    gap: 16,
+    gap: gap.lg,
   },
   performanceItem: {
     flex: 1,
     alignItems: "center",
-    gap: 8,
+    gap: gap.sm,
   },
   performanceLabel: {
     opacity: 0.7,
@@ -557,15 +635,15 @@ const styles = StyleSheet.create({
   contactRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: gap.md,
   },
   contactText: {
     opacity: 0.8,
   },
   signOutButton: {
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   bottomSpacing: {
-    height: 32,
+    height: spacing.xxl,
   },
 });

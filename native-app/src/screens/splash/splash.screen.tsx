@@ -1,16 +1,64 @@
-import React from "react";
-import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { View, StyleSheet, useWindowDimensions, Animated } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../../core/theme";
+import NextUpAnimation from "../../../assets/NextUp";
 
 export const SplashScreen = () => {
   const { theme } = useTheme();
+  const { width, height } = useWindowDimensions();
+  const animationWidth = width * 0.8;
+  // const dotLeftPosition = (width - animationWidth) / 2;
+  const dotMarginRight = animationWidth / 2;
+
+  const dotScale = useRef(new Animated.Value(0)).current;
+  const dotOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(dotScale, {
+          toValue: Math.max(width, height) * 2,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(dotOpacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, 2290);
+
+    return () => clearTimeout(timer);
+  }, [width, height]);
 
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
-      <Text style={[styles.title, { color: theme.colors.text }]}>Next-Up</Text>
-      <ActivityIndicator size="large" color={theme.colors.primary} />
+      <View style={{ width: animationWidth, zIndex: 2 }}>
+        <NextUpAnimation />
+      </View>
+
+      <Animated.View
+        style={[
+          styles.dotContainer,
+          {
+            marginRight: dotMarginRight,
+            opacity: dotOpacity,
+            transform: [{ scale: dotScale }],
+            zIndex: 1,
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={["#1088fa", "#0ab9a3"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.dot}
+        />
+      </Animated.View>
     </View>
   );
 };
@@ -21,9 +69,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    marginBottom: 20,
+  dotContainer: {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  dot: {
+    width: 1,
+    height: 1,
+    borderRadius: 0.5,
   },
 });

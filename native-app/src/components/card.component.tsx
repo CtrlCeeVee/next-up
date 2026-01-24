@@ -32,11 +32,8 @@ export const Card: React.FC<CardProps> = ({
 
   // Glass morphism effect: semi-transparent with subtle gradient
   const gradientColors: [ColorValue, ColorValue] =
-    linearGradientColors ||
-    (isDark
-      ? ["rgba(39, 42, 58, 0.8)", "rgba(30, 41, 59, 0.8)"] // slate-800/80 with slight gradient
-      : ["rgba(255, 255, 255, 0.9)", "rgba(248, 250, 252, 0.85)"]); // white to slate-50 with transparency
-
+    linearGradientColors || theme.colors.cardGradient; // slate-800/80 with slight gradient
+  // white to slate-50 with transparency
   return (
     <LinearGradient
       colors={gradientColors}

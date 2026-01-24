@@ -1,7 +1,8 @@
 import { StyleProp, StyleSheet, View, ViewStyle } from "react-native";
 import { ThemedText } from "./themed-text.component";
-import { Icon, IconName, padding, rounding, TextStyle } from "..";
+import { Icon, IconName, TextStyle } from "..";
 import { useTheme } from "../core/theme";
+import { rounding, spacing, gap } from "../core/styles/global";
 
 interface BadgeComponentProps {
   icon: IconName;
@@ -41,9 +42,9 @@ const styles = StyleSheet.create({
   badge: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 4,
-    paddingHorizontal: 6,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm - 2,
     borderRadius: rounding,
-    gap: 4,
+    gap: gap.xs,
   },
 });

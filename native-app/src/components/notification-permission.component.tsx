@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { ThemedText, Card, Button } from "./";
 import { Icon } from "../icons";
 import { useTheme } from "../core/theme";
-import { GlobalStyles, padding } from "../core/styles";
+import { GlobalStyles, padding, spacing, gap, roundingLarge } from "../core/styles";
 import { usePushNotificationsState } from "../features/push-notifications/state";
 import { useAuthState } from "../features/auth/state";
 
@@ -204,20 +204,20 @@ export const NotificationPermissionCard: React.FC = () => {
 const styles = StyleSheet.create({
   card: {
     ...GlobalStyles.padding,
-    gap: 16,
+    gap: gap.lg,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: gap.md,
   },
   description: {
     opacity: 0.8,
     lineHeight: 20,
   },
   steps: {
-    gap: 8,
-    paddingLeft: 8,
+    gap: gap.sm,
+    paddingLeft: spacing.sm,
   },
   step: {
     opacity: 0.7,
@@ -225,9 +225,9 @@ const styles = StyleSheet.create({
   errorContainer: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
-    borderRadius: 12,
-    gap: 8,
+    padding: spacing.md,
+    borderRadius: roundingLarge,
+    gap: gap.sm,
   },
   errorText: {
     flex: 1,
@@ -235,20 +235,20 @@ const styles = StyleSheet.create({
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: gap.sm,
   },
   statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: spacing.sm,
+    height: spacing.sm,
+    borderRadius: spacing.xs,
   },
   statusText: {
     fontWeight: "600",
   },
   actions: {
     flexDirection: "row",
-    gap: 12,
-    marginTop: 8,
+    gap: gap.md,
+    marginTop: spacing.sm,
   },
   actionButton: {
     flex: 1,

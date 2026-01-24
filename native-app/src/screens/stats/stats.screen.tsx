@@ -9,7 +9,7 @@ import {
 import { ThemedText, Card, ScreenContainer } from "../../components";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
-import { GlobalStyles, padding, TextStyle } from "../../core/styles";
+import { GlobalStyles, padding, TextStyle, spacing, gap, roundingLarge } from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
 import { useProfilesState } from "../../features/profiles/state";
 
@@ -508,21 +508,21 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: padding,
-    paddingBottom: padding * 4,
+    paddingBottom: spacing.xxxl + spacing.lg,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
-    gap: 16,
+    padding: spacing.xl,
+    gap: gap.lg,
   },
   loadingText: {
     opacity: 0.7,
   },
   header: {
-    marginBottom: 32,
-    gap: 8,
+    marginBottom: spacing.xxl,
+    gap: gap.sm,
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
@@ -535,24 +535,24 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   section: {
-    marginBottom: 24,
-    gap: 12,
+    marginBottom: spacing.xl,
+    gap: gap.md,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: gap.sm,
   },
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: gap.md,
     alignItems: "stretch",
   },
   statCardInner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: gap.md,
     width: "48%",
     minWidth: "48%",
     maxWidth: "48%",
@@ -560,13 +560,13 @@ const styles = StyleSheet.create({
   statIconContainer: {
     width: 48,
     height: 48,
-    borderRadius: 12,
+    borderRadius: roundingLarge,
     alignItems: "center",
     justifyContent: "center",
   },
   statContent: {
     flex: 1,
-    gap: 2,
+    gap: gap.xs / 2,
   },
   statLabel: {
     opacity: 0.7,
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
   statValueRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: gap.xs,
   },
   statValue: {
     fontSize: 24,
@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
   },
   streakItem: {
     alignItems: "center",
-    gap: 8,
+    gap: gap.sm,
     flex: 1,
   },
   streakIconContainer: {
@@ -620,13 +620,13 @@ const styles = StyleSheet.create({
   },
   leagueStatsGrid: {
     flexDirection: "row",
-    gap: 12,
+    gap: gap.md,
   },
   leagueStatCard: {
     ...GlobalStyles.container,
     flex: 1,
     alignItems: "center",
-    gap: 12,
+    gap: gap.md,
   },
   leagueStatValue: {
     fontSize: 32,
@@ -638,12 +638,12 @@ const styles = StyleSheet.create({
   },
   insightsCard: {
     ...GlobalStyles.container,
-    gap: 16,
+    gap: gap.lg,
   },
   insightRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
+    gap: gap.md,
   },
   insightIcon: {
     width: 40,
@@ -661,8 +661,8 @@ const styles = StyleSheet.create({
   },
   emptyInsights: {
     alignItems: "center",
-    padding: 24,
-    gap: 12,
+    padding: spacing.xl,
+    gap: gap.md,
   },
   emptyInsightsText: {
     opacity: 0.7,
@@ -671,8 +671,8 @@ const styles = StyleSheet.create({
   emptyStateContainer: {
     ...GlobalStyles.container,
     alignItems: "center",
-    padding: 32,
-    gap: 16,
+    padding: spacing.xxl,
+    gap: gap.lg,
   },
   emptyStateTitle: {
     textAlign: "center",

@@ -13,7 +13,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ThemedText, Card, Button, ScreenContainer } from "../../components";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
-import { GlobalStyles, padding, TextStyle } from "../../core/styles";
+import { GlobalStyles, padding, TextStyle, spacing, gap, roundingLarge } from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
 import { useLeaguesState } from "../../features/leagues/state";
 import { useMembershipState } from "../../features/membership/state";
@@ -553,14 +553,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    gap: 16,
+    gap: gap.lg,
   },
   loadingText: {
     opacity: 0.7,
   },
   heroSection: {
-    paddingTop: 40,
-    paddingBottom: 32,
+    paddingTop: spacing.xxxl,
+    paddingBottom: spacing.xxl,
     paddingHorizontal: padding,
     alignItems: "center",
   },
@@ -571,42 +571,42 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   leagueName: {
     fontSize: 28,
     fontWeight: "700",
-    marginBottom: 16,
+    marginBottom: spacing.lg,
     textAlign: "center",
   },
   quickInfo: {
-    gap: 8,
-    marginBottom: 24,
+    gap: gap.sm,
+    marginBottom: spacing.xl,
     alignItems: "center",
   },
   quickInfoItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: gap.sm - 2,
   },
   quickInfoText: {
     opacity: 0.8,
   },
   joinButton: {
     width: "100%",
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   statsGrid: {
     flexDirection: "row",
-    gap: 12,
+    gap: gap.md,
     width: "100%",
   },
   statCard: {
     flex: 1,
-    padding: 16,
-    borderRadius: 16,
+    padding: spacing.lg,
+    borderRadius: spacing.lg,
     alignItems: "center",
-    gap: 8,
+    gap: gap.sm,
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
   },
@@ -621,53 +621,53 @@ const styles = StyleSheet.create({
   },
   contentSection: {
     padding: padding,
-    paddingTop: 28,
-    paddingBottom: 48,
-    gap: 16,
+    paddingTop: spacing.xl + 12,
+    paddingBottom: spacing.xxxl + 8,
+    gap: gap.lg,
   },
-  sectionCard: { padding: padding, gap: 16 },
+  sectionCard: { padding: padding, gap: gap.lg },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: gap.sm,
   },
   description: {
     opacity: 0.8,
     lineHeight: 22,
   },
   detailsGrid: {
-    gap: 16,
+    gap: gap.lg,
     alignItems: "flex-start",
   },
   detailRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    gap: 12,
+    gap: gap.md,
   },
   nightCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     padding: padding,
-    borderRadius: 12,
+    borderRadius: roundingLarge,
     borderWidth: 2,
   },
   nightInfo: {
     flex: 1,
-    gap: 8,
+    gap: gap.sm,
   },
   nightDay: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: gap.sm,
   },
   nightDayText: {
     fontWeight: "600",
   },
   todayBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: roundingLarge,
   },
   todayBadgeText: {
     color: "#FFF",
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
   nightDetails: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: gap.sm - 2,
   },
   nightDetailText: {
     opacity: 0.7,
@@ -686,12 +686,12 @@ const styles = StyleSheet.create({
   membersGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
+    gap: gap.md,
   },
   memberCard: {
     width: "30%",
     alignItems: "center",
-    gap: 8,
+    gap: gap.sm,
   },
   memberAvatar: {
     width: 40,
@@ -707,13 +707,13 @@ const styles = StyleSheet.create({
   moreMembers: {
     textAlign: "center",
     opacity: 0.6,
-    marginTop: 8,
+    marginTop: spacing.sm,
   },
   ctaCard: {
     alignItems: "center",
-    gap: 16,
-    padding: 32,
-    borderRadius: 16,
+    gap: gap.lg,
+    padding: spacing.xxl,
+    borderRadius: spacing.lg,
   },
   ctaTitle: {
     textAlign: "center",
@@ -723,6 +723,6 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   bottomSpacing: {
-    height: 32,
+    height: spacing.xxl,
   },
 });

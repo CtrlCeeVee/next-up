@@ -16,6 +16,7 @@ type FontWeight =
 export interface ThemeCoreColours extends Theme {
   backgroundGradient: [string, string, string];
   componentBackground: string;
+  navigationBarBackground: string;
   fonts: {
     regular: {
       fontFamily: string;
@@ -56,6 +57,9 @@ export interface AppThemeCoreColours extends ThemeCoreColours {
     error: string;
     warning: string;
     info: string;
+    inputBackground: string;
+    cardGradient: [string, string];
+    refreshControlBackground: string;
   } & ThemeCoreColours["colors"];
 }
 
@@ -82,10 +86,12 @@ const defaultFonts: AppThemeCoreColours["fonts"] = {
 export const DarkTheme: AppThemeCoreColours = {
   backgroundGradient: ["#0f172a", "#1e293b", "#064e3b"], // slate-900 → slate-800 → emerald-900
   componentBackground: "#27272a", // secondary-800
+  navigationBarBackground: "#0f172acc", // secondary-800
   colors: {
     background: "#283142", // secondary-950
     border: "#29364d",
     card: "#27272a", // secondary-800
+    cardGradient: ["rgba(39, 42, 58, 0.8)", "rgba(30, 41, 59, 0.8)"], // secondary-800
     text: "#F0F0F0", // Light gray
     notification: "#F0F0F0",
     primary: SharedTheme.primary,
@@ -93,6 +99,8 @@ export const DarkTheme: AppThemeCoreColours = {
     error: SharedTheme.error,
     warning: SharedTheme.warning,
     info: SharedTheme.info,
+    inputBackground: "rgba(30, 41, 59, 0.8)", // secondary-800
+    refreshControlBackground: "#27272a", // secondary-800
   },
   fonts: defaultFonts,
   dark: true,
@@ -101,10 +109,12 @@ export const DarkTheme: AppThemeCoreColours = {
 export const LightTheme: AppThemeCoreColours = {
   backgroundGradient: ["#d1fae5", "#f0fdf4", "#f8fafc"], // slate-50 → green-50 → emerald-50
   componentBackground: "#ffffff",
+  navigationBarBackground: "#ffffff", // white
   colors: {
     background: "#f0f0f0",
     border: "#f0f0f0",
     card: "#FFFFFF", //slightly-darker white
+    cardGradient: ["rgba(255, 255, 255, 0.9)", "rgba(248, 250, 252, 0.85)"], // slightly-darker white
     text: "#18181b", // secondary-900
     notification: "#18181b",
     primary: SharedTheme.primary,
@@ -112,6 +122,8 @@ export const LightTheme: AppThemeCoreColours = {
     error: SharedTheme.error,
     warning: SharedTheme.warning,
     info: SharedTheme.info,
+    inputBackground: "#f0f0f0", // slightly-darker white
+    refreshControlBackground: "#f0f0f0", // slightly-darker white
   },
   fonts: defaultFonts,
   dark: false,
