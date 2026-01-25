@@ -8,6 +8,7 @@ interface ThemedTextProps {
   children: React.ReactNode;
   style?: StyleProp<RNTextStyle>;
   color?: string;
+  muted?: boolean;
 }
 
 export const ThemedText: React.FC<ThemedTextProps> = ({
@@ -15,6 +16,7 @@ export const ThemedText: React.FC<ThemedTextProps> = ({
   children,
   style,
   color,
+  muted,
 }) => {
   const { theme } = useTheme();
 
@@ -22,7 +24,9 @@ export const ThemedText: React.FC<ThemedTextProps> = ({
     <Text
       style={[
         GlobalTextStyles[textStyle],
-        { color: color || theme.colors.text },
+        {
+          color: color || (muted ? theme.colors.muted : theme.colors.text),
+        },
         style,
       ]}
     >

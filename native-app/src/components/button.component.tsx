@@ -9,7 +9,7 @@ import {
   View,
 } from "react-native";
 import { useTheme } from "../core/theme";
-import { rounding, padding } from "../core/styles/global";
+import { rounding, padding, paddingSmall } from "../core/styles/global";
 import { GlobalTextStyles, TextStyle } from "../core/styles/text";
 import { Icon, IconName } from "../icons";
 
@@ -90,9 +90,10 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const getTextStyle = (): RNTextStyle => {
-    const baseStyle = variant === "link"
-      ? GlobalTextStyles[TextStyle.Body]
-      : GlobalTextStyles[TextStyle.Button];
+    const baseStyle =
+      variant === "link"
+        ? GlobalTextStyles[TextStyle.Body]
+        : GlobalTextStyles[TextStyle.Button];
 
     const variantTextColor = {
       primary: "#FFFFFF",
@@ -119,7 +120,9 @@ export const Button: React.FC<ButtonProps> = ({
       activeOpacity={0.7}
     >
       {loading ? (
-        <ActivityIndicator color={variant === "primary" ? "#FFFFFF" : theme.colors.primary} />
+        <ActivityIndicator
+          color={variant === "primary" ? "#FFFFFF" : theme.colors.primary}
+        />
       ) : (
         <View style={styles.content}>
           {leftIcon && (

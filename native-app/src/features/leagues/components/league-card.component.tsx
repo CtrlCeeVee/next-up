@@ -3,7 +3,15 @@ import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { ThemedText, Card } from "../../../components";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
-import { TextStyle, spacing, gap } from "../../../core/styles";
+import {
+  TextStyle,
+  spacing,
+  gap,
+  roundingFull,
+  roundingSmall,
+  paddingSmall,
+  paddingXSmall,
+} from "../../../core/styles";
 import { BadgeComponent } from "../../../components/badge.component";
 import { League } from "../types";
 
@@ -14,6 +22,17 @@ interface LeagueCardProps {
   onPress: () => void;
 }
 
+const DAYS_OF_WEEK = ["S", "M", "T", "W", "T", "F", "S"];
+const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
 export const LeagueCard: React.FC<LeagueCardProps> = ({
   league,
   isTonight,
@@ -22,74 +41,160 @@ export const LeagueCard: React.FC<LeagueCardProps> = ({
 }) => {
   const { theme, isDark } = useTheme();
 
-  return (
-    <TouchableOpacity onPress={onPress}>
-      <Card style={styles.leagueCard} variant="elevated">
-        {/* Header */}
-        <View style={styles.cardHeader}>
-          <View style={styles.cardHeaderLeft}>
-            <View style={styles.cardTitleContainer}>
-              <View style={styles.badgeContainer}>
-                {isTonight && <BadgeComponent icon="zap" text="Tonight" />}
-                {isMember && (
-                  <BadgeComponent
-                    icon="check-circle"
-                    text="Member"
-                    color={isDark ? "#6497f5" : "#2862c9"}
-                  />
-                )}
-              </View>
-              <ThemedText textStyle={TextStyle.Body} style={styles.leagueName}>
-                {league.name}
-              </ThemedText>
-            </View>
-          </View>
-        </View>
+  const renderDaysOfWeek = () => {
+    const activeDays = league.leagueDays.map((day) => DAY_NAMES.indexOf(day));
+    const todayDayOfWeek = new Date().getDay();
 
-        {/* Info */}
-        <View style={styles.infoContainer}>
-          {league.leagueDays && league.leagueDays.length > 0 && (
-            <View style={styles.infoRow}>
-              <Icon
-                name="calendar"
-                size={16}
-                color={theme.colors.text + "80"}
+    const todayColour = theme.colors.accent;
+
+    return (
+      <View style={styles.daysContainer}>
+        {DAYS_OF_WEEK.map((day, index) => {
+          const isActive = activeDays.includes(index);
+          return (
+            <View key={index} style={[styles.dayItem]}>
+              <View
+                style={[
+                  styles.dayCircle,
+                  {
+                    backgroundColor: isActive
+                      ? index === todayDayOfWeek
+                        ? todayColour
+                        : theme.colors.text
+                      : "transparent",
+                    borderColor:
+                      index === todayDayOfWeek
+                        ? todayColour
+                        : theme.colors.text + "30",
+                  },
+                ]}
               />
               <ThemedText
                 textStyle={TextStyle.BodySmall}
-                style={styles.infoText}
+                style={[
+                  styles.dayText,
+                  {
+                    color:
+                      index === todayDayOfWeek
+                        ? todayColour
+                        : isActive
+                          ? theme.colors.text
+                          : theme.colors.text + "30",
+                  },
+                ]}
               >
-                {league.leagueDays.join(", ")} •{" "}
-                {league.startTime.split(":").slice(0, 2).join(":")}
+                {day}
               </ThemedText>
             </View>
-          )}
+          );
+        })}
+      </View>
+    );
+  };
+
+  const renderChevron = () => {
+    return (
+      <View
+        style={[
+          styles.chevronCircle,
+          { backgroundColor: theme.colors.text + "15" },
+        ]}
+      >
+        <Icon name="chevron-right" size={18} color={theme.colors.text} />
+      </View>
+    );
+  };
+
+  return (
+    <TouchableOpacity onPress={onPress}>
+      <Card style={styles.leagueCard} variant="elevated">
+        {/* Top Section: Member Badge & Chevron */}
+        {
+          <View style={styles.topSection}>
+            <View style={styles.badgeContainer}>
+              {isMember && (
+                <BadgeComponent
+                  icon="check-circle"
+                  text="Member"
+                  // green colour
+                  color={theme.colors.success}
+                />
+              )}
+              {!isMember && (
+                <BadgeComponent
+                  icon="plus-circle"
+                  text="Can Join"
+                  color={theme.colors.info}
+                />
+              )}
+              {isTonight && (
+                <BadgeComponent
+                  icon="calendar"
+                  text="Tonight"
+                  // purple colour
+                  color={theme.colors.accent}
+                />
+              )}
+            </View>
+            {renderChevron()}
+          </View>
+        }
+
+        {/* Middle Section: League Name & Location */}
+        <View style={styles.middleSection}>
+          <View style={styles.leagueNameContainer}>
+            <ThemedText textStyle={TextStyle.Body} style={styles.leagueName}>
+              {league.name}
+            </ThemedText>
+            {!isMember && renderChevron()}
+          </View>
           {league.location && (
-            <View style={styles.infoRow}>
-              <Icon name="map-pin" size={16} color={theme.colors.text + "80"} />
+            <View style={styles.locationRow}>
               <ThemedText
                 textStyle={TextStyle.BodySmall}
-                style={styles.infoText}
+                style={styles.locationText}
               >
                 {league.location}
               </ThemedText>
             </View>
           )}
-          {league.totalPlayers !== undefined && (
-            <View style={styles.infoRow}>
-              <Icon name="users" size={16} color={theme.colors.text + "80"} />
-              <ThemedText
-                textStyle={TextStyle.BodySmall}
-                style={styles.infoText}
-              >
-                {league.totalPlayers} members
-              </ThemedText>
-            </View>
-          )}
         </View>
 
-        <View style={styles.arrowContainer}>
-          <Icon name="chevron-right" size={20} color={theme.colors.text} />
+        {/* Bottom Section: Time, Days, Members */}
+        <View style={styles.bottomSection}>
+          <View style={[styles.bottomItem, styles.alignLeft]}>
+            <View style={styles.bottomItemText}>
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={styles.bottomText}
+              >
+                {league.startTime.split(":").slice(0, 2).join(":")}
+              </ThemedText>
+            </View>
+            <ThemedText textStyle={TextStyle.BodySmall} muted>
+              Start Time
+            </ThemedText>
+          </View>
+
+          {league.leagueDays &&
+            league.leagueDays.length > 0 &&
+            renderDaysOfWeek()}
+
+          <View style={[styles.bottomItem, styles.alignRight]}>
+            <View style={styles.bottomItemText}>
+              <Icon name="users" size={12} color={theme.colors.text + "60"} />
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                style={styles.bottomText}
+              >
+                {league.totalPlayers}
+              </ThemedText>
+            </View>
+
+            <ThemedText textStyle={TextStyle.BodySmall} muted>
+              Members
+            </ThemedText>
+          </View>
         </View>
       </Card>
     </TouchableOpacity>
@@ -99,50 +204,94 @@ export const LeagueCard: React.FC<LeagueCardProps> = ({
 const styles = StyleSheet.create({
   leagueCard: {
     marginBottom: spacing.lg,
+    gap: gap.xs,
   },
-  cardHeader: {
+  topSection: {
     flexDirection: "row",
-    alignItems: "center",
-    marginBottom: spacing.md,
-  },
-  cardHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    gap: gap.md,
-  },
-  cardTitleContainer: {
-    flex: 1,
-    gap: gap.sm - 2,
-    justifyContent: "center",
-  },
-  leagueName: {
-    fontWeight: "700",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   badgeContainer: {
     flexDirection: "row",
     alignItems: "center",
     gap: gap.xs,
   },
-  description: {
-    opacity: 0.7,
-    marginBottom: spacing.md,
-    lineHeight: 20,
+  chevronCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: roundingFull,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  infoContainer: {
-    gap: gap.sm,
+  middleSection: {
+    marginBottom: spacing.lg,
+    gap: gap.xs,
   },
-  infoRow: {
+  leagueNameContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    minHeight: 26,
+  },
+  leagueName: {
+    fontWeight: "700",
+    fontSize: 18,
+  },
+  locationRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: gap.xs,
+  },
+  locationText: {
+    opacity: 0.6,
+    fontSize: 13,
+  },
+  bottomSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
+  bottomItem: {
+    flexDirection: "column",
+    alignItems: "center",
+    gap: gap.xs,
+  },
+  bottomItemText: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: gap.xs,
+  },
+  alignRight: {
+    alignItems: "flex-end",
+  },
+  alignLeft: {
+    alignItems: "flex-start",
+  },
+  alignCenter: {
+    alignItems: "center",
+  },
+  bottomText: {
+    opacity: 0.8,
+    fontWeight: "600",
+  },
+  daysContainer: {
+    flexDirection: "row",
+    alignItems: "flex-end",
     gap: gap.sm,
   },
-  infoText: {
-    opacity: 0.8,
+  dayItem: {
+    alignItems: "center",
+    gap: gap.xs,
+    borderRadius: roundingSmall,
   },
-  arrowContainer: {
-    position: "absolute",
-    right: spacing.lg,
-    bottom: spacing.lg,
+  dayCircle: {
+    width: 6,
+    height: 6,
+    borderRadius: roundingFull,
+    borderWidth: 1,
+    marginBottom: gap.xs,
+  },
+  dayText: {
+    fontSize: 10,
   },
 });

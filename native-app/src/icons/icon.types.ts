@@ -67,6 +67,7 @@ export type IconName =
   | "alert-triangle"
   | "check-circle"
   | "info"
+  | "plus-circle"
   // Communication
   | "mail"
   | "phone"

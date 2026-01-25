@@ -14,6 +14,7 @@ export const spacing = {
 // Legacy spacing exports (for backward compatibility)
 export const padding = spacing.md; // 12
 export const paddingSmall = spacing.sm; // 8
+export const paddingXSmall = spacing.xs; // 4
 export const paddingLarge = spacing.lg; // 16
 export const paddingXLarge = spacing.xl; // 24
 

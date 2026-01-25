@@ -15,95 +15,96 @@ export const IconMap: Record<IconName, string> = {
   "chevron-right": "chevron-forward",
   "chevron-up": "chevron-up",
   "chevron-down": "chevron-down",
-  "close": "close",
-  "menu": "menu",
-  "home": "home",
-  
+  close: "close",
+  menu: "menu",
+  home: "home",
+
   // Theme
-  "moon": "moon",
-  "sun": "sunny",
-  
+  moon: "moon",
+  sun: "sunny",
+
   // Sports & Awards
-  "trophy": "trophy",
-  "star": "star",
+  trophy: "trophy",
+  star: "star",
   "star-outline": "star-outline",
-  "medal": "medal",
-  "flame": "flame",
-  
+  medal: "medal",
+  flame: "flame",
+
   // People
-  "user": "person",
-  "users": "people",
+  user: "person",
+  users: "people",
   "user-add": "person-add",
   "user-plus": "person-add",
   "user-check": "person-add",
   "user-x": "person-remove",
-  
+
   // Location & Time
   "map-pin": "location",
-  "calendar": "calendar",
-  "clock": "time",
-  
+  calendar: "calendar",
+  clock: "time",
+
   // Actions
-  "search": "search",
-  "plus": "add",
-  "minus": "remove",
-  "x": "close",
-  "logout": "log-out",
-  "send": "send",
-  "edit": "create",
-  "delete": "trash",
-  "refresh": "refresh",
-  "share": "share-social",
-  
+  search: "search",
+  plus: "add",
+  minus: "remove",
+  x: "close",
+  logout: "log-out",
+  send: "send",
+  edit: "create",
+  delete: "trash",
+  refresh: "refresh",
+  share: "share-social",
+
   // Notifications
-  "bell": "notifications",
+  bell: "notifications",
   "bell-outline": "notifications-outline",
-  
+
   // Stats
   "bar-chart": "bar-chart",
   "trending-up": "trending-up",
   "trending-down": "trending-down",
-  
+
   // Security
-  "shield": "shield",
+  shield: "shield",
   "shield-alert": "shield-checkmark",
-  "lock": "lock-closed",
+  lock: "lock-closed",
   "lock-open": "lock-open",
-  "eye": "eye",
+  eye: "eye",
   "eye-off": "eye-off",
-  
+
   // Status
   "alert-circle": "alert-circle",
   "alert-triangle": "warning",
   "check-circle": "checkmark-circle",
-  "info": "information-circle",
-  
+  info: "information-circle",
+  "plus-circle": "add-circle",
+
   // Communication
-  "mail": "mail",
-  "phone": "call",
-  "message": "chatbubble",
-  
+  mail: "mail",
+  phone: "call",
+  message: "chatbubble",
+
   // Content
-  "file": "document",
+  file: "document",
   "file-text": "document-text",
-  "image": "image",
-  "video": "videocam",
-  "list": "list",
-  
+  image: "image",
+  video: "videocam",
+  list: "list",
+
   // Settings
-  "settings": "settings",
-  "sliders": "options",
-  "filter": "funnel",
-  
+  settings: "settings",
+  sliders: "options",
+  filter: "funnel",
+
   // Sports specific
   "tennis-ball": "tennisball",
-  "play": "play",
-  "pause": "pause",
+  play: "play",
+  pause: "pause",
   "stop-circle": "stop-circle",
-  "heart": "heart",
+  heart: "heart",
   "heart-outline": "heart-outline",
-  
+
   // Misc
-  "zap": "flash",
-  "target": "location",
+  zap: "flash",
+  target: "location",
 };
