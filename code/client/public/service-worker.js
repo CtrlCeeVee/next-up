@@ -4,13 +4,13 @@
 // Service Worker for Next-Up PWA
 // Handles: offline caching, push notifications, notification actions
 
-const CACHE_NAME = 'next-up-v1';
+const CACHE_NAME = 'next-up-v3';
 const urlsToCache = [
   '/',
-  '/index.html',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png'
+  // Don't cache index.html or JS assets - let them be fetched fresh
 ];
 
 // ============================================
@@ -51,11 +51,24 @@ self.addEventListener('activate', (event) => {
 // FETCH - Serve from cache, fallback to network
 // ============================================
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) {
     return;
   }
 
+  // NEVER cache: auth, API, HTML, or JS/CSS assets with hashes
+  if (url.pathname.includes('/auth/') || 
+      url.pathname.includes('/api/') ||
+      url.pathname.includes('supabase.co') ||
+      url.pathname.endsWith('.html') ||
+      url.pathname.match(/\.(js|css)$/)) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Only cache static assets like images, icons, manifest
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -72,13 +85,18 @@ self.addEventListener('fetch', (event) => {
             return response;
           }
 
-          // Clone and cache the response
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+          // Only cache successful static asset responses
+          if (url.pathname.match(/\.(png|jpg|jpeg|svg|webp|woff|woff2)$/)) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
 
           return response;
+        }).catch(() => {
+          // Network failed, try cache as last resort
+          return caches.match(event.request);
         });
       })
   );
