@@ -40,7 +40,7 @@ export class MembershipService extends BaseService {
   }
 
   async getAll(userId: string): Promise<Membership[]> {
-    const response = await this.get<any>(`/api/memberships?user_id=${userId}`);
+    const response = await this.get<any>(`/api/leagues/memberships?user_id=${userId}`);
     return response.data;
   }
 

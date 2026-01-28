@@ -118,7 +118,12 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
         leagueId,
         nightId
       );
-      set({ leagueNight: nightData, loading: false });
+      set({
+        leagueNight: nightData,
+        checkedInPlayers: nightData.checkins,
+        partnershipRequests: nightData.requests,
+        loading: false,
+      });
     } catch (error) {
       set({
         error:

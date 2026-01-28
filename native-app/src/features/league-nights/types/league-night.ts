@@ -11,6 +11,9 @@ export interface LeagueNightInstance extends BaseModel {
   checkedInCount: number;
   partnershipsCount: number;
   possibleGames: number;
+  checkins: CheckedInPlayer[];
+  partnerships: Partnership[];
+  requests: PartnershipRequest[];
 }
 
 export interface CheckedInPlayer {

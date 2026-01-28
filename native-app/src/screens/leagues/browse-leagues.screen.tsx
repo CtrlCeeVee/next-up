@@ -9,7 +9,12 @@ import { useMembershipState } from "../../features/membership/state";
 import { useAuthState } from "../../features/auth/state";
 import { League } from "../../features/leagues/types";
 import { LeaguesStackParamList } from "../../navigation/types";
-import { GlobalStyles, padding, paddingSmall, paddingXLarge } from "../../core/styles";
+import {
+  GlobalStyles,
+  padding,
+  paddingSmall,
+  paddingXLarge,
+} from "../../core/styles";
 import { Routes } from "../../navigation/routes";
 import {
   LeagueCard,
@@ -25,13 +30,16 @@ export const BrowseLeaguesScreen = () => {
   const { theme, isDark } = useTheme();
   const { user } = useAuthState();
   const { leagues, loading, fetchLeagues } = useLeaguesState();
-  const { isMember, checkMembership } = useMembershipState();
+  const { getMemberships, memberships } = useMembershipState();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
 
   useEffect(() => {
     fetchLeagues();
+    if (user) {
+      getMemberships(user.id);
+    }
   }, [user]);
 
   // Check if league is happening today
@@ -60,7 +68,7 @@ export const BrowseLeaguesScreen = () => {
     <LeagueCard
       league={league}
       isTonight={isTonight(league)}
-      isMember={isMember(league.id)}
+      isMember={memberships[league.id] ? true : false}
       onPress={() =>
         navigation.navigate(Routes.LeagueDetail, { leagueId: league.id })
       }

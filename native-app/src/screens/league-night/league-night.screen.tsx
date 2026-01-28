@@ -94,10 +94,6 @@ export const LeagueNightScreen = () => {
       fetchMembership(leagueId, user.id);
     }
     fetchLeagueNight(leagueId, nightId);
-    refreshCheckedInPlayers(leagueId, nightId);
-    if (user) {
-      refreshPartnershipRequests(leagueId, nightId, user.id);
-    }
   }, [leagueId, nightId, user]);
 
   // Set up real-time subscriptions

@@ -11,7 +11,14 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { ThemedText, Card, ScreenContainer } from "../../components";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
-import { GlobalStyles, padding, TextStyle, spacing, gap, roundingLarge } from "../../core/styles";
+import {
+  GlobalStyles,
+  padding,
+  TextStyle,
+  spacing,
+  gap,
+  roundingLarge,
+} from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
 import { useLeaguesState } from "../../features/leagues/state";
 import { useMembershipState } from "../../features/membership/state";
@@ -33,7 +40,7 @@ export const DashboardScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const { theme, isDark } = useTheme();
   const { user } = useAuthState();
-  const { membersByLeague, fetchMembersByLeagueId } = useMembershipState();
+  const { memberships, getMemberships } = useMembershipState();
   const { leagues, fetchLeagues, loading: leaguesLoading } = useLeaguesState();
 
   const [myLeagues, setMyLeagues] = useState<LeagueWithNight[]>([]);
@@ -54,6 +61,9 @@ export const DashboardScreen = () => {
 
         // Fetch all leagues
         await fetchLeagues();
+        if (user) {
+          await getMemberships(user.id);
+        }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -64,21 +74,12 @@ export const DashboardScreen = () => {
     fetchDashboardData();
   }, [user]);
 
-  useEffect(() => {
-    if (!user) return;
-    leagues.forEach((league) => {
-      fetchMembersByLeagueId(league.id);
-    });
-  }, [user, leagues]);
-
   // Filter and process user's leagues
   useEffect(() => {
     if (!leagues || !user) return;
 
     const userLeagues = leagues
-      .filter((league) =>
-        membersByLeague[league.id]?.some((member) => member.id === user.id)
-      )
+      .filter((league) => (memberships[league.id] ? true : false))
       .map((league) => {
         // Check if league has a night happening today
         const today = new Date().toLocaleDateString("en-US", {
@@ -103,7 +104,7 @@ export const DashboardScreen = () => {
     // Find active league night for tonight (if any)
     const todayLeague = userLeagues.find((league) => league.hasNightToday);
     setActiveTonight(todayLeague || null);
-  }, [leagues, membersByLeague]);
+  }, [leagues, memberships]);
 
   // Quick action buttons
   const quickActions = [

@@ -11,7 +11,8 @@ export interface MembershipState {
   error: string | null;
 
   // Actions
-isMember: (leagueId: string) => boolean;
+  getMemberships: (userId: string) => Promise<void>;
+  isMember: (leagueId: string) => boolean;
   checkMembership: (leagueId: string, userId: string) => Promise<void>;
   fetchMembership: (leagueId: string, userId: string) => Promise<void>;
   joinLeague: (leagueId: string, userId: string) => Promise<void>;
@@ -22,7 +23,6 @@ isMember: (leagueId: string) => boolean;
 }
 
 export const useMembershipState = create<MembershipState>((set, get) => {
-
   return {
     membersByLeague: {},
     memberships: {},
@@ -30,6 +30,19 @@ export const useMembershipState = create<MembershipState>((set, get) => {
     joining: false,
     leaving: false,
     error: null,
+
+    getMemberships: async (userId: string) => {
+      const memberships = await membershipService.getAll(userId);
+      set({
+        memberships: memberships.reduce(
+          (acc, membership) => ({
+            ...acc,
+            [membership.league_id]: membership,
+          }),
+          {}
+        ),
+      });
+    },
 
     isMember: (leagueId: string) => {
       const membership = get().memberships[leagueId.toString()];
@@ -39,7 +52,10 @@ export const useMembershipState = create<MembershipState>((set, get) => {
     checkMembership: async (leagueId: string, userId: string) => {
       set({ loading: true, error: null });
       try {
-        const result = await membershipService.checkMembership(leagueId, userId);
+        const result = await membershipService.checkMembership(
+          leagueId,
+          userId
+        );
         set({
           memberships: {
             ...get().memberships,
@@ -61,7 +77,10 @@ export const useMembershipState = create<MembershipState>((set, get) => {
     fetchMembership: async (leagueId: string, userId: string) => {
       set({ loading: true, error: null });
       try {
-        const result = await membershipService.checkMembership(leagueId, userId);
+        const result = await membershipService.checkMembership(
+          leagueId,
+          userId
+        );
         set({
           memberships: {
             ...get().memberships,
@@ -126,7 +145,10 @@ export const useMembershipState = create<MembershipState>((set, get) => {
       set({ loading: true, error: null });
       try {
         const members = await membershipService.getLeagueMembers(leagueId);
-        set({ membersByLeague: { ...get().membersByLeague, [leagueId]: members }, loading: false });
+        set({
+          membersByLeague: { ...get().membersByLeague, [leagueId]: members },
+          loading: false,
+        });
       } catch (error) {
         set({
           error:
