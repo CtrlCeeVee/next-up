@@ -19,12 +19,11 @@ const getAllLeagues = async (req, res) => {
           day_of_week,
           start_time
         ),
-        league_memberships!inner (
+        league_memberships (
           user_id
         )
       `)
-      .eq('is_active', true)
-      .eq('league_memberships.is_active', true);
+      .eq('is_active', true);
 
     if (leaguesError) {
       throw leaguesError;
@@ -73,13 +72,12 @@ const getLeagueById = async (req, res) => {
           day_of_week,
           start_time
         ),
-        league_memberships!inner (
+        league_memberships (
           user_id
         )
       `)
       .eq('id', id)
       .eq('is_active', true)
-      .eq('league_memberships.is_active', true)
       .single();
 
     if (error || !league) {
@@ -397,10 +395,11 @@ const getLeagueStats = async (req, res) => {
       }, 0);
     }
 
-    // If no sessions with attendance data, use member count as a reasonable estimate
+    // Calculate average attendance
+    // If no sessions with attendance data, return 0 (no history yet)
     const avgAttendance = totalSessions > 0 
       ? Math.round(totalAttendance / totalSessions) 
-      : Math.round((membersData?.length || 0) * 0.7); // Assume 70% attendance rate as default
+      : 0;
 
     const stats = {
       totalMembers: membersData?.length || 0,
