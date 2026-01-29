@@ -5,7 +5,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { ThemedText, ScreenContainer } from "../../components";
 import { useTheme } from "../../core/theme";
-import { TextStyle } from "../../core/styles";
+import { padding, TextStyle } from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
 import { useLeaguesState } from "../../features/leagues/state";
 import { useMembershipState } from "../../features/membership/state";
@@ -38,7 +38,7 @@ export const LeagueNightScreen = () => {
   const { theme } = useTheme();
   const { user } = useAuthState();
   const { fetchLeague, currentLeague } = useLeaguesState();
-  const { memberships, fetchMembership } = useMembershipState();
+  const { memberships } = useMembershipState();
 
   // League night state from Zustand
   const {
@@ -72,27 +72,30 @@ export const LeagueNightScreen = () => {
   const { leagueId, nightId } = route.params;
   const [membership, setMembership] = useState<Membership | null>(null);
   const [matchesRefreshTrigger, setMatchesRefreshTrigger] = useState(0);
+  const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // Check if user is checked in
-  const isCheckedIn = user
-    ? checkedInPlayers.some((p) => p.id === user.id)
-    : false;
+  // useEffect(() => {
+  //   refreshCheckedInPlayers(leagueId, nightId);
+  // });
 
-  // Check if user is admin
-  const isAdmin = membership?.role === "admin";
+  useEffect(() => {
+    const isCheckedIn = user
+      ? checkedInPlayers.some((p) => p.id === user.id)
+      : false;
+    setIsCheckedIn(isCheckedIn);
+  }, [checkedInPlayers]);
 
   useEffect(() => {
     if (memberships[leagueId]) {
       setMembership(memberships[leagueId]);
+      setIsAdmin(membership?.role === "admin");
     }
   }, [memberships, leagueId]);
 
   // Initialize data on mount
   useEffect(() => {
     fetchLeague(leagueId);
-    if (user) {
-      fetchMembership(leagueId, user.id);
-    }
     fetchLeagueNight(leagueId, nightId);
   }, [leagueId, nightId, user]);
 
@@ -217,7 +220,8 @@ export const LeagueNightScreen = () => {
           tabBarActiveTintColor: theme.colors.primary,
           tabBarInactiveTintColor: theme.colors.text + "60",
           tabBarStyle: {
-            backgroundColor: theme.componentBackground,
+            backgroundColor: "transparent",
+            marginHorizontal: padding,
           },
           tabBarIndicatorStyle: {
             backgroundColor: theme.colors.primary,
@@ -241,7 +245,7 @@ export const LeagueNightScreen = () => {
             />
           )}
         </Tab.Screen>
-        <Tab.Screen name="Info" options={{ title: "League Info" }}>
+        <Tab.Screen name="Info" options={{ title: "Info" }}>
           {() => <LeagueInfoTab {...tabProps} />}
         </Tab.Screen>
         {isAdmin && (

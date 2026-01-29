@@ -482,6 +482,9 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
           </View>
         ) : (
           <FlatList
+            style={{
+              width: "100%",
+            }}
             data={availablePartners}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => {
@@ -491,8 +494,7 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
                   style={[
                     styles.partnerListCard,
                     {
-                      backgroundColor: theme.componentBackground,
-                      borderColor: theme.colors.border,
+                      borderBottomColor: theme.colors.border,
                     },
                   ]}
                 >
@@ -732,10 +734,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 12,
     borderRadius: 12,
-    borderWidth: 1,
+    borderBottomWidth: 1,
   },
   partnerInfo: {
-    flex: 1,
     gap: 2,
   },
   partnerName: {

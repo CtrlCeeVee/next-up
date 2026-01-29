@@ -146,7 +146,6 @@ export const LeagueCard: React.FC<LeagueCardProps> = ({
             <ThemedText textStyle={TextStyle.Body} style={styles.leagueName}>
               {league.name}
             </ThemedText>
-            {!isMember && renderChevron()}
           </View>
           {league.location && (
             <View style={styles.locationRow}>

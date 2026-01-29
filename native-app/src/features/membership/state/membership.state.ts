@@ -13,8 +13,6 @@ export interface MembershipState {
   // Actions
   getMemberships: (userId: string) => Promise<void>;
   isMember: (leagueId: string) => boolean;
-  checkMembership: (leagueId: string, userId: string) => Promise<void>;
-  fetchMembership: (leagueId: string, userId: string) => Promise<void>;
   joinLeague: (leagueId: string, userId: string) => Promise<void>;
   leaveLeague: (leagueId: string, userId: string) => Promise<void>;
   fetchMembersByLeagueId: (leagueId: string) => Promise<void>;
@@ -47,56 +45,6 @@ export const useMembershipState = create<MembershipState>((set, get) => {
     isMember: (leagueId: string) => {
       const membership = get().memberships[leagueId.toString()];
       return !!membership;
-    },
-
-    checkMembership: async (leagueId: string, userId: string) => {
-      set({ loading: true, error: null });
-      try {
-        const result = await membershipService.checkMembership(
-          leagueId,
-          userId
-        );
-        set({
-          memberships: {
-            ...get().memberships,
-            [leagueId]: result.membership,
-          },
-          loading: false,
-        });
-      } catch (error) {
-        set({
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to check membership",
-          loading: false,
-        });
-      }
-    },
-
-    fetchMembership: async (leagueId: string, userId: string) => {
-      set({ loading: true, error: null });
-      try {
-        const result = await membershipService.checkMembership(
-          leagueId,
-          userId
-        );
-        set({
-          memberships: {
-            ...get().memberships,
-            [leagueId.toString()]: result.membership,
-          },
-          loading: false,
-        });
-      } catch (error) {
-        set({
-          error:
-            error instanceof Error
-              ? error.message
-              : "Failed to fetch membership",
-          loading: false,
-        });
-      }
     },
 
     joinLeague: async (leagueId: string, userId: string) => {

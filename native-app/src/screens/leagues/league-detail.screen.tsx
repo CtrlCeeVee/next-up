@@ -53,7 +53,6 @@ export const LeagueDetailScreen = () => {
     leaveLeague,
     joining,
     leaving,
-    fetchMembership,
     membersByLeague,
   } = useMembershipState();
 
@@ -63,9 +62,6 @@ export const LeagueDetailScreen = () => {
 
   useEffect(() => {
     fetchLeague(leagueId);
-    if (user) {
-      fetchMembership(leagueId, user.id);
-    }
   }, [leagueId, user]);
 
   // Generate upcoming league nights
@@ -86,7 +82,7 @@ export const LeagueDetailScreen = () => {
       const todayDay = today.getDay();
       let daysUntilTarget = targetDay - todayDay;
 
-      if (daysUntilTarget <= 0) {
+      if (daysUntilTarget < 0) {
         daysUntilTarget += 7;
       }
 

@@ -6,17 +6,6 @@ export class MembershipService extends BaseService {
     super();
   }
 
-  // Check if user is a member of a league
-  async checkMembership(
-    leagueId: string,
-    userId: string
-  ): Promise<{ isMember: boolean; membership: Membership | null }> {
-    const response = await this.get<any>(
-      `/api/leagues/${leagueId}/membership?user_id=${userId}`
-    );
-    return response.data;
-  }
-
   // Join a league
   async joinLeague(
     leagueId: string,
