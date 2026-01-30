@@ -24,6 +24,17 @@ const LEAGUES = [
     totalPlayers: 42,
     isActive: true
   },
+  {
+    id: 3,
+    name: "GPC Pickleball",
+    description: "GPC Pickleball is a premier pickleball complex in South Africa. Featuring brand new courts. GPC Pickleball offers an unparalleled playing experience.",
+    location: "German Country Club",
+    address: "131 Holkam Rd, Paulshof, Sandton, 2056",
+    leagueDays: ["Saturday"],
+    startTime: "15:00",
+    totalPlayers: 0,
+    isActive: true
+  },
 ];
 
 export default function BrowseLeaguesPage() {

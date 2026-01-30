@@ -17,8 +17,10 @@ interface AdminTabProps {
   userId?: string;
   startingLeague: boolean;
   endingLeague: boolean;
+  restartingLeague: boolean;
   onStartLeague: () => void;
   onEndLeague: () => void;
+  onRestartLeague: () => void;
   onRefresh: () => void;
 }
 
@@ -29,8 +31,10 @@ const AdminTab: React.FC<AdminTabProps> = ({
   userId,
   startingLeague,
   endingLeague,
+  restartingLeague,
   onStartLeague,
   onEndLeague,
+  onRestartLeague,
   onRefresh
 }) => {
   const isActive = leagueNight.backendStatus === 'active' || leagueNight.status === 'active';
@@ -692,11 +696,31 @@ const AdminTab: React.FC<AdminTabProps> = ({
           )}
 
           {isCompleted && (
-            <div className="bg-slate-100 dark:bg-slate-700/50 rounded-lg p-4 text-center">
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">League Night Ended</p>
-              <p className="text-xs text-slate-500 dark:text-slate-500">
-                No new matches will be auto-assigned
-              </p>
+            <div className="space-y-4">
+              <div className="bg-slate-100 dark:bg-slate-700/50 rounded-lg p-4 text-center">
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-1">League Night Ended</p>
+                <p className="text-xs text-slate-500 dark:text-slate-500">
+                  No new matches will be auto-assigned
+                </p>
+              </div>
+              
+              <button
+                onClick={onRestartLeague}
+                disabled={restartingLeague}
+                className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {restartingLeague ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Restarting League Night...
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-6 h-6" />
+                    Restart League Night
+                  </>
+                )}
+              </button>
             </div>
           )}
         </div>
