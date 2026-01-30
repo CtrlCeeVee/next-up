@@ -15,6 +15,7 @@ const {
   removePartnership,
   startLeague,
   endLeague,
+  restartLeague,
   updateCourts,
   toggleAutoAssignment,
   adminCheckInPlayer,
@@ -90,6 +91,9 @@ router.post('/:leagueId/nights/:nightId/start-league', startLeague);
 
 // POST /api/leagues/:leagueId/nights/:nightId/end-league - End league night (admin only)
 router.post('/:leagueId/nights/:nightId/end-league', endLeague);
+
+// POST /api/leagues/:leagueId/nights/:nightId/restart-league - Restart a completed league night (admin only)
+router.post('/:leagueId/nights/:nightId/restart-league', restartLeague);
 
 // POST /api/leagues/:leagueId/nights/:nightId/update-courts - Update court configuration (admin only)
 router.post('/:leagueId/nights/:nightId/update-courts', updateCourts);

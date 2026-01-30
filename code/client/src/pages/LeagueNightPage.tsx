@@ -77,6 +77,7 @@ const LeagueNightPage = () => {
   const [removingPartnership, setRemovingPartnership] = useState(false);
   const [startingLeague, setStartingLeague] = useState(false);
   const [endingLeague, setEndingLeague] = useState(false);
+  const [restartingLeague, setRestartingLeague] = useState(false);
 
   // Tab state
   const [activeTab, setActiveTab] = useState('my-night');
@@ -293,6 +294,24 @@ const LeagueNightPage = () => {
       console.error('Error ending league:', error);
     } finally {
       setEndingLeague(false);
+    }
+  };
+
+  // Handle restarting league night (admin only)
+  const handleRestartLeague = async () => {
+    if (!user || !leagueId || !nightId || restartingLeague) return;
+
+    setRestartingLeague(true);
+    try {
+      await leagueNightService.restartLeague(parseInt(leagueId), nightId, user.id);
+      
+      // Refresh league night data to show new status
+      await fetchLeagueNight();
+      
+    } catch (error) {
+      console.error('Error restarting league:', error);
+    } finally {
+      setRestartingLeague(false);
     }
   };
 
@@ -642,8 +661,10 @@ const LeagueNightPage = () => {
             userId={user?.id}
             startingLeague={startingLeague}
             endingLeague={endingLeague}
+            restartingLeague={restartingLeague}
             onStartLeague={handleStartLeague}
             onEndLeague={handleEndLeague}
+            onRestartLeague={handleRestartLeague}
             onRefresh={() => {
               refreshCheckedInPlayers();
               refreshPartnershipRequests();

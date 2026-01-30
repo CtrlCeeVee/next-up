@@ -938,6 +938,76 @@ const endLeague = async (req, res) => {
   }
 };
 
+// POST /api/leagues/:leagueId/nights/:nightId/restart-league - Restart a completed league night (admin only)
+const restartLeague = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID is required'
+      });
+    }
+
+    // Check if user is admin of this league
+    const { data: membership, error: membershipError } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (membershipError || !membership || membership.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Only league admins can restart the league night'
+      });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    if (instance.status !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        error: 'Can only restart completed league nights'
+      });
+    }
+
+    // Restart the league night - set status back to active
+    const { data: updatedInstance, error: updateError } = await supabase
+      .from('league_night_instances')
+      .update({ 
+        status: 'active',
+        ended_at: null
+      })
+      .eq('id', instance.id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    console.log(`League night ${instance.id} restarted by admin ${user_id}`);
+
+    res.json({
+      success: true,
+      data: {
+        instance: updatedInstance,
+        message: 'League night restarted successfully. Auto-assignment is now active again.'
+      }
+    });
+
+  } catch (error) {
+    console.error('Error restarting league:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to restart league night'
+    });
+  }
+};
+
 // POST /api/leagues/:leagueId/nights/:nightId/update-courts
 const updateCourts = async (req, res) => {
   try {
@@ -1673,6 +1743,7 @@ module.exports = {
   removePartnership,
   startLeague,
   endLeague,
+  restartLeague,
   updateCourts,
   toggleAutoAssignment,
   adminCheckInPlayer,
