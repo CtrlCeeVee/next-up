@@ -4,20 +4,19 @@
 // Service Worker for Next-Up PWA
 // Handles: offline caching, push notifications, notification actions
 
-const CACHE_NAME = 'next-up-v3';
+const CACHE_NAME = 'next-up-v4'; // Bumped version to force update
 const urlsToCache = [
-  '/',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png'
-  // Don't cache index.html or JS assets - let them be fetched fresh
+  // Don't cache root path, index.html or JS assets - let them be fetched fresh
 ];
 
 // ============================================
 // INSTALL - Cache static assets
 // ============================================
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Installing...');
+  console.log('[Service Work`er] Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
@@ -48,7 +47,17 @@ self.addEventListener('activate', (event) => {
 });
 
 // ============================================
-// FETCH - Serve from cache, fallback to network
+// MESSAGE - Handle messages from app
+// ============================================
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[Service Worker] Received SKIP_WAITING message');
+    self.skipWaiting();
+  }
+});
+
+// ============================================
+// FETCH - Network-first for HTML/JS, cache for static assets
 // ============================================
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
@@ -58,17 +67,30 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // NEVER cache: auth, API, HTML, or JS/CSS assets with hashes
+  // ALWAYS fetch fresh (never cache): auth, API, HTML, JS, CSS
   if (url.pathname.includes('/auth/') || 
       url.pathname.includes('/api/') ||
       url.pathname.includes('supabase.co') ||
       url.pathname.endsWith('.html') ||
+      url.pathname === '/' ||
       url.pathname.match(/\.(js|css)$/)) {
-    event.respondWith(fetch(event.request));
+    // Network-only strategy with no cache fallback to prevent stale content
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        // If offline, show offline page instead of cached stale content
+        if (url.pathname.endsWith('.html') || url.pathname === '/') {
+          return new Response(
+            '<html><body><h1>Offline</h1><p>Please check your internet connection.</p></body></html>',
+            { headers: { 'Content-Type': 'text/html' } }
+          );
+        }
+        throw new Error('Network request failed');
+      })
+    );
     return;
   }
 
-  // Only cache static assets like images, icons, manifest
+  // Only cache static assets like images, icons, fonts
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -86,7 +108,7 @@ self.addEventListener('fetch', (event) => {
           }
 
           // Only cache successful static asset responses
-          if (url.pathname.match(/\.(png|jpg|jpeg|svg|webp|woff|woff2)$/)) {
+          if (url.pathname.match(/\.(png|jpg|jpeg|svg|webp|woff|woff2|ico)$/)) {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);
@@ -95,7 +117,7 @@ self.addEventListener('fetch', (event) => {
 
           return response;
         }).catch(() => {
-          // Network failed, try cache as last resort
+          // Network failed, try cache as last resort for static assets only
           return caches.match(event.request);
         });
       })
