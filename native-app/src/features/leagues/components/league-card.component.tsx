@@ -14,6 +14,7 @@ import {
 } from "../../../core/styles";
 import { BadgeComponent } from "../../../components/badge.component";
 import { League } from "../types";
+import { LeagueDays } from "./league-days.component";
 
 interface LeagueCardProps {
   league: League;
@@ -22,17 +23,6 @@ interface LeagueCardProps {
   onPress: () => void;
 }
 
-const DAYS_OF_WEEK = ["S", "M", "T", "W", "T", "F", "S"];
-const DAY_NAMES = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
-
 export const LeagueCard: React.FC<LeagueCardProps> = ({
   league,
   isTonight,
@@ -40,57 +30,6 @@ export const LeagueCard: React.FC<LeagueCardProps> = ({
   onPress,
 }) => {
   const { theme, isDark } = useTheme();
-
-  const renderDaysOfWeek = () => {
-    const activeDays = league.leagueDays.map((day) => DAY_NAMES.indexOf(day));
-    const todayDayOfWeek = new Date().getDay();
-
-    const todayColour = theme.colors.accent;
-
-    return (
-      <View style={styles.daysContainer}>
-        {DAYS_OF_WEEK.map((day, index) => {
-          const isActive = activeDays.includes(index);
-          return (
-            <View key={index} style={[styles.dayItem]}>
-              <View
-                style={[
-                  styles.dayCircle,
-                  {
-                    backgroundColor: isActive
-                      ? index === todayDayOfWeek
-                        ? todayColour
-                        : theme.colors.text
-                      : "transparent",
-                    borderColor:
-                      index === todayDayOfWeek
-                        ? todayColour
-                        : theme.colors.text + "30",
-                  },
-                ]}
-              />
-              <ThemedText
-                textStyle={TextStyle.BodySmall}
-                style={[
-                  styles.dayText,
-                  {
-                    color:
-                      index === todayDayOfWeek
-                        ? todayColour
-                        : isActive
-                          ? theme.colors.text
-                          : theme.colors.text + "30",
-                  },
-                ]}
-              >
-                {day}
-              </ThemedText>
-            </View>
-          );
-        })}
-      </View>
-    );
-  };
 
   const renderChevron = () => {
     return (
@@ -116,7 +55,6 @@ export const LeagueCard: React.FC<LeagueCardProps> = ({
                 <BadgeComponent
                   icon="check-circle"
                   text="Member"
-                  // green colour
                   color={theme.colors.success}
                 />
               )}
@@ -175,9 +113,9 @@ export const LeagueCard: React.FC<LeagueCardProps> = ({
             </ThemedText>
           </View>
 
-          {league.leagueDays &&
-            league.leagueDays.length > 0 &&
-            renderDaysOfWeek()}
+          {league.leagueDays && league.leagueDays.length > 0 && (
+            <LeagueDays leagueDays={league.leagueDays} />
+          )}
 
           <View style={[styles.bottomItem, styles.alignRight]}>
             <View style={styles.bottomItemText}>
@@ -272,25 +210,5 @@ const styles = StyleSheet.create({
   bottomText: {
     opacity: 0.8,
     fontWeight: "600",
-  },
-  daysContainer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: gap.sm,
-  },
-  dayItem: {
-    alignItems: "center",
-    gap: gap.xs,
-    borderRadius: roundingSmall,
-  },
-  dayCircle: {
-    width: 6,
-    height: 6,
-    borderRadius: roundingFull,
-    borderWidth: 1,
-    marginBottom: gap.xs,
-  },
-  dayText: {
-    fontSize: 10,
   },
 });

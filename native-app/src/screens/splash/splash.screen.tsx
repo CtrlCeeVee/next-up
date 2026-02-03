@@ -14,31 +14,12 @@ export const SplashScreen = () => {
   const dotScale = useRef(new Animated.Value(0)).current;
   const dotOpacity = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      Animated.parallel([
-        Animated.timing(dotScale, {
-          toValue: Math.max(width, height) * 2,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(dotOpacity, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }, 2290);
-
-    return () => clearTimeout(timer);
-  }, [width, height]);
-
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <View style={{ width: animationWidth, zIndex: 2 }}>
-        <NextUpAnimation />
+        {/* <NextUpAnimation /> */}
       </View>
 
       <Animated.View

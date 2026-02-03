@@ -17,6 +17,7 @@ export interface ThemeCoreColours extends Theme {
   backgroundGradient: [string, string, string];
   componentBackground: string;
   navigationBarBackground: string;
+  stackScreenBackground: string;
   fonts: {
     regular: {
       fontFamily: string;
@@ -89,6 +90,7 @@ export const DarkTheme: AppThemeCoreColours = {
   backgroundGradient: ["#0f172a", "#1e293b", "#064e3b"], // slate-900 → slate-800 → emerald-900
   componentBackground: "#27272a", // secondary-800
   navigationBarBackground: "#0f172acc", // secondary-800
+  stackScreenBackground: "#0a101f",
   colors: {
     background: "#283142", // secondary-950
     border: "#29364d",
@@ -114,6 +116,7 @@ export const LightTheme: AppThemeCoreColours = {
   backgroundGradient: ["#d1fae5", "#f0fdf4", "#f8fafc"], // slate-50 → green-50 → emerald-50
   componentBackground: "#ffffff",
   navigationBarBackground: "#ffffff", // white
+  stackScreenBackground: "#f0f0f0", // slightly-darker white
   colors: {
     background: "#f0f0f0",
     border: "#f0f0f0",

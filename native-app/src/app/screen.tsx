@@ -21,7 +21,9 @@ export const Screen = () => {
     } else {
       // Fallback: show app after 3 seconds even if fonts haven't loaded
       const timeout = setTimeout(() => {
-        console.warn("Fonts taking too long to load. Showing app with system fonts.");
+        console.warn(
+          "Fonts taking too long to load. Showing app with system fonts."
+        );
         setShowApp(true);
       }, 3000);
 
@@ -36,13 +38,7 @@ export const Screen = () => {
   return (
     <SafeAreaProvider>
       <View style={styles.container}>
-        <LinearGradient
-          colors={theme.backgroundGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradient}
-        />
-        <SafeAreaView style={styles.safeArea} edges={['left', 'right']}>
+        <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
           <StatusBar
             barStyle={isDark ? "light-content" : "dark-content"}
             backgroundColor="transparent"
@@ -61,7 +57,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   gradient: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
     top: 0,

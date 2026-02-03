@@ -1,6 +1,7 @@
 import { BaseModel } from "../../../core/models";
 
 export interface LeagueNightInstance extends BaseModel {
+  leagueId: string;
   day: string;
   time: string;
   date: string;

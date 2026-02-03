@@ -15,3 +15,6 @@ export * from "./auth";
 
 // Toast components
 export * from "./toast";
+
+// Navigation components
+export * from "./back-chevron.component";

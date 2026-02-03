@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { supabaseClient } from "../core/services";
-import { RealtimeChannel } from "@supabase/supabase-js";
+import { RealtimeChannel, User } from "@supabase/supabase-js";
 
 interface LeagueNightRealtimeCallbacks {
   onCheckinsUpdate?: () => void;
@@ -18,7 +18,7 @@ interface UseLeagueNightRealtimeReturn {
 /**
  * Single hook to manage all real-time subscriptions for a league night
  * This replaces the multiple individual hooks to prevent subscription churn
- * 
+ *
  * Usage:
  * ```tsx
  * const { isConnected, connectionStatus } = useLeagueNightRealtime(
@@ -33,7 +33,7 @@ interface UseLeagueNightRealtimeReturn {
  */
 export const useLeagueNightRealtime = (
   leagueNightInstanceId: string,
-  userId: string,
+  user: User | null,
   callbacks: LeagueNightRealtimeCallbacks
 ): UseLeagueNightRealtimeReturn => {
   const channelRef = useRef<RealtimeChannel | null>(null);
@@ -47,6 +47,7 @@ export const useLeagueNightRealtime = (
 
   // Update callbacks without triggering re-subscription
   useEffect(() => {
+    console.log("mounted realtime hook");
     stableCallbacks.current = callbacks;
   });
 
@@ -61,7 +62,7 @@ export const useLeagueNightRealtime = (
 
   const setupSubscriptions = useCallback(() => {
     // Don't setup if no valid instance ID
-    if (!leagueNightInstanceId) {
+    if (!leagueNightInstanceId || !user) {
       return;
     }
 
@@ -75,7 +76,7 @@ export const useLeagueNightRealtime = (
     const channel = supabaseClient.channel(channelName, {
       config: {
         broadcast: { self: false },
-        presence: { key: userId },
+        presence: { key: user.id },
       },
     });
 
@@ -91,6 +92,7 @@ export const useLeagueNightRealtime = (
         filter: `league_night_instance_id=eq.${leagueNightInstanceId}`,
       },
       (payload) => {
+        console.log("checkins update", payload);
         stableCallbacks.current.onCheckinsUpdate?.();
       }
     );
@@ -105,6 +107,7 @@ export const useLeagueNightRealtime = (
         filter: `league_night_instance_id=eq.${leagueNightInstanceId}`,
       },
       (payload) => {
+        console.log("partnership requests update", payload);
         stableCallbacks.current.onPartnershipRequestsUpdate?.();
       }
     );
@@ -182,7 +185,7 @@ export const useLeagueNightRealtime = (
     });
 
     channelRef.current = channel;
-  }, [leagueNightInstanceId, userId, cleanup]);
+  }, [leagueNightInstanceId, user, cleanup]);
 
   // Set up subscriptions when instance ID or user ID changes
   useEffect(() => {

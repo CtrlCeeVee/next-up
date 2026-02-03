@@ -4,6 +4,7 @@ import { leaguesService } from "../../../di/services.registry";
 
 export interface LeaguesState {
   leagues: League[];
+  myLeagues: League[];
   currentLeague: League | null;
   topPlayers: TopPlayer[];
   stats: LeagueStats | null;
@@ -12,6 +13,7 @@ export interface LeaguesState {
 
   // Actions
   fetchLeagues: () => Promise<void>;
+  fetchMyLeagues: (userId: string) => Promise<void>;
   fetchLeague: (leagueId: string) => Promise<void>;
   fetchTopPlayers: (leagueId: string, userEmail: string) => Promise<void>;
   fetchStats: (leagueId: string) => Promise<void>;
@@ -20,9 +22,9 @@ export interface LeaguesState {
 }
 
 export const useLeaguesState = create<LeaguesState>((set, get) => {
-
   return {
     leagues: [],
+    myLeagues: [],
     currentLeague: null,
     topPlayers: [],
     stats: null,
@@ -36,7 +38,8 @@ export const useLeaguesState = create<LeaguesState>((set, get) => {
         set({ leagues, loading: false });
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : "Failed to fetch leagues",
+          error:
+            error instanceof Error ? error.message : "Failed to fetch leagues",
           loading: false,
         });
       }
@@ -49,7 +52,24 @@ export const useLeaguesState = create<LeaguesState>((set, get) => {
         set({ currentLeague: league, loading: false });
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : "Failed to fetch league",
+          error:
+            error instanceof Error ? error.message : "Failed to fetch league",
+          loading: false,
+        });
+      }
+    },
+
+    fetchMyLeagues: async (userId: string) => {
+      set({ loading: true, error: null });
+      try {
+        const myLeagues = await leaguesService.getMyLeagues(userId);
+        set({ myLeagues, loading: false });
+      } catch (error) {
+        set({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch my leagues",
           loading: false,
         });
       }
@@ -66,7 +86,10 @@ export const useLeaguesState = create<LeaguesState>((set, get) => {
         set({ topPlayers: playersWithCurrentUser, loading: false });
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : "Failed to fetch top players",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch top players",
           loading: false,
         });
       }
@@ -79,7 +102,8 @@ export const useLeaguesState = create<LeaguesState>((set, get) => {
         set({ stats, loading: false });
       } catch (error) {
         set({
-          error: error instanceof Error ? error.message : "Failed to fetch stats",
+          error:
+            error instanceof Error ? error.message : "Failed to fetch stats",
           loading: false,
         });
       }

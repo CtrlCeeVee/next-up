@@ -12,6 +12,15 @@ export class LeaguesService extends BaseService {
     return response.success ? response.data : response;
   }
 
+  // Get my leagues
+  async getMyLeagues(userId: string): Promise<League[]> {
+    const response = await this.get<any>(
+      `/api/leagues/my-leagues?userId=${userId}`
+    );
+    console.log("my leagues response", response.data);
+    return response.success ? response.data : response;
+  }
+
   // Get league by ID
   async getById(id: string): Promise<League> {
     const response = await this.get<any>(`/api/leagues/${id}`);

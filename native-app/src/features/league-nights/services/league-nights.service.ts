@@ -15,6 +15,24 @@ export class LeagueNightsService extends BaseService {
     super();
   }
 
+  // Get all league  nights details
+  async getAllLeagueNights(leagueId: string): Promise<LeagueNightInstance[]> {
+    const response = await this.get<any>(`/api/leagues/${leagueId}/nights`);
+    return response.data;
+  }
+
+  // Get next up league night instances
+  async getNextUpLeagueNightInstances(
+    count: number,
+    userId: string
+  ): Promise<LeagueNightInstance[]> {
+    const response = await this.get<any>(
+      `/api/nights?limit=${count}&userId=${userId}`
+    );
+    console.log("next up league night instances response", response.data);
+    return response.data;
+  }
+
   // Get league night details
   async getLeagueNight(
     leagueId: string,
@@ -119,6 +137,7 @@ export class LeagueNightsService extends BaseService {
     const response = await this.get<any>(
       `/api/leagues/${leagueId}/nights/${nightId}/partnership-requests?user_id=${userId}`
     );
+    console.log("partnership requests response", response.data);
     return response.data;
   }
 

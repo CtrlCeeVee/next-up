@@ -40,36 +40,63 @@ export const LeagueNightScreen = () => {
   const { fetchLeague, currentLeague } = useLeaguesState();
   const { memberships } = useMembershipState();
 
-  // League night state from Zustand
-  const {
-    leagueNight,
-    checkedInPlayers,
-    partnershipRequests,
-    confirmedPartnership,
-    currentMatch,
-    loading,
-    checkingIn,
-    unchecking,
-    sendingRequest,
-    acceptingRequest,
-    rejectingRequest,
-    removingPartnership,
-    startingLeague,
-    endingLeague,
-    fetchLeagueNight,
-    refreshCheckedInPlayers,
-    refreshPartnershipRequests,
-    checkInPlayer,
-    uncheckPlayer,
-    sendPartnershipRequest,
-    acceptPartnershipRequest,
-    rejectPartnershipRequest,
-    removePartnership,
-    startLeague,
-    endLeague,
-  } = useLeagueNightState();
+  // League night state
+  const leagueNight = useLeagueNightState((state) => state.leagueNightInstance);
+  const checkedInPlayers = useLeagueNightState(
+    (state) => state.checkedInPlayers
+  );
+  const partnershipRequests = useLeagueNightState(
+    (state) => state.partnershipRequests
+  );
+  const confirmedPartnership = useLeagueNightState(
+    (state) => state.confirmedPartnership
+  );
+  const currentMatch = useLeagueNightState((state) => state.currentMatch);
+  const loading = useLeagueNightState((state) => state.loading);
+  const checkingIn = useLeagueNightState((state) => state.checkingIn);
+  const unchecking = useLeagueNightState((state) => state.unchecking);
+  const sendingRequest = useLeagueNightState((state) => state.sendingRequest);
+  const acceptingRequest = useLeagueNightState(
+    (state) => state.acceptingRequest
+  );
+  const rejectingRequest = useLeagueNightState(
+    (state) => state.rejectingRequest
+  );
+  const removingPartnership = useLeagueNightState(
+    (state) => state.removingPartnership
+  );
+  const startingLeague = useLeagueNightState((state) => state.startingLeague);
+  const endingLeague = useLeagueNightState((state) => state.endingLeague);
+  const fetchLeagueNight = useLeagueNightState(
+    (state) => state.fetchLeagueNight
+  );
+  const refreshCheckedInPlayers = useLeagueNightState(
+    (state) => state.refreshCheckedInPlayers
+  );
+  const refreshPartnershipRequests = useLeagueNightState(
+    (state) => state.refreshPartnershipRequests
+  );
+  const checkInPlayer = useLeagueNightState((state) => state.checkInPlayer);
+  const uncheckPlayer = useLeagueNightState((state) => state.uncheckPlayer);
+  const sendPartnershipRequest = useLeagueNightState(
+    (state) => state.sendPartnershipRequest
+  );
+  const acceptPartnershipRequest = useLeagueNightState(
+    (state) => state.acceptPartnershipRequest
+  );
+  const rejectPartnershipRequest = useLeagueNightState(
+    (state) => state.rejectPartnershipRequest
+  );
+  const removePartnership = useLeagueNightState(
+    (state) => state.removePartnership
+  );
+  const startLeague = useLeagueNightState((state) => state.startLeague);
+  const endLeague = useLeagueNightState((state) => state.endLeague);
 
+  // Navigation state
   const { leagueId, nightId } = route.params;
+
+  // UI state
   const [membership, setMembership] = useState<Membership | null>(null);
   const [matchesRefreshTrigger, setMatchesRefreshTrigger] = useState(0);
   const [isCheckedIn, setIsCheckedIn] = useState(false);
@@ -100,7 +127,8 @@ export const LeagueNightScreen = () => {
   }, [leagueId, nightId, user]);
 
   // Set up real-time subscriptions
-  useLeagueNightRealtime(leagueId, nightId, {
+
+  useLeagueNightRealtime(nightId, user, {
     onCheckinsUpdate: () => refreshCheckedInPlayers(leagueId, nightId),
     onPartnershipRequestsUpdate: () => {
       if (user) {

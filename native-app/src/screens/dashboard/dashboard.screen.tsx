@@ -26,6 +26,8 @@ import { AppTabParamList } from "../../navigation/types";
 import { Routes } from "../../navigation/routes";
 import type { League } from "../../features/leagues/types";
 import { BadgeComponent } from "../../components/badge.component";
+import { useLeagueNightState } from "../../features/league-nights/state";
+import { LeagueNightInstance } from "../../features/league-nights/types";
 
 type NavigationProp = NativeStackNavigationProp<AppTabParamList>;
 
@@ -37,16 +39,27 @@ interface LeagueWithNight extends Omit<League, "startTime" | "totalPlayers"> {
 }
 
 export const DashboardScreen = () => {
+  // League night state
+  const nextUpLeagueNightInstances = useLeagueNightState(
+    (state) => state.nextUpLeagueNightInstances
+  );
+  const fetchNextUpLeagueNightInstances = useLeagueNightState(
+    (state) => state.fetchNextUpLeagueNightInstances
+  );
+
+  const myLeagues = useLeaguesState((state) => state.myLeagues);
+  const fetchMyLeagues = useLeaguesState((state) => state.fetchMyLeagues);
+
   const navigation = useNavigation<NavigationProp>();
   const { theme, isDark } = useTheme();
   const { user } = useAuthState();
-  const { memberships, getMemberships } = useMembershipState();
+  // const { memberships, getMemberships } = useMembershipState();
   const { leagues, fetchLeagues, loading: leaguesLoading } = useLeaguesState();
 
-  const [myLeagues, setMyLeagues] = useState<LeagueWithNight[]>([]);
-  const [activeTonight, setActiveTonight] = useState<LeagueWithNight | null>(
-    null
-  );
+  // const [myLeagues, setMyLeagues] = useState<LeagueWithNight[]>([]);
+  // const [activeTonight, setActiveTonight] = useState<LeagueWithNight | null>(
+  //   null
+  // );
   const [loading, setLoading] = useState(true);
 
   // Extract first name from user metadata
@@ -61,9 +74,8 @@ export const DashboardScreen = () => {
 
         // Fetch all leagues
         await fetchLeagues();
-        if (user) {
-          await getMemberships(user.id);
-        }
+        await fetchMyLeagues(user.id);
+        await fetchNextUpLeagueNightInstances(3, user.id);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -74,37 +86,43 @@ export const DashboardScreen = () => {
     fetchDashboardData();
   }, [user]);
 
+  const getLeagueForLeagueNightInstance = (
+    leagueNightInstance: LeagueNightInstance
+  ) => {
+    return leagues.find((league) => league.id === leagueNightInstance.leagueId);
+  };
+
   // Filter and process user's leagues
-  useEffect(() => {
-    if (!leagues || !user) return;
+  // useEffect(() => {
+  //   if (!leagues || !user) return;
 
-    const userLeagues = leagues
-      .filter((league) => (memberships[league.id] ? true : false))
-      .map((league) => {
-        // Check if league has a night happening today
-        const today = new Date().toLocaleDateString("en-US", {
-          weekday: "long",
-        });
-        const hasNightToday = league.leagueDays?.includes(today) ?? false;
+  //   // const userLeagues = leagues
+  //   //   .filter((league) => (memberships[league.id] ? true : false))
+  //   //   .map((league) => {
+  //   //     // Check if league has a night happening today
+  //   //     const today = new Date().toLocaleDateString("en-US", {
+  //   //       weekday: "long",
+  //   //     });
+  //   //     const hasNightToday = league.leagueDays?.includes(today) ?? false;
 
-        // Generate nightId for today (format: YYYY-MM-DD)
-        const todayDate = new Date().toISOString().split("T")[0];
+  //   //     // Generate nightId for today (format: YYYY-MM-DD)
+  //   //     const todayDate = new Date().toISOString().split("T")[0];
 
-        return {
-          ...league,
-          hasNightToday,
-          nightId: todayDate,
-          startTime: "7:00 PM", // TODO: Get from league night instance
-          totalPlayers: 0, // TODO: Fetch from API
-        };
-      });
+  //   //     return {
+  //   //       ...league,
+  //   //       hasNightToday,
+  //   //       nightId: todayDate,
+  //   //       startTime: "7:00 PM", // TODO: Get from league night instance
+  //   //       totalPlayers: 0, // TODO: Fetch from API
+  //   //     };
+  //   //   });
 
-    setMyLeagues(userLeagues);
+  //   // setMyLeagues(userLeagues);
 
-    // Find active league night for tonight (if any)
-    const todayLeague = userLeagues.find((league) => league.hasNightToday);
-    setActiveTonight(todayLeague || null);
-  }, [leagues, memberships]);
+  //   // Find active league night for tonight (if any)
+  //   // const todayLeague = userLeagues.find((league) => league.hasNightToday);
+  //   // setActiveTonight(todayLeague || null);
+  // }, [leagues]);
 
   // Quick action buttons
   const quickActions = [
@@ -193,84 +211,95 @@ export const DashboardScreen = () => {
             <Card style={styles.loadingCard}>
               <ActivityIndicator size="large" color={theme.colors.primary} />
             </Card>
-          ) : activeTonight ? (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Icon name="zap" size={20} color={theme.colors.primary} />
-                <ThemedText textStyle={TextStyle.Subheader}>Next Up</ThemedText>
-              </View>
-              <Card
-                style={styles.activeCard}
-                linearGradientColors={
-                  isDark
-                    ? ["rgb(74 222 128 / .05)", "rgb(52 211 153 / .1)"]
-                    : undefined
-                }
-              >
-                <View style={styles.activeCardContent}>
-                  <ThemedText
-                    textStyle={TextStyle.Header}
-                    style={[
-                      styles.activeCardTitle,
-                      { color: theme.colors.primary },
-                    ]}
-                  >
-                    {activeTonight.name}
-                  </ThemedText>
-                  <View style={styles.activeCardBadges}>
-                    <BadgeComponent icon="zap" text="Today" />
-                    <BadgeComponent
-                      icon="clock"
-                      text={activeTonight.startTime || ""}
-                      color={theme.colors.text}
-                    />
-                    <BadgeComponent
-                      icon="users"
-                      text={activeTonight.totalPlayers?.toString() || ""}
-                      color={theme.colors.text}
-                    />
-                  </View>
-                  <View style={styles.locationRow}>
-                    <Icon
-                      name="map-pin"
-                      size={16}
-                      color={theme.colors.text + "80"}
-                    />
-                    <ThemedText
-                      textStyle={TextStyle.Body}
-                      style={styles.locationText}
-                    >
-                      {activeTonight.location}
+          ) : nextUpLeagueNightInstances.length > 0 ? (
+            nextUpLeagueNightInstances.map((leagueNightInstance) => {
+              const league =
+                getLeagueForLeagueNightInstance(leagueNightInstance);
+              console.log("league", league);
+              if (!league) return null;
+
+              return (
+                <View style={styles.section} key={leagueNightInstance.id}>
+                  <View style={styles.sectionHeader}>
+                    <Icon name="zap" size={20} color={theme.colors.primary} />
+                    <ThemedText textStyle={TextStyle.Subheader}>
+                      Next Up
                     </ThemedText>
                   </View>
-                  <TouchableOpacity
-                    style={[
-                      styles.viewDetailsButton,
-                      { backgroundColor: theme.colors.primary },
-                    ]}
-                    onPress={() => {
-                      if (activeTonight?.nightId) {
-                        (navigation as any).navigate(Routes.Leagues, {
-                          screen: Routes.LeagueNight,
-                          params: {
-                            leagueId: activeTonight.id,
-                            nightId: activeTonight.nightId,
-                          },
-                        });
-                      }
-                    }}
-                    activeOpacity={0.8}
+                  <Card
+                    style={styles.activeCard}
+                    linearGradientColors={
+                      isDark
+                        ? ["rgb(74 222 128 / .05)", "rgb(52 211 153 / .1)"]
+                        : undefined
+                    }
                   >
-                    <ThemedText
-                      textStyle={TextStyle.Button}
-                      style={styles.viewDetailsText}
-                    >
-                      View Details
-                    </ThemedText>
-                  </TouchableOpacity>
+                    <View style={styles.activeCardContent}>
+                      <ThemedText
+                        textStyle={TextStyle.Header}
+                        style={[
+                          styles.activeCardTitle,
+                          { color: theme.colors.primary },
+                        ]}
+                      >
+                        {league.name}
+                      </ThemedText>
+                      <View style={styles.activeCardBadges}>
+                        <BadgeComponent icon="zap" text="Today" />
+                        <BadgeComponent
+                          icon="clock"
+                          text={league.startTime || ""}
+                          color={theme.colors.text}
+                        />
+                        <BadgeComponent
+                          icon="users"
+                          text={league.totalPlayers?.toString() || ""}
+                          color={theme.colors.text}
+                        />
+                      </View>
+                      <View style={styles.locationRow}>
+                        <Icon
+                          name="map-pin"
+                          size={16}
+                          color={theme.colors.text + "80"}
+                        />
+                        <ThemedText
+                          textStyle={TextStyle.Body}
+                          style={styles.locationText}
+                        >
+                          {league.location}
+                        </ThemedText>
+                      </View>
+                      <TouchableOpacity
+                        style={[
+                          styles.viewDetailsButton,
+                          { backgroundColor: theme.colors.primary },
+                        ]}
+                        onPress={() => {
+                          if (leagueNightInstance?.date) {
+                            (navigation as any).navigate(Routes.Leagues, {
+                              screen: Routes.LeagueNight,
+                              params: {
+                                leagueId: leagueNightInstance.id,
+                                nightId: leagueNightInstance.date,
+                              },
+                            });
+                          }
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <ThemedText
+                          textStyle={TextStyle.Button}
+                          style={styles.viewDetailsText}
+                        >
+                          View Details
+                        </ThemedText>
+                      </TouchableOpacity>
+                    </View>
+                  </Card>
                 </View>
-              </Card>
-            </View>
+              );
+            })
           ) : (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>

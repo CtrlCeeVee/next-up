@@ -127,6 +127,7 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
 
   // Get incoming requests
   const incomingRequests = useMemo(() => {
+    console.log("incoming requests", partnershipRequests);
     return partnershipRequests.filter(
       (req) => req.requested_id === user?.id && req.status === "pending"
     );
@@ -134,6 +135,7 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
 
   // Get outgoing requests
   const outgoingRequests = useMemo(() => {
+    console.log("outgoing requests", partnershipRequests);
     return partnershipRequests.filter(
       (req) => req.requester_id === user?.id && req.status === "pending"
     );

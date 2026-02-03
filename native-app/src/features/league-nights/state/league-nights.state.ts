@@ -9,7 +9,8 @@ import type {
 
 interface LeagueNightState {
   // Data
-  leagueNight: LeagueNightInstance | null;
+  leagueNightInstance: LeagueNightInstance | null;
+  nextUpLeagueNightInstances: LeagueNightInstance[];
   checkedInPlayers: CheckedInPlayer[];
   partnershipRequests: PartnershipRequest[];
   confirmedPartnership: ConfirmedPartnership | null;
@@ -31,6 +32,10 @@ interface LeagueNightState {
 
   // Actions
   fetchLeagueNight: (leagueId: string, nightId: string) => Promise<void>;
+  fetchNextUpLeagueNightInstances: (
+    count: number,
+    userId: string
+  ) => Promise<void>;
   refreshCheckedInPlayers: (leagueId: string, nightId: string) => Promise<void>;
   refreshPartnershipRequests: (
     leagueId: string,
@@ -94,7 +99,8 @@ interface LeagueNightState {
 
 export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
   // Initial state
-  leagueNight: null,
+  leagueNightInstance: null,
+  nextUpLeagueNightInstances: [],
   checkedInPlayers: [],
   partnershipRequests: [],
   confirmedPartnership: null,
@@ -114,14 +120,14 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
   fetchLeagueNight: async (leagueId: string, nightId: string) => {
     set({ loading: true, error: null });
     try {
-      const nightData = await leagueNightsService.getLeagueNight(
+      const leagueNightInstance = await leagueNightsService.getLeagueNight(
         leagueId,
         nightId
       );
       set({
-        leagueNight: nightData,
-        checkedInPlayers: nightData.checkins,
-        partnershipRequests: nightData.requests,
+        leagueNightInstance: leagueNightInstance,
+        checkedInPlayers: leagueNightInstance.checkins,
+        partnershipRequests: leagueNightInstance.requests,
         loading: false,
       });
     } catch (error) {
@@ -130,6 +136,24 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
           error instanceof Error
             ? error.message
             : "Failed to fetch league night",
+        loading: false,
+      });
+    }
+  },
+
+  // Fetch next up league night instances
+  fetchNextUpLeagueNightInstances: async (count: number, userId: string) => {
+    set({ loading: true, error: null });
+    try {
+      const nextUpLeagueNightInstances =
+        await leagueNightsService.getNextUpLeagueNightInstances(count, userId);
+      set({ nextUpLeagueNightInstances });
+    } catch (error) {
+      set({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch next up league night instances",
         loading: false,
       });
     }
@@ -364,7 +388,7 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
   // Reset state
   reset: () =>
     set({
-      leagueNight: null,
+      leagueNightInstance: null,
       checkedInPlayers: [],
       partnershipRequests: [],
       confirmedPartnership: null,
