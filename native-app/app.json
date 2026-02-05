@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "native-app",
-    "slug": "native-app",
+    "slug": "nu-test",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,18 +14,29 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.native-app"
+      "bundleIdentifier": "com.anonymous.native-app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "googleServicesFile": "./assets/android/google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.next_up.test"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "2c1137a5-51c9-4df7-9dee-c1dd532c32c4"
+      }
+    },
+    "owner": "nu-test"
   }
 }

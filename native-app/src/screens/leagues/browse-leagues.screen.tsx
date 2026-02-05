@@ -29,8 +29,11 @@ export const BrowseLeaguesScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const { theme, isDark } = useTheme();
   const { user } = useAuthState();
-  const { leagues, loading, fetchLeagues } = useLeaguesState();
-  const { getMemberships, memberships } = useMembershipState();
+  const leagues = useLeaguesState((state) => state.leagues);
+  const loading = useLeaguesState((state) => state.loading);
+  const fetchLeagues = useLeaguesState((state) => state.fetchLeagues);
+  const getMemberships = useMembershipState((state) => state.getMemberships);
+  const memberships = useMembershipState((state) => state.memberships);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");

@@ -39,13 +39,13 @@ export const Screen = () => {
     <SafeAreaProvider>
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
+          <ToastContainer />
           <StatusBar
             barStyle={isDark ? "light-content" : "dark-content"}
             backgroundColor="transparent"
             translucent
           />
           <NavigationProvider />
-          <ToastContainer />
         </SafeAreaView>
       </View>
     </SafeAreaProvider>

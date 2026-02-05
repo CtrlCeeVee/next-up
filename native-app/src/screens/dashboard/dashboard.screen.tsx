@@ -212,94 +212,93 @@ export const DashboardScreen = () => {
               <ActivityIndicator size="large" color={theme.colors.primary} />
             </Card>
           ) : nextUpLeagueNightInstances.length > 0 ? (
-            nextUpLeagueNightInstances.map((leagueNightInstance) => {
-              const league =
-                getLeagueForLeagueNightInstance(leagueNightInstance);
-              console.log("league", league);
-              if (!league) return null;
+            <View style={{gap: gap.md}}>
+              <View style={styles.sectionHeader}>
+                <Icon name="zap" size={20} color={theme.colors.primary} />
+                <ThemedText textStyle={TextStyle.Subheader}>Next Up</ThemedText>
+              </View>
+              {nextUpLeagueNightInstances.map((leagueNightInstance) => {
+                const league =
+                  getLeagueForLeagueNightInstance(leagueNightInstance);
+                if (!league) return null;
 
-              return (
-                <View style={styles.section} key={leagueNightInstance.id}>
-                  <View style={styles.sectionHeader}>
-                    <Icon name="zap" size={20} color={theme.colors.primary} />
-                    <ThemedText textStyle={TextStyle.Subheader}>
-                      Next Up
-                    </ThemedText>
+                return (
+                  <View style={styles.section} key={leagueNightInstance.id}>
+                    <Card
+                      style={styles.activeCard}
+                      linearGradientColors={
+                        isDark
+                          ? ["rgb(74 222 128 / .05)", "rgb(52 211 153 / .1)"]
+                          : undefined
+                      }
+                    >
+                      <View style={styles.activeCardContent}>
+                        <ThemedText
+                          textStyle={TextStyle.Header}
+                          style={[
+                            styles.activeCardTitle,
+                            { color: theme.colors.primary },
+                          ]}
+                        >
+                          {league.name}
+                        </ThemedText>
+                        <View style={styles.activeCardBadges}>
+                          <BadgeComponent icon="zap" text="Today" />
+                          <BadgeComponent
+                            icon="clock"
+                            text={league.startTime || ""}
+                            color={theme.colors.text}
+                          />
+                          <BadgeComponent
+                            icon="users"
+                            text={league.totalPlayers?.toString() || ""}
+                            color={theme.colors.text}
+                          />
+                        </View>
+                        <View style={styles.locationRow}>
+                          <Icon
+                            name="map-pin"
+                            size={16}
+                            color={theme.colors.text + "80"}
+                          />
+                          <ThemedText
+                            textStyle={TextStyle.Body}
+                            style={styles.locationText}
+                          >
+                            {league.location}
+                          </ThemedText>
+                        </View>
+                        <TouchableOpacity
+                          style={[
+                            styles.viewDetailsButton,
+                            { backgroundColor: theme.colors.primary },
+                          ]}
+                          onPress={() => {
+                            if (leagueNightInstance?.date) {
+                              (navigation as any).navigate(Routes.Leagues, {
+                                screen: Routes.LeagueNight,
+                                params: {
+                                  leagueId: leagueNightInstance.id,
+                                  nightId: leagueNightInstance.date,
+                                },
+                              });
+                            }
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <ThemedText
+                            textStyle={TextStyle.Button}
+                            style={styles.viewDetailsText}
+                          >
+                            View Details
+                          </ThemedText>
+                        </TouchableOpacity>
+                      </View>
+                    </Card>
                   </View>
-                  <Card
-                    style={styles.activeCard}
-                    linearGradientColors={
-                      isDark
-                        ? ["rgb(74 222 128 / .05)", "rgb(52 211 153 / .1)"]
-                        : undefined
-                    }
-                  >
-                    <View style={styles.activeCardContent}>
-                      <ThemedText
-                        textStyle={TextStyle.Header}
-                        style={[
-                          styles.activeCardTitle,
-                          { color: theme.colors.primary },
-                        ]}
-                      >
-                        {league.name}
-                      </ThemedText>
-                      <View style={styles.activeCardBadges}>
-                        <BadgeComponent icon="zap" text="Today" />
-                        <BadgeComponent
-                          icon="clock"
-                          text={league.startTime || ""}
-                          color={theme.colors.text}
-                        />
-                        <BadgeComponent
-                          icon="users"
-                          text={league.totalPlayers?.toString() || ""}
-                          color={theme.colors.text}
-                        />
-                      </View>
-                      <View style={styles.locationRow}>
-                        <Icon
-                          name="map-pin"
-                          size={16}
-                          color={theme.colors.text + "80"}
-                        />
-                        <ThemedText
-                          textStyle={TextStyle.Body}
-                          style={styles.locationText}
-                        >
-                          {league.location}
-                        </ThemedText>
-                      </View>
-                      <TouchableOpacity
-                        style={[
-                          styles.viewDetailsButton,
-                          { backgroundColor: theme.colors.primary },
-                        ]}
-                        onPress={() => {
-                          if (leagueNightInstance?.date) {
-                            (navigation as any).navigate(Routes.Leagues, {
-                              screen: Routes.LeagueNight,
-                              params: {
-                                leagueId: leagueNightInstance.id,
-                                nightId: leagueNightInstance.date,
-                              },
-                            });
-                          }
-                        }}
-                        activeOpacity={0.8}
-                      >
-                        <ThemedText
-                          textStyle={TextStyle.Button}
-                          style={styles.viewDetailsText}
-                        >
-                          View Details
-                        </ThemedText>
-                      </TouchableOpacity>
-                    </View>
-                  </Card>
-                </View>
-              );
-            })
+                );
+              })}
+            </View>
           ) : (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>

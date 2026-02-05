@@ -13,6 +13,7 @@ export const ToastContainer: React.FC = () => {
   const { toasts, removeToast } = useToastState();
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+
   if (toasts.length === 0) {
     return null;
   }

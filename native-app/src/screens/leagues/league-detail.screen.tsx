@@ -55,20 +55,16 @@ export const LeagueDetailScreen = () => {
   const navigation = useNavigation<LeagueDetailNavigationProp>();
   const { theme, isDark } = useTheme();
   const { user } = useAuthState();
-  const {
-    fetchLeague,
-    currentLeague,
-    loading: leagueLoading,
-  } = useLeaguesState();
+  const fetchLeague = useLeaguesState((state) => state.fetchLeague);
+  const currentLeague = useLeaguesState((state) => state.currentLeague);
+  const leagueLoading = useLeaguesState((state) => state.loading);
 
-  const {
-    isMember,
-    joinLeague,
-    leaveLeague,
-    joining,
-    leaving,
-    membersByLeague,
-  } = useMembershipState();
+  const isMember = useMembershipState((state) => state.isMember);
+  const joinLeague = useMembershipState((state) => state.joinLeague);
+  const leaveLeague = useMembershipState((state) => state.leaveLeague);
+  const joining = useMembershipState((state) => state.joining);
+  const leaving = useMembershipState((state) => state.leaving);
+  const membersByLeague = useMembershipState((state) => state.membersByLeague);
 
   const { leagueId } = route.params as { leagueId: string };
 

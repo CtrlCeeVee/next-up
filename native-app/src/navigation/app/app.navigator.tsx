@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { AppTabParamList } from "../types";
 import { Routes } from "../routes";
@@ -10,12 +10,37 @@ import { StatsScreen } from "../../screens/stats/stats.screen";
 import { AboutScreen } from "../../screens/info/about.screen";
 import { Icon } from "../../icons/icon.component";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { InjectableType } from "../../di/di";
+import { useInjection } from "../../di/di";
+import { PushNotificationsService } from "../../features/push-notifications/services";
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
 export const AppNavigator = () => {
   const { theme } = useTheme();
   const { bottom } = useSafeAreaInsets();
+
+  useEffect(() => {
+    const pushNotificationService = useInjection<PushNotificationsService>(
+      InjectableType.PUSH_NOTIFICATIONS
+    );
+    pushNotificationService.requestPermission();
+    // async function initFCM() {
+    //   await Notifications.requestPermissionsAsync();
+    //   const messaging = getMessaging();
+    //   const authStatus = await messaging.requestPermission();
+    //   const enabled =
+    //     authStatus === AuthorizationStatus.AUTHORIZED ||
+    //     authStatus === AuthorizationStatus.PROVISIONAL;
+
+    //   if (enabled) {
+    //     const token = await messaging.getToken();
+    //     console.log("FCM TOKEN:", token);
+    //   }
+    // }
+
+    // initFCM();
+  }, []);
 
   return (
     <Tab.Navigator
@@ -59,7 +84,7 @@ export const AppNavigator = () => {
             const leaguesRoute = state.routes.find(
               (r) => r.name === Routes.Leagues
             );
-            
+
             if (
               leaguesRoute?.state?.index !== undefined &&
               leaguesRoute.state.index > 0

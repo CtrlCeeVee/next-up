@@ -89,7 +89,7 @@ const defaultFonts: AppThemeCoreColours["fonts"] = {
 export const DarkTheme: AppThemeCoreColours = {
   backgroundGradient: ["#0f172a", "#1e293b", "#064e3b"], // slate-900 → slate-800 → emerald-900
   componentBackground: "#27272a", // secondary-800
-  navigationBarBackground: "#0f172acc", // secondary-800
+  navigationBarBackground: "#0f172a", // secondary-800
   stackScreenBackground: "#0a101f",
   colors: {
     background: "#283142", // secondary-950

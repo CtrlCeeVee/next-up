@@ -16,6 +16,7 @@ export const useToastState = create<ToastState>((set, get) => ({
   toasts: [],
 
   showToast: (toast: ToastInput) => {
+    console.log("showToast", toast);
     const id = Math.random().toString(36).substr(2, 9);
     const newToast: Toast = {
       id,
