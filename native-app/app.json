@@ -37,6 +37,9 @@
         "projectId": "2c1137a5-51c9-4df7-9dee-c1dd532c32c4"
       }
     },
-    "owner": "nu-test"
+    "owner": "nu-test",
+    "plugins": [
+      "@react-native-firebase/app"
+    ]
   }
 }

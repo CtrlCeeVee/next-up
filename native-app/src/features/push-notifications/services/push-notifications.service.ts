@@ -1,12 +1,8 @@
 import * as Notifications from "expo-notifications";
+
+import { isExpoGo } from "../../../app/app";
 import { BaseService } from "../../../core/services";
 import type { NotificationPermissionStatus } from "../types";
-import {
-  AuthorizationStatus,
-  getMessaging,
-  getToken,
-  requestPermission
-} from "@react-native-firebase/messaging";
 
 export class PushNotificationsService extends BaseService {
   constructor() {
@@ -27,8 +23,12 @@ export class PushNotificationsService extends BaseService {
     const canAskAgain =
       finalStatus === Notifications.PermissionStatus.UNDETERMINED;
 
-    const token = await this.getFcmToken();
-    console.log("FCM TOKEN:", token);
+    try {
+      const token = await this.getFcmToken();
+      console.log("FCM TOKEN:", token);
+    } catch (error) {
+      console.error(error);
+    }
 
     return {
       status: finalStatus as Notifications.PermissionStatus,
@@ -37,6 +37,13 @@ export class PushNotificationsService extends BaseService {
   }
 
   private async getFcmToken(): Promise<string | null> {
+    if (isExpoGo()) {
+      return null;
+    }
+
+    const { getMessaging, requestPermission, getToken, AuthorizationStatus } =
+      await import("@react-native-firebase/messaging");
+
     const messaging = getMessaging();
     const authStatus = await requestPermission(messaging);
     const enabled =
