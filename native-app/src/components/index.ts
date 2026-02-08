@@ -9,6 +9,9 @@ export * from "./refresh.component";
 export * from "./realtime-status-indicator.component";
 export * from "./notification-permission.component";
 export * from "./search-bar.component";
+export * from "./scroll-area.component";
+export * from "./container.component";
+export * from "./map.component";
 
 // Auth components
 export * from "./auth";

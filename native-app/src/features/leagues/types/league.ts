@@ -1,15 +1,21 @@
 import { BaseModel } from "../../../core/models";
+import { DayOfWeek } from "../../../core/types";
+import { LeagueMember } from "../../membership/types";
 
 export interface League extends BaseModel {
   name: string;
   description: string;
   location: string;
+  latitude?: number;
+  longitude?: number;
   address: string;
-  leagueDays: string[];
+  leagueDays: DayOfWeek[];
   startTime: string;
   totalPlayers: number;
   isActive: boolean;
   skillLevel?: string; // Deprecated - keeping for backward compatibility
+  members?: LeagueMember[];
+  image?: string;
 }
 
 export interface TopPlayer {

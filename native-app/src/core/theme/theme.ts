@@ -54,6 +54,8 @@ export const SharedTheme = {
 
 export interface AppThemeCoreColours extends ThemeCoreColours {
   colors: {
+    primaryLight: string;
+    primaryDark: string;
     success: string;
     muted: string;
     error: string;
@@ -99,6 +101,8 @@ export const DarkTheme: AppThemeCoreColours = {
     text: "#F0F0F0", // Light gray
     notification: "#F0F0F0",
     primary: SharedTheme.primary,
+    primaryLight: SharedTheme.primaryLight,
+    primaryDark: SharedTheme.primaryDark,
     success: SharedTheme.success,
     muted: "#64748b", // slate-500
     error: SharedTheme.error,
@@ -125,6 +129,8 @@ export const LightTheme: AppThemeCoreColours = {
     text: "#18181b", // secondary-900
     notification: "#18181b",
     primary: SharedTheme.primary,
+    primaryLight: SharedTheme.primaryLight,
+    primaryDark: SharedTheme.primaryDark,
     success: SharedTheme.success,
     muted: "#64748b", // slate-500
     error: SharedTheme.error,

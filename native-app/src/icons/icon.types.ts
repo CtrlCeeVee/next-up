@@ -91,7 +91,10 @@ export type IconName =
   | "heart-outline"
   // Misc
   | "zap"
-  | "target";
+  | "target"
+  | "sparkle"
+  | "moon"
+  | "checkmark";
 
 /**
  * Icon component props

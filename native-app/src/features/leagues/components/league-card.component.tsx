@@ -14,7 +14,7 @@ import {
 } from "../../../core/styles";
 import { BadgeComponent } from "../../../components/badge.component";
 import { League } from "../types";
-import { LeagueDays } from "./league-days.component";
+import { LeagueDaysSummary } from "./league-days-summary.component";
 
 interface LeagueCardProps {
   league: League;
@@ -114,7 +114,7 @@ export const LeagueCard: React.FC<LeagueCardProps> = ({
           </View>
 
           {league.leagueDays && league.leagueDays.length > 0 && (
-            <LeagueDays leagueDays={league.leagueDays} />
+            <LeagueDaysSummary leagueDays={league.leagueDays} />
           )}
 
           <View style={[styles.bottomItem, styles.alignRight]}>

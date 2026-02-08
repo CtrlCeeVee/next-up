@@ -107,4 +107,6 @@ export const IconMap: Record<IconName, string> = {
   // Misc
   zap: "flash",
   target: "location",
+  sparkle: "sparkles",
+  checkmark: "checkmark",
 };

@@ -1,5 +1,7 @@
 import { StyleSheet } from "react-native";
 
+export const defaultIconSize = 24;
+
 // Global spacing constants (from Tailwind config)
 export const spacing = {
   xs: 4,
@@ -30,6 +32,7 @@ export const gap = {
 // Border radius constants
 export const rounding = 21; // rounded-lg
 export const roundingSmall = 4; // rounded
+export const roundingMedium = 8; // rounded-md
 export const roundingLarge = 12; // rounded-xl
 export const roundingFull = 9999; // rounded-full
 
@@ -73,6 +76,10 @@ export const GlobalStyles = StyleSheet.create({
   },
   row: {
     flexDirection: "row",
+    alignItems: "center",
+  },
+  column: {
+    flexDirection: "column",
     alignItems: "center",
   },
   rowBetween: {

@@ -14,8 +14,16 @@ import { Dropdown } from "../dropdown.component";
 import { Card } from "../card.component";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
-import { GlobalStyles, padding, TextStyle, spacing, gap, roundingLarge } from "../../core/styles";
+import {
+  GlobalStyles,
+  padding,
+  TextStyle,
+  spacing,
+  gap,
+  roundingLarge,
+} from "../../core/styles";
 import { AppIcon } from "../app-icon.component";
+import { SkillLevel } from "../../features/leagues/types";
 
 interface SignUpFormProps {
   onToggle: () => void;
@@ -197,15 +205,15 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onToggle }) => {
             >
               <Dropdown.Item
                 label="🌱 Beginner - New to pickleball"
-                value="Beginner"
+                value={SkillLevel.Beginner}
               />
               <Dropdown.Item
                 label="🎯 Intermediate - Some experience"
-                value="Intermediate"
+                value={SkillLevel.Intermediate}
               />
               <Dropdown.Item
                 label="🏆 Advanced - Experienced player"
-                value="Advanced"
+                value={SkillLevel.Advanced}
               />
             </Dropdown>
 

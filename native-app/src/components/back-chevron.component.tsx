@@ -12,14 +12,12 @@ export const BackChevron = () => {
 
   const styles = StyleSheet.create({
     backChevronContainer: {
-      width: "100%",
       alignItems: "flex-start",
     },
     backChevron: {
       flexDirection: "row",
       alignItems: "center",
       gap: paddingSmall,
-      padding: paddingSmall,
       opacity: 0.2,
     },
   });

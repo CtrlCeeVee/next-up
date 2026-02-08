@@ -14,5 +14,6 @@ export interface LeagueMember {
   email: string;
   skillLevel: "Beginner" | "Intermediate" | "Advanced";
   role: "player" | "admin";
+  imageUrl?: string;
   joinedAt: string;
 }
