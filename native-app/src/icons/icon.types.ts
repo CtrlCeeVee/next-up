@@ -17,6 +17,7 @@ export type IconName =
   | "close"
   | "menu"
   | "home"
+  | "open-external"
   // Theme
   | "moon"
   | "sun"

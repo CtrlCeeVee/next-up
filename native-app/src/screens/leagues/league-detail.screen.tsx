@@ -132,9 +132,6 @@ export const LeagueDetailScreen = () => {
             {currentLeague.name}
           </ThemedText>
         </Container>
-        <ThemedText textStyle={TextStyle.Body} muted>
-          {currentLeague.location}
-        </ThemedText>
       </Container>
     );
   };

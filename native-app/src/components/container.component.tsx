@@ -1,5 +1,6 @@
 import { View, ViewStyle, StyleSheet, LayoutChangeEvent } from "react-native";
-import { gap } from "../core";
+import { gap, TextStyle } from "../core";
+import { ThemedText } from "./themed-text.component";
 
 interface ContainerProps {
   children: React.ReactNode;
@@ -20,6 +21,7 @@ interface ContainerProps {
   paddingVertical?: number;
   growVertical?: boolean;
   growHorizontal?: boolean;
+  noWrap?: boolean;
   onLayout?: (event: LayoutChangeEvent) => void;
 }
 
@@ -44,6 +46,7 @@ export const Container = ({
   paddingVertical = 0,
   growVertical = false,
   growHorizontal = false,
+  noWrap = false,
   onLayout,
 }: ContainerProps) => {
   const getFlexDirection = () => {
@@ -81,6 +84,7 @@ export const Container = ({
       flexDirection: getFlexDirection(),
       alignItems: getAlignItems(),
       justifyContent: getJustifyContent(),
+      flexWrap: noWrap ? "nowrap" : "wrap",
       gap: gap,
       ...style,
       ...(growVertical && { flex: 1 }),

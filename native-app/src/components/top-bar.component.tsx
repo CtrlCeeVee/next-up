@@ -14,13 +14,27 @@ export const TobBar = ({
   showSettingsButton = true,
   children,
 }: TabBarComponentProps) => {
+  const buttonSize = 24;
+
+  const renderPlaceholder = () => {
+    return <View style={{ width: buttonSize, height: buttonSize }}></View>;
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.buttonBar}>
-        {showBackButton && <BackChevron />}
-        {showSettingsButton && <SettingsButton />}
+      <View style={styles.bar}>
+        {showBackButton ? (
+          <BackChevron size={buttonSize} />
+        ) : (
+          renderPlaceholder()
+        )}
+        {children ? children : renderPlaceholder()}
+        {showSettingsButton ? (
+          <SettingsButton size={buttonSize} />
+        ) : (
+          renderPlaceholder()
+        )}
       </View>
-      <View style={styles.childrenContainer}>{children}</View>
     </View>
   );
 };
@@ -29,16 +43,10 @@ const styles = StyleSheet.create({
   container: {
     width: "100%",
   },
-  buttonBar: {
+  bar: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: padding,
-  },
-  childrenContainer: {
-    width: "100%",
-    paddingHorizontal: padding,
-    marginBottom: spacing.md,
-    paddingVertical: paddingSmall,
+    alignItems: "flex-start",
+    padding: padding,
   },
 });

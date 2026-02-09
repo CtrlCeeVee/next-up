@@ -4,6 +4,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from "react-native";
 import {
   Button,
@@ -20,7 +21,9 @@ import {
   paddingLarge,
   paddingSmall,
   paddingXSmall,
+  rounding,
   roundingMedium,
+  roundingSmall,
 } from "../../../core/styles";
 import { gap } from "../../../core/styles";
 import { useTheme } from "../../../core/theme";
@@ -100,112 +103,170 @@ export const LeagueInfoComponent = ({
 
   return (
     <ScrollArea style={styles.container} hoverActions={renderHoverActions()}>
-      <Container column growHorizontal>
-        <ThemedText textStyle={TextStyle.BodyMedium} muted>
-          Location
-        </ThemedText>
-        <Card>
-          <Container column gap={gap.md}>
-            <ThemedText textStyle={TextStyle.Body}>{league.address}</ThemedText>
-            <Button
-              text="Get Directions"
-              leftIcon="map-pin"
-              onPress={() => {}}
-              style={{
-                width: "100%",
-                borderRadius: roundingMedium,
-                backgroundColor: "#006df0",
-                marginTop: gap.sm,
-              }}
-            />
+      <Container column growHorizontal gap={gap.md}>
+        <Container column growHorizontal>
+          <Container row growHorizontal spaceBetween centerVertical>
+            <ThemedText textStyle={TextStyle.BodyMedium}>Location</ThemedText>
           </Container>
-        </Card>
-      </Container>
+          <Card>
+            <Container column startHorizontal gap={gap.md}>
+              <Container row spaceBetween centerVertical growHorizontal>
+                <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
+                  {league.location}
+                </ThemedText>
+              </Container>
+              <ThemedText textStyle={TextStyle.BodySmall} color={"white"}>
+                {league.address}
+              </ThemedText>
+              <Container
+                row
+                centerVertical
+                gap={gap.sm}
+                growHorizontal
+                endHorizontal
+              >
+                <TouchableOpacity
+                  onPress={() => {}}
+                  style={{
+                    borderRadius: rounding,
+                    paddingVertical: paddingSmall,
+                    paddingHorizontal: padding,
+                    backgroundColor: "#2563eb",
+                  }}
+                >
+                  <Container row centerVertical gap={gap.sm}>
+                    <Icon name="open-external" size={16} color={"#dddddd"} />
+                    <ThemedText
+                      textStyle={TextStyle.BodySmall}
+                      color={"#dddddd"}
+                    >
+                      Open in {Platform.OS === "ios" ? "Maps" : "Google Maps"}
+                    </ThemedText>
+                  </Container>
+                </TouchableOpacity>
+              </Container>
+            </Container>
+          </Card>
+        </Container>
 
-      <Container column growHorizontal>
-        <ThemedText textStyle={TextStyle.BodyMedium} muted>
-          Schedule
-        </ThemedText>
-        <Card>
-          <Container
+        <Container column growHorizontal>
+          <ThemedText textStyle={TextStyle.BodyMedium}>Schedule</ThemedText>
+          <Card>
+            <Container
+            // paddingVertical={padding}
+            // paddingHorizontal={paddingLarge}
+            // style={{
+            //   borderBottomWidth: 1,
+            //   borderBottomColor: theme.colors.border,
+            // }}
+            >
+              <LeagueDays
+                leagueDays={league.leagueDays.map((day) => ({
+                  dayOfWeek: day,
+                  startTime: league.startTime,
+                }))}
+              />
+              <Container column centerHorizontal paddingVertical={padding}>
+                <ThemedText textStyle={TextStyle.BodySmall} muted center>
+                  This is the standard schedule for this league. Some nights may
+                  be cancelled or rescheduled. Make sure to check the Upcoming
+                  League Nights for the most up-to-date information.
+                </ThemedText>
+              </Container>
+              <Container
+                row
+                centerVertical
+                gap={gap.sm}
+                growHorizontal
+                endHorizontal
+              >
+                <TouchableOpacity
+                  onPress={() => {}}
+                  style={{
+                    borderRadius: rounding,
+                    paddingVertical: padding,
+                    paddingHorizontal: padding,
+                    backgroundColor: "#18181b",
+                  }}
+                >
+                  <Container row centerVertical gap={gap.sm}>
+                    <ThemedText
+                      textStyle={TextStyle.BodySmall}
+                      color={"#dddddd"}
+                    >
+                      View Upcoming
+                    </ThemedText>
+                    <Icon name="chevron-right" size={16} color={"#dddddd"} />
+                  </Container>
+                </TouchableOpacity>
+              </Container>
+            </Container>
+            {/* <Container
+            column
+            startVertical
             paddingVertical={padding}
             paddingHorizontal={paddingLarge}
-            style={{
-              borderBottomWidth: 1,
-              borderBottomColor: theme.colors.border,
-            }}
           >
-            <LeagueDays leagueDays={league.leagueDays} />
-          </Container>
-          <Container
-            row
-            centerVertical
-            spaceBetween
-            gap={gap.md}
-            paddingVertical={padding}
-            paddingHorizontal={paddingLarge}
-          >
-            <ThemedText textStyle={TextStyle.BodyMedium} muted>
-              Start Time
+            <ThemedText textStyle={TextStyle.BodySmall} muted>
+              Start Times
             </ThemedText>
-            <ThemedText textStyle={TextStyle.Body}>
-              {getLeagueTime()}
-            </ThemedText>
-          </Container>
-        </Card>
-      </Container>
+            {league.leagueDays.map((day) => (
+              <ThemedText textStyle={TextStyle.BodyMedium}>{day}</ThemedText>
+            ))}
+          </Container> */}
+          </Card>
+        </Container>
 
-      <Container column growHorizontal>
-        <ThemedText textStyle={TextStyle.BodyMedium} muted>
-          Members
-        </ThemedText>
-        <LeagueMembersComponent
-          isMember={isMember(league.id)}
-          members={
-            league.members || [
-              {
-                id: "1",
-                name: "John Doe",
-                email: "john.doe@example.com",
-                skillLevel: "Beginner",
-                role: "player",
-                joinedAt: new Date().toISOString(),
-              },
-              {
-                id: "2",
-                name: "Jane Doe",
-                email: "jane.doe@example.com",
-                skillLevel: "Beginner",
-                role: "player",
-                joinedAt: new Date().toISOString(),
-              },
-              {
-                id: "3",
-                name: "Jim Doe",
-                email: "jim.doe@example.com",
-                skillLevel: "Beginner",
-                role: "player",
-                joinedAt: new Date().toISOString(),
-              },
-              {
-                id: "4",
-                name: "Jill Doe",
-                email: "jill.doe@example.com",
-                skillLevel: "Beginner",
-                role: "player",
-                joinedAt: new Date().toISOString(),
-              },
-              {
-                id: "5",
-                name: "Jill Doe",
-                email: "jill.doe@example.com",
-                skillLevel: "Beginner",
-                role: "player",
-                joinedAt: new Date().toISOString(),
-              },
-            ]
-          }
-        />
+        <Container column growHorizontal>
+          <ThemedText textStyle={TextStyle.BodyMedium}>Members</ThemedText>
+          <LeagueMembersComponent
+            isMember={isMember(league.id)}
+            members={
+              league.members || [
+                {
+                  id: "1",
+                  name: "John Doe",
+                  email: "john.doe@example.com",
+                  skillLevel: "Beginner",
+                  role: "player",
+                  joinedAt: new Date().toISOString(),
+                },
+                {
+                  id: "2",
+                  name: "Jane Doe",
+                  email: "jane.doe@example.com",
+                  skillLevel: "Beginner",
+                  role: "player",
+                  joinedAt: new Date().toISOString(),
+                },
+                {
+                  id: "3",
+                  name: "Jim Doe",
+                  email: "jim.doe@example.com",
+                  skillLevel: "Beginner",
+                  role: "player",
+                  joinedAt: new Date().toISOString(),
+                },
+                {
+                  id: "4",
+                  name: "Jill Doe",
+                  email: "jill.doe@example.com",
+                  skillLevel: "Beginner",
+                  role: "player",
+                  joinedAt: new Date().toISOString(),
+                },
+                {
+                  id: "5",
+                  name: "Jill Doe",
+                  email: "jill.doe@example.com",
+                  skillLevel: "Beginner",
+                  role: "player",
+                  joinedAt: new Date().toISOString(),
+                },
+              ]
+            }
+          />
+        </Container>
       </Container>
     </ScrollArea>
   );

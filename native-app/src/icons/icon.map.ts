@@ -18,6 +18,7 @@ export const IconMap: Record<IconName, string> = {
   close: "close",
   menu: "menu",
   home: "home",
+  "open-external": "open-outline",
 
   // Theme
   moon: "moon",
