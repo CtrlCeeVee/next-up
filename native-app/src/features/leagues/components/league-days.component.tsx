@@ -68,7 +68,7 @@ export const LeagueDays = ({ leagueDays }: { leagueDays: LeagueDay[] }) => {
   const iconSize = 18;
 
   return (
-    <Container row growHorizontal spaceBetween noWrap>
+    <Container row grow spaceBetween wrap>
       <Container column startVertical gap={gap.md}>
         {DAYS_OF_WEEK.map((day) => (
           <Container key={day} row centerVertical startHorizontal gap={gap.xs}>

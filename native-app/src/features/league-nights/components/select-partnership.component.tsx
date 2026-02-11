@@ -136,7 +136,7 @@ export const SelectPartnershipComponent = ({
 
   const renderCheckInSection = () => {
     return (
-      <Container column centerHorizontal growHorizontal gap={gap.md}>
+      <Container column centerHorizontal grow gap={gap.md}>
         <Icon name="user-plus" size={24} color={theme.colors.success} />
         <ThemedText textStyle={TextStyle.Body} style={{ textAlign: "center" }}>
           Check in to tonight's league night to set up your partnership
@@ -152,37 +152,35 @@ export const SelectPartnershipComponent = ({
     onAction: () => void
   ) => {
     return (
-      <Container column growHorizontal>
-        <Container
-          row
-          centerVertical
-          growHorizontal
-          gap={gap.md}
-          padding={paddingSmall}
-          style={{ borderBottomWidth: 1, borderColor: theme.colors.border }}
-          spaceBetween
-        >
-          <Container row centerVertical gap={gap.lg}>
-            <Icon name="user" size={18} color={theme.colors.primary} />
-            <Container column startVertical>
-              <ThemedText textStyle={TextStyle.Body}>{player.name}</ThemedText>
-              <ThemedText
-                textStyle={TextStyle.Body}
-                style={{ color: theme.colors.muted }}
-              >
-                {player.skillLevel}
-              </ThemedText>
-            </Container>
+      <Container
+        row
+        centerVertical
+        spaceBetween
+        w100
+        gap={gap.md}
+        padding={paddingSmall}
+        style={{ borderBottomWidth: 1, borderColor: theme.colors.border }}
+      >
+        <Container row centerVertical gap={gap.lg}>
+          <Icon name="user" size={18} color={theme.colors.primary} />
+          <Container column startVertical>
+            <ThemedText textStyle={TextStyle.Body}>{player.name}</ThemedText>
+            <ThemedText
+              textStyle={TextStyle.Body}
+              style={{ color: theme.colors.muted }}
+            >
+              {player.skillLevel}
+            </ThemedText>
           </Container>
-          {actionText && (
-            <Button
-              text={actionText}
-              onPress={onAction}
-              variant="ghost"
-              size="small"
-            />
-          )}
         </Container>
+        {actionText && (
+          <Button
+            text={actionText}
+            onPress={onAction}
+            variant="ghost"
+            size="small"
+          />
+        )}
       </Container>
     );
   };
@@ -195,9 +193,9 @@ export const SelectPartnershipComponent = ({
     onAction: (requestId: string) => void
   ) => {
     return (
-      <Container column growHorizontal>
+      <Container column w100>
         <ThemedText textStyle={TextStyle.Body}>{title}</ThemedText>
-        <Container column padding={paddingSmall} growHorizontal>
+        <Container column padding={paddingSmall} w100>
           {requests.length > 0 ? (
             requests.map((request) =>
               renderPlayerCard(
@@ -263,7 +261,7 @@ export const SelectPartnershipComponent = ({
             />
           )}
         </Container>
-        <Container column padding={paddingSmall} growHorizontal>
+        <Container column padding={paddingSmall}>
           {availablePartners.length === 0 ? (
             <ThemedText
               textStyle={TextStyle.Body}
@@ -291,10 +289,10 @@ export const SelectPartnershipComponent = ({
         : confirmedPartnership.player1;
 
     return (
-      <Container column growHorizontal growVertical gap={gap.md}>
+      <Container column gap={gap.md}>
         <ThemedText textStyle={TextStyle.Body}>Current partner</ThemedText>
-        <Container column growHorizontal growVertical spaceBetween>
-          <Container column growHorizontal gap={gap.md}>
+        <Container column spaceBetween>
+          <Container column gap={gap.md}>
             {renderPlayerCard(
               {
                 id: otherPlayer.id,
@@ -328,18 +326,16 @@ export const SelectPartnershipComponent = ({
     }
 
     return (
-      <Container column growHorizontal growVertical gap={gap.md}>
+      <Container column grow gap={gap.md} w100>
         <SearchBar
           value={partnerSearch}
           onChangeText={(text) => setPartnerSearch(text)}
           placeholder="Search..."
         />
-        <ScrollArea style={{ padding: 0 }}>
-          <Container column growHorizontal>
-            {renderReceivedRequests()}
-            {renderSentRequests()}
-            {renderAvailablePartners()}
-          </Container>
+        <ScrollArea style={{ padding: 0, width: "100%" }}>
+          {renderReceivedRequests()}
+          {renderSentRequests()}
+          {renderAvailablePartners()}
         </ScrollArea>
       </Container>
     );
@@ -353,20 +349,14 @@ export const SelectPartnershipComponent = ({
 
   const renderLoadingSection = () => {
     return (
-      <Container
-        column
-        growHorizontal
-        centerHorizontal
-        centerVertical
-        padding={paddingLarge}
-      >
+      <Container column centerHorizontal centerVertical w100 grow>
         <LoadingSpinner />
       </Container>
     );
   };
 
   return (
-    <Container column growHorizontal growVertical>
+    <Container column grow w100>
       {loadingPartnershipData
         ? renderLoadingSection()
         : renderPartnershipSelectionSection()}

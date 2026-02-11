@@ -95,7 +95,7 @@ export const LeagueMembersComponent = ({
         column
         centerHorizontal
         centerVertical
-        growHorizontal
+        grow
         gap={gap.md}
       >
         <ThemedText textStyle={TextStyle.BodyMedium} center growHorizontal>
@@ -111,7 +111,7 @@ export const LeagueMembersComponent = ({
         )}
         {members.length > 0 && (
           <>
-            <Container row gap={gap.md} style={styles.memberIcons} growHorizontal centerHorizontal>
+            <Container row gap={gap.md} style={styles.memberIcons} grow centerHorizontal>
               {renderMemberIcons()}
             </Container>
           </>

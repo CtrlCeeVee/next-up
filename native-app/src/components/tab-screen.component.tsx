@@ -39,9 +39,7 @@ const TabNavigator = createMaterialTopTabNavigator();
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  componentContainer: {
-    flex: 1,
+    width: "100%",
   },
 });
 
@@ -74,6 +72,9 @@ export const TabScreen = ({
     },
     tabBarLabelStyle: {
       ...GlobalTextStyles[TextStyle.BodyMedium],
+    },
+    tabBarContentContainerStyle: {
+      width: "100%",
     },
     tabBarActiveTintColor: theme.colors.primary,
     tabBarInactiveTintColor: theme.colors.muted,

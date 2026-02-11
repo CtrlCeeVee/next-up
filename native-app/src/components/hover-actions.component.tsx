@@ -18,7 +18,7 @@ export const HoverActionsComponent = ({
     <Container
       column
       centerHorizontal
-      growHorizontal
+      grow
       style={styles.container}
       onLayout={onLayout || undefined}
     >
