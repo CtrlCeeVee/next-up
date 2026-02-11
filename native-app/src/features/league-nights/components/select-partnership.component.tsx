@@ -34,16 +34,12 @@ import {
   useInjection,
 } from "../../../di";
 import { LeagueNightsService } from "../services";
+import { PlayerList } from "./player-list.component";
+import { PlayerListItem } from "./player-list-item.component";
 
 interface SelectPartnershipComponentProps {
   league: League;
   night: LeagueNightInstance;
-}
-
-interface PlayerCardDetails {
-  id: string;
-  name: string;
-  skillLevel: string;
 }
 
 export const SelectPartnershipComponent = ({
@@ -146,47 +142,6 @@ export const SelectPartnershipComponent = ({
     );
   };
 
-  const renderPlayerCard = (
-    player: PlayerCardDetails,
-    actionText: string | undefined,
-    onAction: () => void
-  ) => {
-    return (
-      <Container column growHorizontal>
-        <Container
-          row
-          centerVertical
-          growHorizontal
-          gap={gap.md}
-          padding={paddingSmall}
-          style={{ borderBottomWidth: 1, borderColor: theme.colors.border }}
-          spaceBetween
-        >
-          <Container row centerVertical gap={gap.lg}>
-            <Icon name="user" size={18} color={theme.colors.primary} />
-            <Container column startVertical>
-              <ThemedText textStyle={TextStyle.Body}>{player.name}</ThemedText>
-              <ThemedText
-                textStyle={TextStyle.Body}
-                style={{ color: theme.colors.muted }}
-              >
-                {player.skillLevel}
-              </ThemedText>
-            </Container>
-          </Container>
-          {actionText && (
-            <Button
-              text={actionText}
-              onPress={onAction}
-              variant="ghost"
-              size="small"
-            />
-          )}
-        </Container>
-      </Container>
-    );
-  };
-
   const renderRequestsSection = (
     title: string,
     emptyText: string,
@@ -195,38 +150,23 @@ export const SelectPartnershipComponent = ({
     onAction: (requestId: string) => void
   ) => {
     return (
-      <Container column growHorizontal>
-        <ThemedText textStyle={TextStyle.Body}>{title}</ThemedText>
-        <Container column padding={paddingSmall} growHorizontal>
-          {requests.length > 0 ? (
-            requests.map((request) =>
-              renderPlayerCard(
-                {
-                  id: request.requested.id,
-                  name:
-                    request.requested.firstName +
-                    " " +
-                    request.requested.lastName,
-                  skillLevel: request.requested.skillLevel,
-                },
-                undefined,
-                () => onAction(request.id)
-              )
-            )
-          ) : (
-            <ThemedText
-              textStyle={TextStyle.Body}
-              style={{ color: theme.colors.muted }}
-            >
-              {emptyText}
-            </ThemedText>
-          )}
-        </Container>
-      </Container>
+      <PlayerList
+        title={title}
+        emptyText={emptyText}
+        players={requests.map((request) => ({
+          id: request.id,
+          name: request.requested.firstName + " " + request.requested.lastName,
+          skillLevel: request.requested.skillLevel,
+        }))}
+        actionText={actionText}
+        onAction={onAction}
+      />
     );
   };
 
   const renderReceivedRequests = () => {
+    if (receivedRequests.length === 0) return null;
+
     return renderRequestsSection(
       "Received requests",
       "No received requests just yet.",
@@ -237,6 +177,8 @@ export const SelectPartnershipComponent = ({
   };
 
   const renderSentRequests = () => {
+    if (sentRequests.length === 0) return null;
+
     return renderRequestsSection(
       "Sent requests",
       "No sent requests just yet.",
@@ -255,13 +197,6 @@ export const SelectPartnershipComponent = ({
           <ThemedText textStyle={TextStyle.Body}>
             Select your partner
           </ThemedText>
-          {availablePartners.length > 0 && (
-            <SearchBar
-              value={partnerSearch}
-              onChangeText={(text) => setPartnerSearch(text)}
-              placeholder="Search..."
-            />
-          )}
         </Container>
         <Container column padding={paddingSmall} growHorizontal>
           {availablePartners.length === 0 ? (
@@ -273,9 +208,14 @@ export const SelectPartnershipComponent = ({
               check your sent requests!
             </ThemedText>
           ) : (
-            availablePartners.map((player) =>
-              renderPlayerCard(player, "Select", () => selectPartner(player))
-            )
+            availablePartners.map((player) => (
+              <PlayerListItem
+                key={player.id}
+                player={player}
+                actionText="Select"
+                onAction={() => selectPartner(player)}
+              />
+            ))
           )}
         </Container>
       </Container>
@@ -295,15 +235,15 @@ export const SelectPartnershipComponent = ({
         <ThemedText textStyle={TextStyle.Body}>Current partner</ThemedText>
         <Container column growHorizontal growVertical spaceBetween>
           <Container column growHorizontal gap={gap.md}>
-            {renderPlayerCard(
-              {
+            <PlayerListItem
+              player={{
                 id: otherPlayer.id,
                 name: otherPlayer.firstName + " " + otherPlayer.lastName,
                 skillLevel: otherPlayer.skillLevel,
-              },
-              undefined,
-              () => {}
-            )}
+              }}
+              actionText={undefined}
+              onAction={() => {}}
+            />
             <ThemedText textStyle={TextStyle.Body} muted>
               Make sure to check the matches you are playing together. You can
               change your partner at any time.
@@ -328,7 +268,7 @@ export const SelectPartnershipComponent = ({
     }
 
     return (
-      <Container column growHorizontal growVertical gap={gap.md}>
+      <Container column growVertical gap={gap.md}>
         <SearchBar
           value={partnerSearch}
           onChangeText={(text) => setPartnerSearch(text)}
@@ -347,19 +287,15 @@ export const SelectPartnershipComponent = ({
 
   const renderPartnershipSelectionSection = () => {
     return (
-      <>{isCheckedIn ? renderCheckedInSection() : renderCheckInSection()}</>
+      <Container column growHorizontal growVertical>
+        {isCheckedIn ? renderCheckedInSection() : renderCheckInSection()}
+      </Container>
     );
   };
 
   const renderLoadingSection = () => {
     return (
-      <Container
-        column
-        growHorizontal
-        centerHorizontal
-        centerVertical
-        padding={paddingLarge}
-      >
+      <Container>
         <LoadingSpinner />
       </Container>
     );

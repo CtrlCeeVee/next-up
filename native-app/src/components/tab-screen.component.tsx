@@ -18,6 +18,7 @@ import { GlobalTextStyles, TextStyle } from "../core/styles/text";
 import { IconName } from "../icons";
 import { TobBar } from "./top-bar.component";
 import { LinearGradient } from "expo-linear-gradient";
+import { Container } from "./container.component";
 
 export interface TabConfig {
   name: string;
@@ -39,6 +40,7 @@ const TabNavigator = createMaterialTopTabNavigator();
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: "100%",
   },
   componentContainer: {
     flex: 1,

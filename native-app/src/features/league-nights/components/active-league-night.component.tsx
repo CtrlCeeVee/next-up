@@ -8,7 +8,6 @@ import { useTheme } from "../../../core/theme";
 import { useState } from "react";
 import { Match } from "../types";
 import { MatchesList } from "../../matches/components";
-import { PartnershipList } from "./partnership-list.component";
 import { SelectPartnershipComponent } from "./select-partnership.component";
 
 export interface ActiveLeagueNightComponentProps {
@@ -107,7 +106,7 @@ export const ActiveLeagueNightComponent: React.FC<
   };
 
   return (
-    <Container padding={padding} column growVertical>
+    <Container padding={padding} column growVertical growHorizontal>
       {render()}
     </Container>
   );
