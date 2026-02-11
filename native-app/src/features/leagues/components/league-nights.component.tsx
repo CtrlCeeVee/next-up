@@ -2,20 +2,35 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 
-import { Card, ThemedText } from "../../../components";
+import { Card, Container, ScrollArea, ThemedText } from "../../../components";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
 import { TextStyle } from "../../../core/styles/text";
-import { padding, rounding, spacing } from "../../../core/styles";
+import {
+  padding,
+  paddingLarge,
+  paddingSmall,
+  rounding,
+  spacing,
+} from "../../../core/styles";
 import { gap } from "../../../core/styles";
 import { LeagueNightInstance } from "../../league-nights/types";
 import { Routes } from "../../../navigation/routes";
 import { LeaguesStackParamList } from "../../../navigation/types";
+import { DateUtility } from "../../../core/utilities";
 
 type LeagueNightNavigationProp = NativeStackNavigationProp<
   LeaguesStackParamList,
   Routes.LeagueNight
 >;
+
+interface DateInfo {
+  day: string;
+  month: {
+    short: string;
+    long: string;
+  };
+}
 
 export const LeagueNightsComponent = ({
   leagueNights,
@@ -33,145 +48,95 @@ export const LeagueNightsComponent = ({
     navigation.navigate(Routes.LeagueNight, { leagueId, nightId });
   };
 
+  const getDateInfo = (date: string): DateInfo => {
+    const dateObj = new Date(date);
+    return {
+      day: dateObj.getDate().toString(),
+      month: {
+        short: dateObj.toLocaleString("default", { month: "short" }),
+        long: dateObj.toLocaleString("default", { month: "long" }),
+      },
+    };
+  };
+
   return (
-    <View style={styles.container}>
+    <Container column grow w100>
       {/* Upcoming League Nights */}
       {isUserMember && leagueNights.length > 0 && (
-        <Card style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <Icon name="calendar" size={20} color={theme.colors.primary} />
-            <ThemedText textStyle={TextStyle.Subheader}>
-              Upcoming Nights
-            </ThemedText>
-          </View>
-          {leagueNights.map((night) => (
-            <TouchableOpacity
-              key={night.id}
-              style={[
-                styles.nightCard,
-                {
-                  backgroundColor:
-                    night.status === "active"
-                      ? theme.colors.primary + "10"
-                      : "transparent",
-                  borderColor:
-                    night.status === "active"
-                      ? theme.colors.primary
-                      : theme.colors.border,
-                },
-              ]}
-              onPress={() => handleNavigateToNight(night.id)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.nightInfo}>
-                <View style={styles.nightDay}>
-                  <ThemedText
-                    textStyle={TextStyle.Body}
-                    style={styles.nightDayText}
-                  >
-                    {night.day}
-                  </ThemedText>
-                  {night.status === "active" && (
-                    <View
-                      style={[
-                        styles.todayBadge,
-                        { backgroundColor: theme.colors.primary },
-                      ]}
-                    >
-                      <ThemedText
-                        textStyle={TextStyle.BodySmall}
-                        style={styles.todayBadgeText}
-                      >
-                        Today
+        <ScrollArea>
+          <ThemedText textStyle={TextStyle.Body}>Upcoming Nights</ThemedText>
+
+          {leagueNights.map((night) => {
+            const dateInfo = getDateInfo(night.date);
+            return (
+              <TouchableOpacity
+                key={night.id}
+                onPress={() => handleNavigateToNight(night.id)}
+                activeOpacity={0.7}
+              >
+                <Container
+                  row
+                  w100
+                  spaceBetween
+                  centerVertical
+                  paddingHorizontal={paddingLarge}
+                  paddingVertical={padding}
+                  rounding={rounding}
+                  style={{
+                    backgroundColor:
+                      night.status === "active"
+                        ? theme.colors.primary + "10"
+                        : "transparent",
+                    borderColor:
+                      night.status === "active"
+                        ? theme.colors.primary
+                        : theme.colors.border,
+                    borderWidth: 1,
+                  }}
+                >
+                  <Container row centerVertical gap={gap.lg}>
+                    <Container column centerHorizontal>
+                      <ThemedText textStyle={TextStyle.BodyMedium}>
+                        {dateInfo.day}
                       </ThemedText>
-                    </View>
-                  )}
-                </View>
-                <View style={styles.nightDetails}>
+                      <ThemedText textStyle={TextStyle.BodySmall}>
+                        {dateInfo.month.short}
+                      </ThemedText>
+                    </Container>
+                    <Container column>
+                      <ThemedText textStyle={TextStyle.BodyMedium}>
+                        {night.day}
+                      </ThemedText>
+                      <ThemedText textStyle={TextStyle.BodySmall}>
+                        At {night.time}
+                      </ThemedText>
+                    </Container>
+                    {DateUtility.isToday(night.date) && (
+                      <Container
+                        paddingVertical={spacing.xs}
+                        paddingHorizontal={spacing.md}
+                        rounding={rounding}
+                        style={{
+                          backgroundColor: theme.colors.primary,
+                        }}
+                      >
+                        <ThemedText textStyle={TextStyle.BodySmall}>
+                          Today
+                        </ThemedText>
+                      </Container>
+                    )}
+                  </Container>
                   <Icon
-                    name="calendar"
-                    size={14}
-                    color={theme.colors.text + "80"}
+                    name="chevron-right"
+                    size={20}
+                    color={theme.colors.text + "60"}
                   />
-                  <ThemedText
-                    textStyle={TextStyle.BodySmall}
-                    style={styles.nightDetailText}
-                  >
-                    {night.date}
-                  </ThemedText>
-                  <Icon
-                    name="clock"
-                    size={14}
-                    color={theme.colors.text + "80"}
-                  />
-                  <ThemedText
-                    textStyle={TextStyle.BodySmall}
-                    style={styles.nightDetailText}
-                  >
-                    {night.time}
-                  </ThemedText>
-                </View>
-              </View>
-              <Icon
-                name="chevron-right"
-                size={20}
-                color={theme.colors.text + "60"}
-              />
-            </TouchableOpacity>
-          ))}
-        </Card>
+                </Container>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollArea>
       )}
-    </View>
+    </Container>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  sectionCard: {
-    padding: padding,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: gap.sm,
-  },
-  nightCard: {
-    padding: padding,
-    borderRadius: rounding,
-    borderWidth: 1,
-  },
-  nightInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: gap.sm,
-  },
-  nightDay: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: gap.sm,
-  },
-  nightDayText: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  todayBadge: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: rounding,
-  },
-  todayBadgeText: {
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  nightDetails: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: gap.sm,
-  },
-  nightDetailText: {
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-});

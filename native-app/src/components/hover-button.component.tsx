@@ -35,7 +35,7 @@ export const HoverButton = ({
         padding: padding,
       }}
     >
-      <Container row centerVertical spaceBetween gap={gap.md}>
+      <Container row centerVertical w100 spaceBetween gap={gap.md}>
         <Container row centerVertical gap={gap.lg}>
           {leftIcon && <Icon name={leftIcon} size={20} color={"white"} />}
           {children}

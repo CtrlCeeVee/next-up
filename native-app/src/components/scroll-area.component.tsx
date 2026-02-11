@@ -9,6 +9,7 @@ import { gap, padding } from "../core";
 import { GlobalStyles, spacing } from "../core/styles";
 import { HoverActionsComponent } from "./hover-actions.component";
 import { useState } from "react";
+import { Container } from "./container.component";
 
 /**
  * ScrollArea provides a scrollable container with optional hover actions.
@@ -44,7 +45,9 @@ export const ScrollArea = ({
           paddingBottom: hoverActionsHeight + spacing.md,
         }}
       >
-        <View style={[styles.content, style]}>{children}</View>
+        <Container column w100 padding={padding} gap={gap.lg}>
+          {children}
+        </Container>
       </ScrollView>
     </>
   );
@@ -53,10 +56,12 @@ export const ScrollArea = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: "100%",
   },
   content: {
     ...GlobalStyles.column,
     padding: padding,
     gap: gap.lg,
+    width: "100%",
   },
 });

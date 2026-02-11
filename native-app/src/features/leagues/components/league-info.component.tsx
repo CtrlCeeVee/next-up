@@ -75,27 +75,21 @@ export const LeagueInfoComponent = ({
     } else {
       if (leagueNights.length > 0) {
         return (
-          <Container column grow gap={gap.sm}>
-            <HoverButton
-              leftIcon="moon"
-              backgroundColor={"#18181b"}
-              onPress={() => {}}
-              showRightChevron={true}
-            >
-              <Container column gap={0}>
-                <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
-                  View Upcoming League Nights
-                </ThemedText>
-                <ThemedText
-                  textStyle={TextStyle.BodySmall}
-                  color={"white"}
-                  muted
-                >
-                  {leagueNights.length} upcoming league nights
-                </ThemedText>
-              </Container>
-            </HoverButton>
-          </Container>
+          <HoverButton
+            leftIcon="moon"
+            backgroundColor={"#18181b"}
+            onPress={() => {}}
+            showRightChevron={true}
+          >
+            <Container column gap={0}>
+              <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
+                View Upcoming League Nights
+              </ThemedText>
+              <ThemedText textStyle={TextStyle.BodySmall} color={"white"} muted>
+                {leagueNights.length} upcoming league nights
+              </ThemedText>
+            </Container>
+          </HoverButton>
         );
       }
     }
@@ -146,7 +140,7 @@ export const LeagueInfoComponent = ({
         <Container column grow w100>
           <ThemedText textStyle={TextStyle.BodyMedium}>Schedule</ThemedText>
           <Card>
-            <Container w100>
+            <Container column w100>
               <LeagueDays
                 leagueDays={league.leagueDays.map((day) => ({
                   dayOfWeek: day,
@@ -160,7 +154,7 @@ export const LeagueInfoComponent = ({
                   League Nights for the most up-to-date information.
                 </ThemedText>
               </Container>
-              <Container row centerVertical gap={gap.sm} grow endHorizontal>
+              <Container row centerVertical gap={gap.sm} w100 endHorizontal>
                 <TouchableOpacity
                   onPress={() => {}}
                   style={{

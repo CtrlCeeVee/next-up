@@ -22,6 +22,7 @@ interface ContainerProps {
   grow?: boolean;
   w100?: boolean;
   wrap?: boolean;
+  rounding?: number;
   debugColor?: boolean;
   debugPrint?: boolean;
   onLayout?: (event: LayoutChangeEvent) => void;
@@ -49,6 +50,7 @@ export const Container = ({
   grow = false,
   w100 = false,
   wrap = false,
+  rounding = 0,
   debugColor = false,
   debugPrint = false,
   onLayout,
@@ -96,6 +98,7 @@ export const Container = ({
       ...(paddingHorizontal && { paddingHorizontal: paddingHorizontal }),
       ...(paddingVertical && { paddingVertical: paddingVertical }),
       ...(w100 && { width: "100%" }),
+      ...(rounding && { borderRadius: rounding }),
       ...(debugColor && { backgroundColor: "red" }),
     },
   });

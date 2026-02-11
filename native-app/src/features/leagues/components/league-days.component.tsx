@@ -68,65 +68,59 @@ export const LeagueDays = ({ leagueDays }: { leagueDays: LeagueDay[] }) => {
   const iconSize = 18;
 
   return (
-    <Container row grow spaceBetween wrap>
-      <Container column startVertical gap={gap.md}>
-        {DAYS_OF_WEEK.map((day) => (
-          <Container key={day} row centerVertical startHorizontal gap={gap.xs}>
-            <Container
-              column
-              centerVertical
-              centerHorizontal
-              style={{
-                ...styles.dayCircle,
-                backgroundColor: isToday(day)
-                  ? theme.colors.accent
-                  : onDays[day]
-                    ? theme.colors.primary
-                    : theme.colors.muted + "30",
-                borderColor: isToday(day) ? theme.colors.accent : "#f0f0f0",
-              }}
-            >
-              {!onDays[day] ? (
-                <Icon
-                  name="x"
-                  size={iconSize}
-                  color={theme.colors.text + "80"}
-                />
-              ) : (
-                <Icon name="checkmark" size={iconSize} color={"#fff"} />
-              )}
-            </Container>
-            <ThemedText
-              textStyle={TextStyle.BodySmall}
-              color={
-                isToday(day)
-                  ? theme.colors.accent
-                  : onDays[day]
-                    ? theme.colors.primary
-                    : theme.colors.text + "80"
-              }
-            >
-              {DAY_NAMES[day].long}s
-            </ThemedText>
-            {isToday(day) && (
-              <ThemedText
-                textStyle={TextStyle.BodySmall}
-                color={theme.colors.accent}
-              >
-                (Today)
-              </ThemedText>
-            )}
-            {onDays[day] && (
-              <ThemedText textStyle={TextStyle.BodySmall}>
-                {"at "}
-                {formatTime(
-                  leagueDays.find((d) => d.dayOfWeek === day)?.startTime || ""
-                )}
-              </ThemedText>
+    <Container column startVertical gap={gap.md}>
+      {DAYS_OF_WEEK.map((day) => (
+        <Container key={day} row centerVertical startHorizontal gap={gap.xs}>
+          <Container
+            column
+            centerVertical
+            centerHorizontal
+            style={{
+              ...styles.dayCircle,
+              backgroundColor: isToday(day)
+                ? theme.colors.accent
+                : onDays[day]
+                  ? theme.colors.primary
+                  : theme.colors.muted + "30",
+              borderColor: isToday(day) ? theme.colors.accent : "#f0f0f0",
+            }}
+          >
+            {!onDays[day] ? (
+              <Icon name="x" size={iconSize} color={theme.colors.text + "80"} />
+            ) : (
+              <Icon name="checkmark" size={iconSize} color={"#fff"} />
             )}
           </Container>
-        ))}
-      </Container>
+          <ThemedText
+            textStyle={TextStyle.BodySmall}
+            color={
+              isToday(day)
+                ? theme.colors.accent
+                : onDays[day]
+                  ? theme.colors.primary
+                  : theme.colors.text + "80"
+            }
+          >
+            {DAY_NAMES[day].long}s
+          </ThemedText>
+          {isToday(day) && (
+            <ThemedText
+              textStyle={TextStyle.BodySmall}
+              color={theme.colors.accent}
+            >
+              (Today)
+            </ThemedText>
+          )}
+          {onDays[day] && (
+            <ThemedText textStyle={TextStyle.BodySmall}>
+              {"at "}
+              {formatTime(
+                leagueDays.find((d) => d.dayOfWeek === day)?.startTime || ""
+              )}
+            </ThemedText>
+          )}
+        </Container>
+      ))}
     </Container>
   );
 };
