@@ -75,7 +75,7 @@ export const LeagueInfoComponent = ({
     } else {
       if (leagueNights.length > 0) {
         return (
-          <Container column growHorizontal gap={gap.sm}>
+          <Container column grow gap={gap.sm}>
             <HoverButton
               leftIcon="moon"
               backgroundColor={"#18181b"}
@@ -103,14 +103,14 @@ export const LeagueInfoComponent = ({
 
   return (
     <ScrollArea style={styles.container} hoverActions={renderHoverActions()}>
-      <Container column growHorizontal gap={gap.md}>
-        <Container column growHorizontal>
-          <Container row growHorizontal spaceBetween centerVertical>
+      <Container column grow gap={gap.md} w100>
+        <Container column grow w100>
+          <Container row grow spaceBetween centerVertical>
             <ThemedText textStyle={TextStyle.BodyMedium}>Location</ThemedText>
           </Container>
           <Card>
             <Container column startHorizontal gap={gap.md}>
-              <Container row spaceBetween centerVertical growHorizontal>
+              <Container row spaceBetween centerVertical grow>
                 <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
                   {league.location}
                 </ThemedText>
@@ -118,13 +118,7 @@ export const LeagueInfoComponent = ({
               <ThemedText textStyle={TextStyle.BodySmall} color={"white"}>
                 {league.address}
               </ThemedText>
-              <Container
-                row
-                centerVertical
-                gap={gap.sm}
-                growHorizontal
-                endHorizontal
-              >
+              <Container row centerVertical gap={gap.sm} grow endHorizontal>
                 <TouchableOpacity
                   onPress={() => {}}
                   style={{
@@ -149,17 +143,10 @@ export const LeagueInfoComponent = ({
           </Card>
         </Container>
 
-        <Container column growHorizontal>
+        <Container column grow w100>
           <ThemedText textStyle={TextStyle.BodyMedium}>Schedule</ThemedText>
           <Card>
-            <Container
-            // paddingVertical={padding}
-            // paddingHorizontal={paddingLarge}
-            // style={{
-            //   borderBottomWidth: 1,
-            //   borderBottomColor: theme.colors.border,
-            // }}
-            >
+            <Container w100>
               <LeagueDays
                 leagueDays={league.leagueDays.map((day) => ({
                   dayOfWeek: day,
@@ -173,13 +160,7 @@ export const LeagueInfoComponent = ({
                   League Nights for the most up-to-date information.
                 </ThemedText>
               </Container>
-              <Container
-                row
-                centerVertical
-                gap={gap.sm}
-                growHorizontal
-                endHorizontal
-              >
+              <Container row centerVertical gap={gap.sm} grow endHorizontal>
                 <TouchableOpacity
                   onPress={() => {}}
                   style={{
@@ -201,23 +182,10 @@ export const LeagueInfoComponent = ({
                 </TouchableOpacity>
               </Container>
             </Container>
-            {/* <Container
-            column
-            startVertical
-            paddingVertical={padding}
-            paddingHorizontal={paddingLarge}
-          >
-            <ThemedText textStyle={TextStyle.BodySmall} muted>
-              Start Times
-            </ThemedText>
-            {league.leagueDays.map((day) => (
-              <ThemedText textStyle={TextStyle.BodyMedium}>{day}</ThemedText>
-            ))}
-          </Container> */}
           </Card>
         </Container>
 
-        <Container column growHorizontal>
+        <Container column grow w100>
           <ThemedText textStyle={TextStyle.BodyMedium}>Members</ThemedText>
           <LeagueMembersComponent
             isMember={isMember(league.id)}

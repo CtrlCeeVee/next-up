@@ -6,25 +6,52 @@ import { PlayerDetailsDto } from "../types";
 
 interface PlayerListItemProps {
   player: PlayerDetailsDto;
-  actionText: string | undefined;
-  onAction: () => void;
+  actionText?: string;
+  onAction?: () => void;
+  showBorder?: boolean;
 }
 
 export const PlayerListItem = ({
   player,
   actionText,
   onAction,
+  showBorder = true,
 }: PlayerListItemProps) => {
   const { theme } = useTheme();
+
+  const renderActionButton = () => {
+    if (!actionText) return null;
+
+    if (onAction === undefined) {
+      return (
+        <ThemedText textStyle={TextStyle.Body} muted>
+          {actionText}
+        </ThemedText>
+      );
+    }
+
+    return (
+      <Button
+        text={actionText}
+        onPress={onAction}
+        variant="ghost"
+        size="small"
+      />
+    );
+  };
+
   return (
-    <Container column growHorizontal>
+    <Container row grow>
       <Container
         row
+        w100
         centerVertical
-        growHorizontal
         gap={gap.md}
         padding={paddingSmall}
-        style={{ borderBottomWidth: 1, borderColor: theme.colors.border }}
+        style={{
+          borderBottomWidth: showBorder ? 1 : 0,
+          borderColor: theme.colors.border,
+        }}
         spaceBetween
       >
         <Container row centerVertical gap={gap.lg}>
@@ -39,14 +66,7 @@ export const PlayerListItem = ({
             </ThemedText>
           </Container>
         </Container>
-        {actionText && (
-          <Button
-            text={actionText}
-            onPress={onAction}
-            variant="ghost"
-            size="small"
-          />
-        )}
+        {renderActionButton()}
       </Container>
     </Container>
   );

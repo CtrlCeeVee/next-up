@@ -48,7 +48,7 @@ export const ActiveLeagueNightComponent: React.FC<
           column
           centerVertical
           centerHorizontal
-          growHorizontal
+          grow
           gap={gap.md}
         >
           <Icon
@@ -78,7 +78,7 @@ export const ActiveLeagueNightComponent: React.FC<
 
     const renderMatches = () => {
       return (
-        <Container column gap={gap.md} growHorizontal style={{ marginTop: 12 }}>
+        <Container column gap={gap.md} grow w100 style={{ marginTop: 12 }}>
           <MatchesList matches={matches} />
         </Container>
       );
@@ -86,14 +86,14 @@ export const ActiveLeagueNightComponent: React.FC<
 
     const renderPartnership = () => {
       return (
-        <Container column gap={gap.md} growHorizontal growVertical>
+        <Container column gap={gap.md} grow w100>
           <SelectPartnershipComponent league={league} night={leagueNight} />
         </Container>
       );
     };
 
     return (
-      <Container column gap={gap.md} growHorizontal growVertical>
+      <Container column gap={gap.md} grow w100>
         <PillTabs
           options={[ActiveTabs.Partnership, ActiveTabs.Matches]}
           onOptionChange={tabChanged}
@@ -106,7 +106,7 @@ export const ActiveLeagueNightComponent: React.FC<
   };
 
   return (
-    <Container padding={padding} column growVertical growHorizontal>
+    <Container padding={padding} column grow>
       {render()}
     </Container>
   );

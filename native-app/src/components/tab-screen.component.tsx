@@ -42,9 +42,6 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
   },
-  componentContainer: {
-    flex: 1,
-  },
 });
 
 export const TabScreen = ({
@@ -76,6 +73,9 @@ export const TabScreen = ({
     },
     tabBarLabelStyle: {
       ...GlobalTextStyles[TextStyle.BodyMedium],
+    },
+    tabBarContentContainerStyle: {
+      width: "100%",
     },
     tabBarActiveTintColor: theme.colors.primary,
     tabBarInactiveTintColor: theme.colors.muted,

@@ -110,13 +110,7 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({ matches }) => {
 
   if (matches.length === 0) {
     return (
-      <Container
-        column
-        gap={gap.md}
-        centerHorizontal
-        centerVertical
-        growHorizontal
-      >
+      <Container column gap={gap.md} centerHorizontal centerVertical w100 grow>
         <Icon name="trophy" size={48} color={theme.colors.muted} />
         <ThemedText textStyle={TextStyle.Subheader} style={styles.emptyTitle}>
           No Matches
@@ -177,8 +171,10 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({ matches }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: "100%",
   },
   content: {
+    width: "100%",
     padding: padding,
     gap: 24,
   },

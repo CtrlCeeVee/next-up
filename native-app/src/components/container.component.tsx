@@ -19,9 +19,11 @@ interface ContainerProps {
   padding?: number;
   paddingHorizontal?: number;
   paddingVertical?: number;
-  growVertical?: boolean;
-  growHorizontal?: boolean;
-  noWrap?: boolean;
+  grow?: boolean;
+  w100?: boolean;
+  wrap?: boolean;
+  debugColor?: boolean;
+  debugPrint?: boolean;
   onLayout?: (event: LayoutChangeEvent) => void;
 }
 
@@ -44,9 +46,11 @@ export const Container = ({
   padding = 0,
   paddingHorizontal = 0,
   paddingVertical = 0,
-  growVertical = false,
-  growHorizontal = false,
-  noWrap = false,
+  grow = false,
+  w100 = false,
+  wrap = false,
+  debugColor = false,
+  debugPrint = false,
   onLayout,
 }: ContainerProps) => {
   const getFlexDirection = () => {
@@ -84,18 +88,24 @@ export const Container = ({
       flexDirection: getFlexDirection(),
       alignItems: getAlignItems(),
       justifyContent: getJustifyContent(),
-      flexWrap: noWrap ? "nowrap" : "wrap",
+      flexWrap: wrap ? "wrap" : "nowrap",
       gap: gap,
       ...style,
-      ...(growVertical && { flex: 1 }),
-      ...(growHorizontal && { width: "100%" }),
+      ...(grow && { flex: 1 }),
       ...(padding && { padding: padding }),
       ...(paddingHorizontal && { paddingHorizontal: paddingHorizontal }),
       ...(paddingVertical && { paddingVertical: paddingVertical }),
+      ...(w100 && { width: "100%" }),
+      ...(debugColor && { backgroundColor: "red" }),
     },
   });
   return (
     <View style={styles.container} onLayout={onLayout}>
+      {debugPrint && (
+        <ThemedText textStyle={TextStyle.Body}>
+          {JSON.stringify(styles.container)}
+        </ThemedText>
+      )}
       {children}
     </View>
   );

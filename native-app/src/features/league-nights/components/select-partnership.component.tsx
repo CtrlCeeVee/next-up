@@ -59,6 +59,7 @@ export const SelectPartnershipComponent = ({
   const loadingPartnershipData = useLeagueNightState(
     (state) => state.loadingPartnershipData
   );
+  const sendingRequest = useLeagueNightState((state) => state.sendingRequest);
   const sendPartnershipRequest = useLeagueNightState(
     (state) => state.sendPartnershipRequest
   );
@@ -111,28 +112,28 @@ export const SelectPartnershipComponent = ({
   }, [checkedInPlayers, user, sentRequests, receivedRequests]);
 
   const checkIn = () => {
-    if (!user?.id) return;
+    if (!user) return;
     checkInPlayer(league.id, night.id, user.id);
   };
 
-  const selectPartner = (player: CheckedInPlayer) => {
-    if (!user?.id) return;
-    sendPartnershipRequest(league.id, night.id, user.id, player.id);
+  const selectPartner = (playerId: string) => {
+    if (!user) return;
+    sendPartnershipRequest(league.id, night.id, user.id, playerId);
   };
 
   const cancelRequest = (requestId: string) => {
-    if (!user?.id) return;
+    if (!user) return;
     rejectPartnershipRequest(league.id, night.id, requestId, user.id);
   };
 
   const acceptRequest = (requestId: string) => {
-    if (!user?.id) return;
+    if (!user) return;
     acceptPartnershipRequest(league.id, night.id, requestId, user.id);
   };
 
   const renderCheckInSection = () => {
     return (
-      <Container column centerHorizontal growHorizontal gap={gap.md}>
+      <Container column centerHorizontal grow gap={gap.md}>
         <Icon name="user-plus" size={24} color={theme.colors.success} />
         <ThemedText textStyle={TextStyle.Body} style={{ textAlign: "center" }}>
           Check in to tonight's league night to set up your partnership
@@ -143,16 +144,12 @@ export const SelectPartnershipComponent = ({
   };
 
   const renderRequestsSection = (
-    title: string,
-    emptyText: string,
     requests: PartnershipRequest[],
-    actionText: string,
-    onAction: (requestId: string) => void
+    actionText?: string,
+    onAction?: (requestId: string) => void
   ) => {
     return (
       <PlayerList
-        title={title}
-        emptyText={emptyText}
         players={requests.map((request) => ({
           id: request.id,
           name: request.requested.firstName + " " + request.requested.lastName,
@@ -167,57 +164,41 @@ export const SelectPartnershipComponent = ({
   const renderReceivedRequests = () => {
     if (receivedRequests.length === 0) return null;
 
-    return renderRequestsSection(
-      "Received requests",
-      "No received requests just yet.",
-      receivedRequests,
-      "Accept",
-      acceptRequest
-    );
+    return renderRequestsSection(receivedRequests, "Accept", acceptRequest);
   };
 
   const renderSentRequests = () => {
     if (sentRequests.length === 0) return null;
 
-    return renderRequestsSection(
-      "Sent requests",
-      "No sent requests just yet.",
-      sentRequests,
-      "Cancel",
-      cancelRequest
-    );
+    return renderRequestsSection(sentRequests, "Awaiting approval");
   };
 
-  const renderAvailablePartners = () => {
-    if (!availablePartners) return null;
-
+  const renderPartnersList = () => {
     return (
       <Container column>
-        <Container column>
-          <ThemedText textStyle={TextStyle.Body}>
-            Select your partner
+        {availablePartners &&
+        availablePartners.length === 0 &&
+        sentRequests.length === 0 &&
+        receivedRequests.length === 0 ? (
+          <ThemedText
+            textStyle={TextStyle.Body}
+            style={{ color: theme.colors.muted }}
+          >
+            No available partners. Make sure your friends have checked in!
           </ThemedText>
-        </Container>
-        <Container column padding={paddingSmall} growHorizontal>
-          {availablePartners.length === 0 ? (
-            <ThemedText
-              textStyle={TextStyle.Body}
-              style={{ color: theme.colors.muted }}
-            >
-              No available partners. Make sure your friends have checked in, or
-              check your sent requests!
-            </ThemedText>
-          ) : (
-            availablePartners.map((player) => (
-              <PlayerListItem
-                key={player.id}
-                player={player}
+        ) : (
+          <Container column grow w100>
+            {renderSentRequests()}
+            {renderReceivedRequests()}
+            {availablePartners && (
+              <PlayerList
+                players={availablePartners}
                 actionText="Select"
-                onAction={() => selectPartner(player)}
+                onAction={(playerId) => selectPartner(playerId)}
               />
-            ))
-          )}
-        </Container>
+            )}
+          </Container>
+        )}
       </Container>
     );
   };
@@ -231,18 +212,16 @@ export const SelectPartnershipComponent = ({
         : confirmedPartnership.player1;
 
     return (
-      <Container column growHorizontal growVertical gap={gap.md}>
-        <ThemedText textStyle={TextStyle.Body}>Current partner</ThemedText>
-        <Container column growHorizontal growVertical spaceBetween>
-          <Container column growHorizontal gap={gap.md}>
+      <Container column grow w100 gap={gap.md}>
+        <Container column grow w100 spaceBetween>
+          <Container column grow w100 gap={gap.md}>
             <PlayerListItem
               player={{
                 id: otherPlayer.id,
                 name: otherPlayer.firstName + " " + otherPlayer.lastName,
                 skillLevel: otherPlayer.skillLevel,
               }}
-              actionText={undefined}
-              onAction={() => {}}
+              showBorder={false}
             />
             <ThemedText textStyle={TextStyle.Body} muted>
               Make sure to check the matches you are playing together. You can
@@ -268,18 +247,14 @@ export const SelectPartnershipComponent = ({
     }
 
     return (
-      <Container column growVertical gap={gap.md}>
+      <Container column grow w100 gap={gap.md}>
         <SearchBar
           value={partnerSearch}
           onChangeText={(text) => setPartnerSearch(text)}
           placeholder="Search..."
         />
-        <ScrollArea style={{ padding: 0 }}>
-          <Container column growHorizontal>
-            {renderReceivedRequests()}
-            {renderSentRequests()}
-            {renderAvailablePartners()}
-          </Container>
+        <ScrollArea style={{ padding: 0, width: "100%" }}>
+          {renderPartnersList()}
         </ScrollArea>
       </Container>
     );
@@ -287,7 +262,7 @@ export const SelectPartnershipComponent = ({
 
   const renderPartnershipSelectionSection = () => {
     return (
-      <Container column growHorizontal growVertical>
+      <Container column grow w100>
         {isCheckedIn ? renderCheckedInSection() : renderCheckInSection()}
       </Container>
     );
@@ -302,8 +277,8 @@ export const SelectPartnershipComponent = ({
   };
 
   return (
-    <Container column growHorizontal growVertical>
-      {loadingPartnershipData
+    <Container column grow w100>
+      {loadingPartnershipData || sendingRequest
         ? renderLoadingSection()
         : renderPartnershipSelectionSection()}
     </Container>
