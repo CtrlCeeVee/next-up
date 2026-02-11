@@ -22,12 +22,14 @@ export const ScrollArea = ({
   hoverActions,
   innerPadding = padding,
   contentGap = gap.lg,
+  bottomInset = 0,
 }: {
   children: React.ReactNode;
   style?: ViewStyle;
   hoverActions?: React.ReactNode;
   innerPadding?: number;
   contentGap?: number;
+  bottomInset?: number;
 }) => {
   const [hoverActionsHeight, setHoverActionsHeight] = useState(0);
 
@@ -46,7 +48,7 @@ export const ScrollArea = ({
       <ScrollView
         style={styles.container}
         contentContainerStyle={{
-          paddingBottom: hoverActionsHeight + spacing.md,
+          paddingBottom: hoverActionsHeight + spacing.md + bottomInset,
           ...style,
         }}
       >

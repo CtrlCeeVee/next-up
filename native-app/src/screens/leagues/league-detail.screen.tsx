@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   FlatList,
   Platform,
+  useWindowDimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
@@ -21,6 +22,8 @@ import {
   LazyImage,
   ScrollArea,
   MapSnapshot,
+  AppBottomSheet,
+  ActionOnBackdropPress,
 } from "../../components";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
@@ -68,6 +71,7 @@ type LeagueDetailNavigationProp = NativeStackNavigationProp<
 
 const SOFT_HYPHEN = "\u00AD";
 const MAX_WORD_SEGMENT_LENGTH = 12;
+const LEAGUE_ACTIONS_SNAP_POINTS: Array<string> = ["20%", "75%"];
 
 const hyphenateLongWord = (word: string): string => {
   if (word.length <= MAX_WORD_SEGMENT_LENGTH) {
@@ -113,6 +117,10 @@ export const LeagueDetailScreen = () => {
   const [activeLeagueNight, setActiveLeagueNight] =
     useState<LeagueNightInstance | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [isLeagueActionsSheetOpen, setIsLeagueActionsSheetOpen] =
+    useState(true);
+  const [leagueActionsSheetStage, setLeagueActionsSheetStage] = useState(0);
+  const { height: windowHeight } = useWindowDimensions();
 
   useEffect(() => {
     fetchLeague(leagueId);
@@ -258,9 +266,43 @@ export const LeagueDetailScreen = () => {
     return days.slice(0, -1).join(", ") + " and " + days[days.length - 1] + "s";
   };
 
+  const getSnapPointHeight = (snapPoint: string | number): number => {
+    if (typeof snapPoint === "number") {
+      return snapPoint;
+    }
+
+    if (snapPoint.endsWith("%")) {
+      const parsedPercent = Number.parseFloat(snapPoint.replace("%", ""));
+      if (Number.isNaN(parsedPercent)) {
+        return 0;
+      }
+
+      return windowHeight * (parsedPercent / 100);
+    }
+
+    const parsedNumber = Number.parseFloat(snapPoint);
+    if (Number.isNaN(parsedNumber)) {
+      return 0;
+    }
+
+    return parsedNumber;
+  };
+
+  const getCurrentSheetInset = (): number => {
+    if (!isLeagueActionsSheetOpen) {
+      return 0;
+    }
+
+    return getSnapPointHeight(LEAGUE_ACTIONS_SNAP_POINTS[0]);
+  };
+
   return (
     <ScreenContainer>
-      <ScrollArea innerPadding={0} contentGap={gap.lg}>
+      <ScrollArea
+        innerPadding={0}
+        contentGap={gap.lg}
+        bottomInset={getCurrentSheetInset()}
+      >
         {/* <TabScreen headerComponent={renderHeaderComponent()} tabs={getTabs()} /> */}
         <Container
           column
@@ -356,8 +398,13 @@ export const LeagueDetailScreen = () => {
               </Container>
 
               <TouchableOpacity
-                onPress={() => {}}
+                onPress={() => {
+                  setLeagueActionsSheetStage(0);
+                  setIsLeagueActionsSheetOpen(true);
+                }}
                 style={styles.heartButtonContainer}
+                accessibilityRole="button"
+                accessibilityLabel="Open league actions"
               >
                 <Container
                   rounding={roundingFull}
@@ -434,6 +481,108 @@ export const LeagueDetailScreen = () => {
           </Container>
         </Container>
       </ScrollArea>
+
+      <AppBottomSheet
+        isOpen={isLeagueActionsSheetOpen}
+        onClose={() => setIsLeagueActionsSheetOpen(false)}
+        enableDynamicSizing={false}
+        enableDragging={true}
+        allowSwipeToClose={false}
+        actionOnBackdropPress={ActionOnBackdropPress.COLLAPSE}
+        snapPoints={LEAGUE_ACTIONS_SNAP_POINTS}
+        initialSnapIndex={0}
+        backdropAppearsOnIndex={1}
+        backdropDisappearsOnIndex={0}
+        onStageChange={(stageIndex) => {
+          if (stageIndex >= 0) {
+            setLeagueActionsSheetStage(stageIndex);
+          }
+        }}
+        sheetBackgroundStyle={{
+          borderTopLeftRadius: rounding,
+          borderTopRightRadius: rounding,
+        }}
+      >
+        <Container column gap={gap.md}>
+          <ThemedText textStyle={TextStyle.Body}>League Actions</ThemedText>
+          <ThemedText textStyle={TextStyle.BodySmall} muted>
+            Drag up for full details. Drag down to collapse back to preview.
+          </ThemedText>
+          <Container
+            column
+            gap={gap.xs}
+            paddingVertical={paddingSmall}
+            paddingHorizontal={paddingSmall}
+            rounding={rounding}
+            style={{ backgroundColor: theme.colors.text + "08" }}
+          >
+            <ThemedText textStyle={TextStyle.BodySmall} muted>
+              League
+            </ThemedText>
+            <ThemedText textStyle={TextStyle.BodyMedium}>
+              {currentLeague.name}
+            </ThemedText>
+            <ThemedText textStyle={TextStyle.BodySmall} muted>
+              {currentLeague.location}
+            </ThemedText>
+          </Container>
+
+          {leagueActionsSheetStage === 1 && (
+            <Container column gap={gap.sm}>
+              <Container column gap={gap.sm}>
+                <Container
+                  column
+                  gap={gap.xs}
+                  paddingVertical={paddingSmall}
+                  paddingHorizontal={paddingSmall}
+                  rounding={rounding}
+                  style={{ backgroundColor: theme.colors.text + "08" }}
+                >
+                  <ThemedText textStyle={TextStyle.BodySmall} muted>
+                    League Schedule
+                  </ThemedText>
+                  <ThemedText textStyle={TextStyle.BodyMedium}>
+                    {getLeagueDays()}
+                  </ThemedText>
+                  <ThemedText textStyle={TextStyle.BodySmall} muted>
+                    Upcoming nights: {leagueNights.length}
+                  </ThemedText>
+                </Container>
+              </Container>
+              <Container
+                column
+                gap={gap.xs}
+                paddingVertical={paddingSmall}
+                paddingHorizontal={paddingSmall}
+                rounding={rounding}
+                style={{ backgroundColor: theme.colors.text + "08" }}
+              >
+                <ThemedText textStyle={TextStyle.BodySmall} muted>
+                  Quick Context
+                </ThemedText>
+                <ThemedText textStyle={TextStyle.BodySmall}>
+                  This full stage is intended for richer content, like roster
+                  controls, league actions, and schedule deep-links.
+                </ThemedText>
+              </Container>
+            </Container>
+          )}
+          <TouchableOpacity onPress={() => setIsLeagueActionsSheetOpen(false)}>
+            <Container
+              row
+              centerHorizontal
+              centerVertical
+              paddingVertical={paddingSmall}
+              rounding={rounding}
+              style={{ backgroundColor: theme.colors.primary }}
+            >
+              <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
+                Close
+              </ThemedText>
+            </Container>
+          </TouchableOpacity>
+        </Container>
+      </AppBottomSheet>
     </ScreenContainer>
   );
 };

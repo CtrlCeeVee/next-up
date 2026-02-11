@@ -1,4 +1,5 @@
 import React from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { App } from "./app";
 
 /**
@@ -8,5 +9,9 @@ import { App } from "./app";
  * via the import in src/index.ts
  */
 export const AppProvider = () => {
-  return <App />;
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <App />
+    </GestureHandlerRootView>
+  );
 };
