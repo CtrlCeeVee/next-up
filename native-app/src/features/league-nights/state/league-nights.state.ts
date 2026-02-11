@@ -12,7 +12,8 @@ interface LeagueNightState {
   leagueNightInstance: LeagueNightInstance | null;
   nextUpLeagueNightInstances: LeagueNightInstance[];
   checkedInPlayers: CheckedInPlayer[];
-  partnershipRequests: PartnershipRequest[];
+  sentRequests: PartnershipRequest[];
+  receivedRequests: PartnershipRequest[];
   confirmedPartnership: ConfirmedPartnership | null;
   currentMatch: any | null;
 
@@ -26,6 +27,7 @@ interface LeagueNightState {
   removingPartnership: boolean;
   startingLeague: boolean;
   endingLeague: boolean;
+  loadingPartnershipData: boolean;
 
   // Error state
   error: string | null;
@@ -102,7 +104,8 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
   leagueNightInstance: null,
   nextUpLeagueNightInstances: [],
   checkedInPlayers: [],
-  partnershipRequests: [],
+  sentRequests: [],
+  receivedRequests: [],
   confirmedPartnership: null,
   currentMatch: null,
   loading: false,
@@ -114,6 +117,7 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
   removingPartnership: false,
   startingLeague: false,
   endingLeague: false,
+  loadingPartnershipData: false,
   error: null,
 
   // Fetch league night
@@ -127,7 +131,6 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
       set({
         leagueNightInstance: leagueNightInstance,
         checkedInPlayers: leagueNightInstance.checkins,
-        partnershipRequests: leagueNightInstance.requests,
         loading: false,
       });
     } catch (error) {
@@ -178,29 +181,20 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
     nightId: string,
     userId: string
   ) => {
+    set({ loadingPartnershipData: true, error: null });
     try {
       const requests = await leagueNightsService.getPartnershipRequests(
         leagueId,
         nightId,
         userId
       );
-      set({ partnershipRequests: requests.requests });
+      set({ sentRequests: requests.sentRequests });
+      set({ receivedRequests: requests.receivedRequests });
       set({ confirmedPartnership: requests.confirmedPartnership });
-
-      // Get current match if partnership exists
-      if (requests.confirmedPartnership) {
-        const match = await leagueNightsService.getCurrentMatch(
-          leagueId,
-          nightId,
-          requests.confirmedPartnership.id
-        );
-        set({ currentMatch: match });
-      } else {
-        set({ currentMatch: null });
-      }
     } catch (error) {
       console.error("Error refreshing partnership requests:", error);
     }
+    set({ loadingPartnershipData: false });
   },
 
   // Check in player
@@ -390,7 +384,8 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
     set({
       leagueNightInstance: null,
       checkedInPlayers: [],
-      partnershipRequests: [],
+      sentRequests: [],
+      receivedRequests: [],
       confirmedPartnership: null,
       currentMatch: null,
       loading: false,
@@ -402,6 +397,7 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
       removingPartnership: false,
       startingLeague: false,
       endingLeague: false,
+      loadingPartnershipData: false,
       error: null,
     }),
 }));

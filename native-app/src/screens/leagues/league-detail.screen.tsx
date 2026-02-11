@@ -39,7 +39,7 @@ import { LeaguesStackParamList } from "../../navigation/types";
 import { Routes } from "../../navigation/routes";
 import { useLeagueNightState } from "../../features/league-nights/state";
 import { leagueNightsService } from "../../di/services.registry";
-import { LeagueNightInstance } from "../../features/league-nights/types";
+import { LeagueNightInstance, Match } from "../../features/league-nights/types";
 import {
   LeagueDaysSummary,
   LeagueDaysComponentSize,
@@ -49,6 +49,7 @@ import {
 } from "../../features/leagues/components";
 import { TabConfig, TabScreen } from "../../components/tab-screen.component";
 import { HoverActionsComponent } from "../../components/hover-actions.component";
+import { ActiveLeagueNightComponent } from "../../features/league-nights/components/active-league-night.component";
 
 type LeagueDetailRouteProp = RouteProp<
   LeaguesStackParamList,
@@ -77,15 +78,35 @@ export const LeagueDetailScreen = () => {
   const { leagueId } = route.params as { leagueId: string };
 
   const [leagueNights, setLeagueNights] = useState<LeagueNightInstance[]>([]);
+  const [activeLeagueNight, setActiveLeagueNight] =
+    useState<LeagueNightInstance | null>(null);
+  const [matches, setMatches] = useState<Match[]>([]);
 
   useEffect(() => {
     fetchLeague(leagueId);
     fetchLeagueNights();
   }, [leagueId, user]);
 
+  useEffect(() => {
+    fetchMatches();
+  }, [activeLeagueNight, user]);
+
   const fetchLeagueNights = async () => {
     const response = await leagueNightsService.getAllLeagueNights(leagueId);
     setLeagueNights(response);
+    setActiveLeagueNight(
+      response.find((night) => night.status === "active") || null
+    );
+  };
+
+  const fetchMatches = async () => {
+    if (!activeLeagueNight || !user) return;
+    const response = await leagueNightsService.getMatches(
+      leagueId,
+      activeLeagueNight.id,
+      user.id
+    );
+    setMatches(response);
   };
 
   if (leagueLoading || !currentLeague) {
@@ -170,7 +191,13 @@ export const LeagueDetailScreen = () => {
       },
       {
         name: "Active",
-        component: <></>,
+        component: (
+          <ActiveLeagueNightComponent
+            league={currentLeague}
+            leagueNight={activeLeagueNight || undefined}
+            matches={matches}
+          />
+        ),
         options: {
           tabBarActiveTintColor: theme.colors.accent,
           tabBarIndicatorStyle: {

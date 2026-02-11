@@ -4,6 +4,9 @@ import {
   defaultIconSize,
   gap,
   paddingLarge,
+  paddingSmall,
+  rounding,
+  roundingFull,
   TextStyle,
   useTheme,
 } from "../../../core";
@@ -74,13 +77,9 @@ export const LeagueDays = ({ leagueDays }: { leagueDays: DayOfWeek[] }) => {
             }}
           >
             {!onDays[day] ? (
-              <Icon
-                name="x"
-                size={defaultIconSize}
-                color={theme.colors.text + "40"}
-              />
+              <Icon name="x" size={16} color={theme.colors.text + "40"} />
             ) : (
-              <Icon name="checkmark" size={defaultIconSize} color={"#fff"} />
+              <Icon name="checkmark" size={16} color={"#fff"} />
             )}
           </Container>
           <ThemedText
@@ -105,6 +104,6 @@ const styles = StyleSheet.create({
   dayCircle: {
     width: defaultIconSize,
     height: defaultIconSize,
-    borderRadius: 5,
+    borderRadius: roundingFull,
   },
 });

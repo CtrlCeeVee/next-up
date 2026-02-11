@@ -122,8 +122,8 @@ export class LeagueNightsService extends BaseService {
     await this.post(
       `/api/leagues/${leagueId}/nights/${nightId}/partnership-reject`,
       {
-        request_id: requestId,
-        user_id: userId,
+        requestId: requestId,
+        userId: userId,
       }
     );
   }

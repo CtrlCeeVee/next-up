@@ -6,7 +6,6 @@ import { Screen } from "./screen";
 import { useToastState } from "../features/toast/state/toast.state";
 import Constants from "expo-constants";
 import { ExecutionEnvironment } from "expo-constants";
-
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,

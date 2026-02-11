@@ -37,48 +37,47 @@ export interface Partnership {
 
 export interface PartnershipRequestResponse {
   confirmedPartnership: ConfirmedPartnership | null;
-  requests: PartnershipRequest[];
+  sentRequests: PartnershipRequest[];
+  receivedRequests: PartnershipRequest[];
 }
 
 export interface PartnershipRequest {
   id: string;
-  league_night_instance_id: string;
-  requester_id: string;
-  requested_id: string;
+  leagueNightInstanceId: string;
   status: "pending" | "accepted" | "declined";
-  created_at: string;
+  createdAt: string;
   requester: {
     id: string;
-    first_name: string;
-    last_name: string;
-    skill_level: string;
+    firstName: string;
+    lastName: string;
+    skillLevel: string;
   };
   requested: {
     id: string;
-    first_name: string;
-    last_name: string;
-    skill_level: string;
+    firstName: string;
+    lastName: string;
+    skillLevel: string;
   };
 }
 
 export interface ConfirmedPartnership {
   id: string;
-  league_night_instance_id: string;
-  player1_id: string;
-  player2_id: string;
-  is_active: boolean;
-  created_at: string;
+  leagueNightInstanceId: string;
+  player1Id: string;
+  player2Id: string;
+  isActive: boolean;
+  createdAt: string;
   player1: {
     id: string;
-    first_name: string;
-    last_name: string;
-    skill_level: string;
+    firstName: string;
+    lastName: string;
+    skillLevel: string;
   };
   player2: {
     id: string;
-    first_name: string;
-    last_name: string;
-    skill_level: string;
+    firstName: string;
+    lastName: string;
+    skillLevel: string;
   };
 }
 

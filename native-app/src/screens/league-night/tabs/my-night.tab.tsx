@@ -129,7 +129,7 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
   const incomingRequests = useMemo(() => {
     console.log("incoming requests", partnershipRequests);
     return partnershipRequests.filter(
-      (req) => req.requested_id === user?.id && req.status === "pending"
+      (req) => req.requestedId === user?.id && req.status === "pending"
     );
   }, [partnershipRequests, user]);
 
@@ -137,39 +137,18 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
   const outgoingRequests = useMemo(() => {
     console.log("outgoing requests", partnershipRequests);
     return partnershipRequests.filter(
-      (req) => req.requester_id === user?.id && req.status === "pending"
+      (req) => req.requesterId === user?.id && req.status === "pending"
     );
   }, [partnershipRequests, user]);
 
   // Check if request sent to partner
   const hasSentRequest = (partnerId: string) => {
-    return outgoingRequests.some((req) => req.requested_id === partnerId);
+    return outgoingRequests.some((req) => req.requestedId === partnerId);
   };
 
-  // Render check-in section
-  const renderCheckInSection = () => {
-    if (!isCheckedIn) {
-      return (
-        <Card style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="user-check" size={24} color={theme.colors.primary} />
-            <ThemedText textStyle={TextStyle.Subheader}>Check In</ThemedText>
-          </View>
-          <ThemedText textStyle={TextStyle.Body} style={styles.description}>
-            Check in to let others know you're here and ready to play!
-          </ThemedText>
-          <Button
-            text="Check In"
-            onPress={onCheckIn}
-            loading={checkingIn}
-            disabled={checkingIn}
-            leftIcon="user-check"
-            style={styles.button}
-          />
-        </Card>
-      );
-    }
 
+  // Render check-in section
+  const renderCheckedInSection = () => {
     return (
       <Card style={styles.card}>
         <View style={styles.cardHeader}>
@@ -276,265 +255,6 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
   };
 
   // Render partnership section
-  const renderPartnershipSection = () => {
-    if (!isCheckedIn) return null;
-
-    // If user has confirmed partnership
-    if (confirmedPartnership) {
-      const partner =
-        confirmedPartnership.player1_id === user?.id
-          ? confirmedPartnership.player2
-          : confirmedPartnership.player1;
-
-      return (
-        <Card style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="users" size={24} color={theme.colors.primary} />
-            <ThemedText textStyle={TextStyle.Subheader}>
-              Your Partnership
-            </ThemedText>
-          </View>
-          <View
-            style={[
-              styles.partnerCard,
-              {
-                backgroundColor: theme.colors.success + "20",
-                borderColor: theme.colors.success + "40",
-              },
-            ]}
-          >
-            <View style={styles.partnerInfo}>
-              <ThemedText textStyle={TextStyle.Body} style={styles.partnerName}>
-                {partner.first_name} {partner.last_name}
-              </ThemedText>
-              <ThemedText
-                textStyle={TextStyle.BodySmall}
-                style={styles.partnerSkill}
-              >
-                Skill: {partner.skill_level}
-              </ThemedText>
-            </View>
-            <Button
-              text="Remove"
-              variant="outline"
-              onPress={onRemovePartnership}
-              loading={removingPartnership}
-              disabled={removingPartnership}
-              leftIcon="x"
-              size="small"
-            />
-          </View>
-        </Card>
-      );
-    }
-
-    // Show incoming requests
-    if (incomingRequests.length > 0) {
-      return (
-        <Card style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="bell" size={24} color={theme.colors.primary} />
-            <ThemedText textStyle={TextStyle.Subheader}>
-              Partnership Requests
-            </ThemedText>
-          </View>
-          {incomingRequests.map((request) => (
-            <View
-              key={request.id}
-              style={[
-                styles.requestCard,
-                {
-                  backgroundColor: theme.colors.primary + "10",
-                  borderColor: theme.colors.primary + "30",
-                },
-              ]}
-            >
-              <View style={styles.requestInfo}>
-                <ThemedText textStyle={TextStyle.Body}>
-                  {request.requester.first_name} {request.requester.last_name}{" "}
-                  wants to partner with you
-                </ThemedText>
-                <ThemedText
-                  textStyle={TextStyle.BodySmall}
-                  style={styles.requestSkill}
-                >
-                  Skill: {request.requester.skill_level}
-                </ThemedText>
-              </View>
-              <View style={styles.requestActions}>
-                <Button
-                  text="Accept"
-                  size="small"
-                  onPress={() => onAcceptPartnershipRequest(request.id)}
-                  loading={acceptingRequest === request.id}
-                  disabled={!!acceptingRequest}
-                  leftIcon="check-circle"
-                  style={styles.acceptButton}
-                />
-                <Button
-                  text="Decline"
-                  variant="outline"
-                  size="small"
-                  onPress={() => onRejectPartnershipRequest(request.id)}
-                  loading={rejectingRequest === request.id}
-                  disabled={!!rejectingRequest}
-                  leftIcon="x"
-                />
-              </View>
-            </View>
-          ))}
-        </Card>
-      );
-    }
-
-    // Show outgoing requests
-    if (outgoingRequests.length > 0) {
-      return (
-        <Card style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Icon name="clock" size={24} color={theme.colors.text + "80"} />
-            <ThemedText textStyle={TextStyle.Subheader}>
-              Pending Requests
-            </ThemedText>
-          </View>
-          {outgoingRequests.map((request) => (
-            <View
-              key={request.id}
-              style={[
-                styles.requestCard,
-                {
-                  backgroundColor: theme.colors.text + "05",
-                  borderColor: theme.colors.text + "10",
-                },
-              ]}
-            >
-              <View style={styles.requestInfo}>
-                <ThemedText textStyle={TextStyle.Body}>
-                  Waiting for {request.requested.first_name}{" "}
-                  {request.requested.last_name} to respond
-                </ThemedText>
-                <ThemedText
-                  textStyle={TextStyle.BodySmall}
-                  style={styles.requestSkill}
-                >
-                  Skill: {request.requested.skill_level}
-                </ThemedText>
-              </View>
-              <Icon name="clock" size={20} color={theme.colors.text + "60"} />
-            </View>
-          ))}
-          <ThemedText textStyle={TextStyle.BodySmall} style={styles.helpText}>
-            You can search for other partners below while waiting
-          </ThemedText>
-        </Card>
-      );
-    }
-
-    // Show available partners
-    return (
-      <Card style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Icon name="user-add" size={24} color={theme.colors.primary} />
-          <ThemedText textStyle={TextStyle.Subheader}>
-            Find a Partner
-          </ThemedText>
-        </View>
-
-        {/* Search Bar */}
-        <View
-          style={[
-            styles.searchContainer,
-            {
-              backgroundColor: theme.componentBackground,
-              borderColor: theme.colors.border,
-            },
-          ]}
-        >
-          <Icon name="search" size={16} color={theme.colors.text + "60"} />
-          <TextInput
-            style={[styles.searchInput, { color: theme.colors.text }]}
-            placeholder="Search by name or skill level..."
-            placeholderTextColor={theme.colors.text + "60"}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-
-        <ThemedText textStyle={TextStyle.BodySmall} style={styles.description}>
-          {availablePartners.length}{" "}
-          {availablePartners.length === 1 ? "player" : "players"} available
-        </ThemedText>
-
-        {availablePartners.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Icon name="users" size={32} color={theme.colors.text + "40"} />
-            <ThemedText textStyle={TextStyle.Body} style={styles.emptyText}>
-              {searchQuery
-                ? "No players match your search"
-                : "No available partners yet"}
-            </ThemedText>
-            <ThemedText
-              textStyle={TextStyle.BodySmall}
-              style={styles.emptySubtext}
-            >
-              {searchQuery
-                ? "Try a different search"
-                : "More players may check in soon!"}
-            </ThemedText>
-          </View>
-        ) : (
-          <FlatList
-            style={{
-              width: "100%",
-            }}
-            data={availablePartners}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => {
-              const requestSent = hasSentRequest(item.id);
-              return (
-                <View
-                  style={[
-                    styles.partnerListCard,
-                    {
-                      borderBottomColor: theme.colors.border,
-                    },
-                  ]}
-                >
-                  <View style={styles.partnerInfo}>
-                    <ThemedText textStyle={TextStyle.Body}>
-                      {item.name}
-                    </ThemedText>
-                    <ThemedText
-                      textStyle={TextStyle.BodySmall}
-                      style={styles.partnerSkill}
-                    >
-                      Skill: {item.skillLevel}
-                    </ThemedText>
-                  </View>
-                  <Button
-                    text={requestSent ? "Sent" : "Request"}
-                    size="small"
-                    variant={requestSent ? "outline" : "primary"}
-                    onPress={() => onSendPartnershipRequest(item.id)}
-                    loading={sendingRequest === item.id}
-                    disabled={!!sendingRequest || requestSent}
-                    leftIcon={requestSent ? "clock" : "send"}
-                  />
-                </View>
-              );
-            }}
-            scrollEnabled={false}
-            ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-          />
-        )}
-
-        <ThemedText textStyle={TextStyle.BodySmall} style={styles.helpText}>
-          Don't see your partner? They may already be paired or not checked in
-          yet.
-        </ThemedText>
-      </Card>
-    );
-  };
 
   // Render current match section
   const renderCurrentMatchSection = () => {
@@ -614,8 +334,8 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
                 Your Team
               </ThemedText>
               <ThemedText textStyle={TextStyle.Body} style={styles.teamPlayers}>
-                {confirmedPartnership.player1.first_name} &{" "}
-                {confirmedPartnership.player2.first_name}
+                {confirmedPartnership.player1.firstName} &{" "}
+                {confirmedPartnership.player2.firstName}
               </ThemedText>
             </View>
             <ThemedText
@@ -649,16 +369,20 @@ export const MyNightTab: React.FC<MyNightTabProps> = ({
     );
   };
 
-  return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.content}>
-        {renderCheckInSection()}
-        {renderTonightStats()}
-        {renderPartnershipSection()}
-        {renderCurrentMatchSection()}
-      </View>
-    </ScrollView>
-  );
+  const renderScreen = () => {
+    return (
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.content}>
+          {renderCheckedInSection()}
+          {renderTonightStats()}
+          {renderPartnershipSection()}
+          {renderCurrentMatchSection()}
+        </View>
+      </ScrollView>
+    );
+  };
+
+  return <>{renderScreen()}</>;
 };
 
 const styles = StyleSheet.create({
@@ -672,11 +396,6 @@ const styles = StyleSheet.create({
   },
   card: {
     ...GlobalStyles.container,
-    gap: 12,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
     gap: 12,
   },
   description: {

@@ -52,6 +52,7 @@ export class AuthService extends BaseService {
       password,
     });
 
+    console.log("signIn data", error);
     if (error) throw error;
     return data;
   }
