@@ -2,7 +2,7 @@ import { TouchableOpacity, View, StyleSheet } from "react-native";
 import { Icon } from "../icons";
 import { useTheme } from "../core/theme";
 
-export const SettingsButton = () => {
+export const SettingsButton = ({ size = 24 }: { size?: number }) => {
   const { theme } = useTheme();
 
   const styles = StyleSheet.create({
@@ -19,7 +19,7 @@ export const SettingsButton = () => {
       <TouchableOpacity onPress={() => {}}>
         <Icon
           name="settings"
-          size={24}
+          size={size}
           color={theme.colors.text}
           style={styles.settingsButtonIcon}
         />

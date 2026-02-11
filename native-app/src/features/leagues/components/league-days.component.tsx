@@ -5,7 +5,6 @@ import {
   gap,
   paddingLarge,
   paddingSmall,
-  rounding,
   roundingFull,
   TextStyle,
   useTheme,
@@ -24,7 +23,12 @@ const DAY_NAMES: Record<DayOfWeek, { short: string; long: string }> = {
   [DayOfWeek.Saturday]: { short: "Sat", long: "Saturday" },
 };
 
-export const LeagueDays = ({ leagueDays }: { leagueDays: DayOfWeek[] }) => {
+interface LeagueDay {
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+}
+
+export const LeagueDays = ({ leagueDays }: { leagueDays: LeagueDay[] }) => {
   const { theme } = useTheme();
 
   const onDays = useMemo(() => {
@@ -39,7 +43,7 @@ export const LeagueDays = ({ leagueDays }: { leagueDays: DayOfWeek[] }) => {
     };
 
     leagueDays.forEach((day) => {
-      onDayOfWeek[day] = true;
+      onDayOfWeek[day.dayOfWeek] = true;
     });
 
     return onDayOfWeek;
@@ -52,58 +56,89 @@ export const LeagueDays = ({ leagueDays }: { leagueDays: DayOfWeek[] }) => {
     return day === today;
   };
 
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(":");
+    const hour = parseInt(hours);
+    const minute = parseInt(minutes);
+    const period = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minute.toString().padStart(2, "0")} ${period}`;
+  };
+
+  const iconSize = 18;
+
   return (
-    <Container row centerVertical growHorizontal spaceBetween gap={gap.lg}>
-      {DAYS_OF_WEEK.map((day) => (
-        <Container
-          key={day}
-          column
-          centerVertical
-          centerHorizontal
-          gap={gap.xs}
-        >
-          <Container
-            column
-            centerVertical
-            centerHorizontal
-            style={{
-              ...styles.dayCircle,
-              backgroundColor: onDays[day]
-                ? theme.colors.primary
-                : isToday(day)
+    <Container row growHorizontal spaceBetween noWrap>
+      <Container column startVertical gap={gap.md}>
+        {DAYS_OF_WEEK.map((day) => (
+          <Container key={day} row centerVertical startHorizontal gap={gap.xs}>
+            <Container
+              column
+              centerVertical
+              centerHorizontal
+              style={{
+                ...styles.dayCircle,
+                backgroundColor: isToday(day)
                   ? theme.colors.accent
-                  : theme.colors.muted + "20",
-              borderColor: isToday(day) ? theme.colors.accent : "#f0f0f0",
-            }}
-          >
-            {!onDays[day] ? (
-              <Icon name="x" size={16} color={theme.colors.text + "40"} />
-            ) : (
-              <Icon name="checkmark" size={16} color={"#fff"} />
+                  : onDays[day]
+                    ? theme.colors.primary
+                    : theme.colors.muted + "30",
+                borderColor: isToday(day) ? theme.colors.accent : "#f0f0f0",
+              }}
+            >
+              {!onDays[day] ? (
+                <Icon
+                  name="x"
+                  size={iconSize}
+                  color={theme.colors.text + "80"}
+                />
+              ) : (
+                <Icon name="checkmark" size={iconSize} color={"#fff"} />
+              )}
+            </Container>
+            <ThemedText
+              textStyle={TextStyle.BodySmall}
+              color={
+                isToday(day)
+                  ? theme.colors.accent
+                  : onDays[day]
+                    ? theme.colors.primary
+                    : theme.colors.text + "80"
+              }
+            >
+              {DAY_NAMES[day].long}s
+            </ThemedText>
+            {isToday(day) && (
+              <ThemedText
+                textStyle={TextStyle.BodySmall}
+                color={theme.colors.accent}
+              >
+                (Today)
+              </ThemedText>
+            )}
+            {onDays[day] && (
+              <ThemedText textStyle={TextStyle.BodySmall}>
+                {"at "}
+                {formatTime(
+                  leagueDays.find((d) => d.dayOfWeek === day)?.startTime || ""
+                )}
+              </ThemedText>
             )}
           </Container>
-          <ThemedText
-            textStyle={TextStyle.BodySmall}
-            color={
-              onDays[day]
-                ? theme.colors.text
-                : isToday(day)
-                  ? theme.colors.accent
-                  : theme.colors.muted
-            }
-          >
-            {DAY_NAMES[day].short}
-          </ThemedText>
-        </Container>
-      ))}
+        ))}
+      </Container>
     </Container>
   );
 };
 
 const styles = StyleSheet.create({
   dayCircle: {
-    width: defaultIconSize,
-    height: defaultIconSize,
+    padding: 2,
+    borderRadius: roundingFull,
+  },
+  dot: {
+    width: 8,
+    height: 8,
     borderRadius: roundingFull,
   },
 });

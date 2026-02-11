@@ -90,9 +90,15 @@ export const LeagueMembersComponent = ({
   };
 
   return (
-    <Card>
-      <Container column centerHorizontal growHorizontal gap={gap.md}>
-        <ThemedText textStyle={TextStyle.BodyMedium} muted>
+    <Card style={{ width: "100%" }}>
+      <Container
+        column
+        centerHorizontal
+        centerVertical
+        growHorizontal
+        gap={gap.md}
+      >
+        <ThemedText textStyle={TextStyle.BodyMedium} center growHorizontal>
           This League currently has {members.length} members
         </ThemedText>
         {members.length === 0 && (
@@ -105,7 +111,7 @@ export const LeagueMembersComponent = ({
         )}
         {members.length > 0 && (
           <>
-            <Container row gap={gap.md} style={styles.memberIcons}>
+            <Container row gap={gap.md} style={styles.memberIcons} growHorizontal centerHorizontal>
               {renderMemberIcons()}
             </Container>
           </>

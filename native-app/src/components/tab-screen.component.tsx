@@ -6,7 +6,13 @@ import {
 } from "@react-navigation/material-top-tabs";
 
 import { useTheme } from "../core/theme";
-import { defaultIconSize } from "../core/styles/global";
+import {
+  defaultIconSize,
+  rounding,
+  roundingMedium,
+  roundingSmall,
+  shadow,
+} from "../core/styles/global";
 import { Icon } from "../icons/icon.component";
 import { GlobalTextStyles, TextStyle } from "../core/styles/text";
 import { IconName } from "../icons";
@@ -49,6 +55,8 @@ export const TabScreen = ({
 
   const tabBarOptions: MaterialTopTabNavigationOptions = {
     tabBarStyle: {
+      borderTopLeftRadius: roundingMedium,
+      borderTopRightRadius: roundingMedium,
       backgroundColor: theme.colors.cardGradient[0],
       elevation: 0,
       shadowOpacity: 0,

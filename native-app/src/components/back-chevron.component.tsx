@@ -6,7 +6,7 @@ import { useTheme } from "../core/theme";
 import { paddingSmall, TextStyle } from "../core";
 import { ThemedText } from "./themed-text.component";
 
-export const BackChevron = () => {
+export const BackChevron = ({ size = 24 }: { size?: number }) => {
   const { theme } = useTheme();
   const navigation = useNavigation();
 
@@ -28,7 +28,7 @@ export const BackChevron = () => {
         style={styles.backChevron}
         onPress={() => navigation.goBack()}
       >
-        <Icon name="chevron-left" size={30} color={theme.colors.text} />
+        <Icon name="chevron-left" size={size} color={theme.colors.text} />
       </TouchableOpacity>
     </View>
   );

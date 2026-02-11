@@ -9,6 +9,8 @@ interface ThemedTextProps {
   style?: StyleProp<RNTextStyle>;
   color?: string;
   muted?: boolean;
+  center?: boolean;
+  growHorizontal?: boolean;
 }
 
 export const ThemedText: React.FC<ThemedTextProps> = ({
@@ -17,6 +19,8 @@ export const ThemedText: React.FC<ThemedTextProps> = ({
   style,
   color,
   muted,
+  center,
+  growHorizontal,
 }) => {
   const { theme } = useTheme();
 
@@ -26,6 +30,8 @@ export const ThemedText: React.FC<ThemedTextProps> = ({
         GlobalTextStyles[textStyle],
         {
           color: color || (muted ? theme.colors.muted : theme.colors.text),
+          textAlign: center ? "center" : "left",
+          ...(growHorizontal ? { width: "100%" } : {}),
         },
         style,
       ]}
