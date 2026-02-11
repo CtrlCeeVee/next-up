@@ -5,6 +5,7 @@ import { LeagueMember } from "../../membership/types";
 import {
   gap,
   padding,
+  paddingSmall,
   rounding,
   roundingFull,
   roundingLarge,
@@ -26,7 +27,6 @@ export const LeagueMembersComponent = ({
   const { theme } = useTheme();
 
   const styles = StyleSheet.create({
-    memberIcons: {},
     image: {
       marginLeft: -14,
     },
@@ -42,7 +42,7 @@ export const LeagueMembersComponent = ({
       membersToRender = members.slice(0, 3);
     }
 
-    const iconSize = 32;
+    const iconSize = 24;
 
     const icons = membersToRender.map((member, index) => {
       const iconStyle = {
@@ -90,33 +90,23 @@ export const LeagueMembersComponent = ({
   };
 
   return (
-    <Card style={{ width: "100%" }}>
-      <Container
-        column
-        centerHorizontal
-        centerVertical
-        grow
-        gap={gap.md}
-      >
-        <ThemedText textStyle={TextStyle.BodyMedium} center growHorizontal>
-          This League currently has {members.length} members
+    <Container
+      style={{ backgroundColor: "white" }}
+      column
+      centerHorizontal
+      centerVertical
+      padding={paddingSmall}
+      rounding={rounding}
+      gap={gap.md}
+    >
+      <Container row centerVertical>
+        <Container row gap={gap.md} centerHorizontal>
+          {renderMemberIcons()}
+        </Container>
+        <ThemedText textStyle={TextStyle.BodyMedium} center color={"black"}>
+          {members.length} members
         </ThemedText>
-        {members.length === 0 && (
-          <Button
-            text="Be the first member"
-            onPress={() => {}}
-            leftIcon="user-add"
-            style={{ borderRadius: rounding - padding, width: "100%" }}
-          />
-        )}
-        {members.length > 0 && (
-          <>
-            <Container row gap={gap.md} style={styles.memberIcons} grow centerHorizontal>
-              {renderMemberIcons()}
-            </Container>
-          </>
-        )}
       </Container>
-    </Card>
+    </Container>
   );
 };

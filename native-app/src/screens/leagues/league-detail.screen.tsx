@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
+  Platform,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
@@ -17,6 +18,9 @@ import {
   ScreenContainer,
   BackChevron,
   Container,
+  LazyImage,
+  ScrollArea,
+  MapSnapshot,
 } from "../../components";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
@@ -31,6 +35,7 @@ import {
   defaultIconSize,
   roundingFull,
   roundingMedium,
+  paddingSmall,
 } from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
 import { useLeaguesState } from "../../features/leagues/state";
@@ -50,6 +55,7 @@ import {
 import { TabConfig, TabScreen } from "../../components/tab-screen.component";
 import { HoverActionsComponent } from "../../components/hover-actions.component";
 import { ActiveLeagueNightComponent } from "../../features/league-nights/components/active-league-night.component";
+import { LeagueMembersComponent } from "../../features/leagues/components/league-members.component";
 
 type LeagueDetailRouteProp = RouteProp<
   LeaguesStackParamList,
@@ -59,6 +65,32 @@ type LeagueDetailNavigationProp = NativeStackNavigationProp<
   LeaguesStackParamList,
   Routes.LeagueDetail
 >;
+
+const SOFT_HYPHEN = "\u00AD";
+const MAX_WORD_SEGMENT_LENGTH = 12;
+
+const hyphenateLongWord = (word: string): string => {
+  if (word.length <= MAX_WORD_SEGMENT_LENGTH) {
+    return word;
+  }
+
+  const wordSegments = word.match(
+    new RegExp(`.{1,${MAX_WORD_SEGMENT_LENGTH}}`, "g")
+  );
+
+  if (!wordSegments) {
+    return word;
+  }
+
+  return wordSegments.join(SOFT_HYPHEN);
+};
+
+const hyphenateLeagueName = (leagueName: string): string => {
+  return leagueName
+    .split(" ")
+    .map((word) => hyphenateLongWord(word))
+    .join(" ");
+};
 
 export const LeagueDetailScreen = () => {
   const route = useRoute<LeagueDetailRouteProp>();
@@ -217,9 +249,191 @@ export const LeagueDetailScreen = () => {
     return tabs;
   };
 
+  const getLeagueDays = () => {
+    const days = currentLeague.leagueDays;
+    if (!days || days.length === 0) return "No schedule set";
+
+    if (days.length === 1) return days[0] + "s";
+    if (days.length === 2) return days[0] + "s and " + days[1] + "s";
+    return days.slice(0, -1).join(", ") + " and " + days[days.length - 1] + "s";
+  };
+
   return (
     <ScreenContainer>
-      <TabScreen headerComponent={renderHeaderComponent()} tabs={getTabs()} />
+      <ScrollArea innerPadding={0} contentGap={gap.lg}>
+        {/* <TabScreen headerComponent={renderHeaderComponent()} tabs={getTabs()} /> */}
+        <Container
+          column
+          w100
+          style={{ height: 180, position: "relative" }}
+          padding={padding}
+        >
+          <LazyImage
+            source={{
+              uri: "https://cdn.benchmarkpt.com/wp-content/uploads/2024/03/pickleball-injuries-benchmarkpt-newsletter-image-2048x1368-01-min-1347x900-1.jpg",
+            }}
+            width="100%"
+            height="100%"
+            rounding={rounding}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              zIndex: 0,
+            }}
+          />
+          <Container
+            style={{
+              position: "absolute",
+              top: padding + paddingSmall,
+              left: padding + paddingSmall,
+              zIndex: 1,
+            }}
+          >
+            <LeagueMembersComponent
+              members={[
+                {
+                  id: "1",
+                  name: "John Doe",
+                  email: "john.doe@example.com",
+                  skillLevel: "Beginner",
+                  role: "player",
+                  joinedAt: new Date().toISOString(),
+                },
+                {
+                  id: "2",
+                  name: "Jane Doe",
+                  email: "jane.doe@example.com",
+                  skillLevel: "Beginner",
+                  role: "player",
+                  joinedAt: new Date().toISOString(),
+                },
+              ]}
+              isMember={false}
+            />
+          </Container>
+
+          <Container
+            style={{
+              position: "absolute",
+              bottom: padding + paddingSmall,
+              right: padding + paddingSmall,
+              zIndex: 1,
+            }}
+          >
+            <ThemedText textStyle={TextStyle.BodyMedium}>
+              Tag will go here
+            </ThemedText>
+          </Container>
+        </Container>
+
+        {/* League Info */}
+        <Container column w100 gap={gap.sm} paddingHorizontal={padding}>
+          <Container column w100>
+            {!isUserMember && (
+              <Container row centerVertical gap={2}>
+                <Icon
+                  name="check-circle"
+                  size={12}
+                  color={theme.colors.primary}
+                />
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  color={theme.colors.primary}
+                >
+                  Member
+                </ThemedText>
+              </Container>
+            )}
+            <Container row spaceBetween w100 style={styles.leagueNameRow}>
+              <Container column gap={gap.xs} style={styles.leagueNameContainer}>
+                <ThemedText
+                  textStyle={TextStyle.Header}
+                  style={styles.leagueNameText}
+                >
+                  {hyphenateLeagueName(currentLeague.name)}
+                </ThemedText>
+              </Container>
+
+              <TouchableOpacity
+                onPress={() => {}}
+                style={styles.heartButtonContainer}
+              >
+                <Container
+                  rounding={roundingFull}
+                  padding={paddingSmall}
+                  style={{ backgroundColor: theme.colors.text + "10" }}
+                >
+                  <Icon
+                    name="heart"
+                    size={16}
+                    color={theme.colors.text + "60"}
+                  />
+                </Container>
+              </TouchableOpacity>
+            </Container>
+          </Container>
+
+          <Container row centerVertical gap={gap.sm}>
+            <Icon name="map-pin" size={16} color={theme.colors.text + "60"} />
+            <ThemedText textStyle={TextStyle.BodyMedium} muted>
+              {currentLeague.location}
+            </ThemedText>
+          </Container>
+
+          <Container row centerVertical gap={gap.sm}>
+            <Icon name="calendar" size={16} color={theme.colors.text + "60"} />
+            <ThemedText textStyle={TextStyle.BodyMedium} muted>
+              {getLeagueDays()}
+            </ThemedText>
+          </Container>
+        </Container>
+
+        {/* Upcoming League Nights */}
+        <Container column w100 gap={gap.sm} style={{ paddingLeft: padding }}>
+          <ThemedText textStyle={TextStyle.Body}>Upcoming Nights</ThemedText>
+          <LeagueNightsComponent
+            leagueNights={leagueNights}
+            isUserMember={isUserMember}
+            leagueId={leagueId}
+          />
+        </Container>
+
+        {/* Venue Info */}
+        <Container column w100 gap={gap.sm} paddingHorizontal={padding}>
+          <ThemedText textStyle={TextStyle.Body}>Venue</ThemedText>
+          <Container w100>
+            <MapSnapshot
+              latitude={currentLeague.latitude || 0}
+              longitude={currentLeague.longitude || 0}
+              width="100%"
+              height={200}
+              rounding={rounding}
+              style={{ width: "100%", height: 200, zIndex: 0 }}
+            />
+            <TouchableOpacity
+              onPress={() => {}}
+              style={{
+                borderRadius: rounding,
+                paddingVertical: paddingSmall,
+                paddingHorizontal: padding,
+                position: "absolute",
+                bottom: padding,
+                right: padding,
+                backgroundColor: "#2563eb",
+                zIndex: 1,
+              }}
+            >
+              <Container row centerVertical gap={gap.sm}>
+                <Icon name="open-external" size={16} color={"#dddddd"} />
+                <ThemedText textStyle={TextStyle.BodyMedium} color={"#dddddd"}>
+                  Open in {Platform.OS === "ios" ? "Maps" : "Google Maps"}
+                </ThemedText>
+              </Container>
+            </TouchableOpacity>
+          </Container>
+        </Container>
+      </ScrollArea>
     </ScreenContainer>
   );
 };
@@ -248,5 +462,19 @@ const styles = StyleSheet.create({
   nextUpActivity: {
     gap: gap.sm,
     borderRadius: roundingMedium,
+  },
+  leagueNameRow: {
+    alignItems: "flex-start",
+  },
+  leagueNameContainer: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: gap.sm,
+  },
+  leagueNameText: {
+    flexShrink: 1,
+  },
+  heartButtonContainer: {
+    flexShrink: 0,
   },
 });
