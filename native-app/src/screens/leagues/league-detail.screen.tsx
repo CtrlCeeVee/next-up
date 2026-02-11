@@ -59,6 +59,7 @@ import { TabConfig, TabScreen } from "../../components/tab-screen.component";
 import { HoverActionsComponent } from "../../components/hover-actions.component";
 import { ActiveLeagueNightComponent } from "../../features/league-nights/components/active-league-night.component";
 import { LeagueMembersComponent } from "../../features/leagues/components/league-members.component";
+import { TobBar } from "../../components/top-bar.component";
 
 type LeagueDetailRouteProp = RouteProp<
   LeaguesStackParamList,
@@ -298,12 +299,12 @@ export const LeagueDetailScreen = () => {
 
   return (
     <ScreenContainer>
+      <TobBar showBackButton={true} showSettingsButton={false} />
       <ScrollArea
         innerPadding={0}
         contentGap={gap.lg}
         bottomInset={getCurrentSheetInset()}
       >
-        {/* <TabScreen headerComponent={renderHeaderComponent()} tabs={getTabs()} /> */}
         <Container
           column
           w100
