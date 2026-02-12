@@ -40,6 +40,8 @@ import {
   roundingFull,
   roundingMedium,
   paddingSmall,
+  paddingLarge,
+  MIN_TEXTLESS_BUTTON_SIZE,
 } from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
 import { useLeaguesState } from "../../features/leagues/state";
@@ -62,6 +64,7 @@ import { ActiveLeagueNightComponent } from "../../features/league-nights/compone
 import { LeagueMembersComponent } from "../../features/leagues/components/league-members.component";
 import { TobBar } from "../../components/top-bar.component";
 import { HoverButton } from "../../components/hover-button.component";
+import { DateUtility } from "../../core/utilities";
 
 type LeagueDetailRouteProp = RouteProp<
   LeaguesStackParamList,
@@ -302,6 +305,10 @@ export const LeagueDetailScreen = () => {
     return tabs;
   };
 
+  const isLeagueNightToday = () => {
+    return leagueNights.some((night) => DateUtility.isToday(night.date));
+  };
+
   const getLeagueDays = () => {
     const days = currentLeague.leagueDays;
     if (!days || days.length === 0) return "No schedule set";
@@ -493,24 +500,40 @@ export const LeagueDetailScreen = () => {
               zIndex: 1,
             }}
           >
-            {/* <ThemedText textStyle={TextStyle.BodyMedium}>
-              Tag will go here
-            </ThemedText> */}
-            <Container
-              row
-              centerVertical
-              paddingVertical={paddingSmall}
-              paddingHorizontal={padding}
-              rounding={rounding}
-              style={{
-                backgroundColor: theme.colors.accent,
-              }}
-            >
-              <Icon name="moon" size={16} color={"white"} />
-              <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
-                Active now
-              </ThemedText>
-            </Container>
+            {activeLeagueNight && !isLeagueNightToday() && (
+              <Container
+                row
+                centerVertical
+                paddingVertical={paddingSmall}
+                paddingHorizontal={padding}
+                rounding={rounding}
+                style={{
+                  backgroundColor: theme.colors.accent,
+                }}
+              >
+                <Icon name="moon" size={16} color={"white"} />
+                <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
+                  Active now
+                </ThemedText>
+              </Container>
+            )}
+            {!activeLeagueNight && isLeagueNightToday() && (
+              <Container
+                row
+                centerVertical
+                paddingVertical={paddingSmall}
+                paddingHorizontal={padding}
+                rounding={rounding}
+                style={{
+                  backgroundColor: theme.colors.primary,
+                }}
+              >
+                <Icon name="calendar" size={16} color={"white"} />
+                <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
+                  Today
+                </ThemedText>
+              </Container>
+            )}
           </Container>
         </Container>
 
@@ -549,12 +572,17 @@ export const LeagueDetailScreen = () => {
                 }}
                 style={styles.heartButtonContainer}
                 accessibilityRole="button"
-                accessibilityLabel="Open league actions"
+                accessibilityLabel="Toggle favorite league"
               >
                 <Container
+                  column
+                  centerHorizontal
+                  centerVertical
                   rounding={roundingFull}
                   padding={paddingSmall}
-                  style={{ backgroundColor: theme.colors.text + "10" }}
+                  style={{
+                    backgroundColor: theme.colors.text + "10",
+                  }}
                 >
                   <Icon
                     name="heart"
@@ -582,7 +610,15 @@ export const LeagueDetailScreen = () => {
         </Container>
 
         {/* Upcoming League Nights */}
-        <Container column w100 gap={gap.sm} style={{ paddingLeft: padding }}>
+        <Container
+          column
+          w100
+          gap={gap.sm}
+          style={{
+            paddingLeft: padding,
+            ...(leagueNights.length === 0 && { paddingRight: padding }),
+          }}
+        >
           <ThemedText textStyle={TextStyle.Body}>Upcoming Nights</ThemedText>
           <LeagueNightsComponent
             leagueNights={leagueNights}
@@ -696,6 +732,10 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   heartButtonContainer: {
-    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: MIN_TEXTLESS_BUTTON_SIZE,
+    height: MIN_TEXTLESS_BUTTON_SIZE,
   },
 });

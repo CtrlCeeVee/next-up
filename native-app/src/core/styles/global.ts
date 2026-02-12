@@ -36,6 +36,8 @@ export const roundingMedium = 8; // rounded-md
 export const roundingLarge = 12; // rounded-xl
 export const roundingFull = 9999; // rounded-full
 
+export const MIN_TEXTLESS_BUTTON_SIZE = 44;
+
 // Shadow definitions (approximating Tailwind shadows)
 export const shadow = {
   soft: {
