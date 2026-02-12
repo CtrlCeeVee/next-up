@@ -1,17 +1,10 @@
-import {
-  Container,
-  LoadingSpinner,
-  Refresh,
-  ScrollArea,
-  SearchBar,
-} from "../../../components";
-import { Icon } from "../../../icons";
+import { Container, Refresh, SearchBar } from "../../../components";
 import { useTheme } from "../../../core/theme";
 import {
-  defaultIconSize,
   gap,
-  paddingLarge,
-  paddingSmall,
+  padding,
+  rounding,
+  spacing,
   TextStyle,
 } from "../../../core/styles";
 import { ThemedText } from "../../../components";
@@ -20,26 +13,26 @@ import { useLeagueNightState } from "../state";
 import { useAuthState } from "../../auth/state";
 import { useEffect, useMemo, useState } from "react";
 import { League } from "../../leagues/types";
-import {
-  CheckedInPlayer,
-  LeagueNightInstance,
-  PartnershipRequest,
-  ConfirmedPartnership,
-} from "../types";
-import { LeagueMemberIconComponent } from "../../leagues/components/league-member-icon.component";
-import {
-  getService,
-  InjectableType,
-  leagueNightsService,
-  useInjection,
-} from "../../../di";
-import { LeagueNightsService } from "../services";
+import { LeagueNightInstance, PartnershipRequest } from "../types";
 import { PlayerList } from "./player-list.component";
-import { PlayerListItem } from "./player-list-item.component";
+import {
+  PartnershipItemVariant,
+  PlayerListItem,
+} from "./player-list-item.component";
+import { LeagueMemberIconComponent } from "../../leagues/components/league-member-icon.component";
+import { BasePlayerDetails } from "../../player/types";
 
 interface SelectPartnershipComponentProps {
   league: League;
   night: LeagueNightInstance;
+}
+
+interface PartnerListItem {
+  id: string;
+  player: BasePlayerDetails;
+  variant: PartnershipItemVariant;
+  onAction: (playerId: string) => void;
+  actionBusy: boolean;
 }
 
 export const SelectPartnershipComponent = ({
@@ -63,8 +56,14 @@ export const SelectPartnershipComponent = ({
   const sendPartnershipRequest = useLeagueNightState(
     (state) => state.sendPartnershipRequest
   );
+  const rejectingRequest = useLeagueNightState(
+    (state) => state.rejectingRequest
+  );
   const rejectPartnershipRequest = useLeagueNightState(
     (state) => state.rejectPartnershipRequest
+  );
+  const acceptingRequest = useLeagueNightState(
+    (state) => state.acceptingRequest
   );
   const acceptPartnershipRequest = useLeagueNightState(
     (state) => state.acceptPartnershipRequest
@@ -80,23 +79,26 @@ export const SelectPartnershipComponent = ({
     (state) => state.removePartnership
   );
 
+  const [refreshing, setRefreshing] = useState(false);
+
   useEffect(() => {
-    if (user?.id) {
-      refreshPartnershipRequests(league.id, night.id, user.id);
-      refreshCheckedInPlayers(league.id, night.id);
-    }
+    refreshPartnershipData();
   }, [user, league, night]);
+
+  const refreshPartnershipData = async () => {
+    if (user?.id) {
+      setRefreshing(true);
+      await Promise.all([
+        refreshPartnershipRequests(league.id, night.id, user.id),
+        refreshCheckedInPlayers(league.id, night.id),
+      ]);
+      setRefreshing(false);
+    }
+  };
 
   const checkedInPlayers = useLeagueNightState(
     (state) => state.checkedInPlayers
   );
-
-  const isCheckedIn = useMemo(() => {
-    if (!user) {
-      return false;
-    }
-    return checkedInPlayers.some((player) => player.id === user.id);
-  }, [checkedInPlayers, user]);
 
   const availablePartners = useMemo(() => {
     if (!user || !sentRequests || !receivedRequests) {
@@ -131,31 +133,19 @@ export const SelectPartnershipComponent = ({
     acceptPartnershipRequest(league.id, night.id, requestId, user.id);
   };
 
-  const renderCheckInSection = () => {
-    return (
-      <Container column centerHorizontal grow gap={gap.md}>
-        <Icon name="user-plus" size={24} color={theme.colors.success} />
-        <ThemedText textStyle={TextStyle.Body} style={{ textAlign: "center" }}>
-          Check in to tonight's league night to set up your partnership
-        </ThemedText>
-        <Button text="Check In" onPress={checkIn} />
-      </Container>
-    );
-  };
-
   const renderRequestsSection = (
     requests: PartnershipRequest[],
-    actionText?: string,
     onAction?: (requestId: string) => void
   ) => {
     return (
       <PlayerList
+        variant={PartnershipItemVariant.RECEIVED_REQUEST}
         players={requests.map((request) => ({
           id: request.id,
-          name: request.requested.firstName + " " + request.requested.lastName,
+          firstName: request.requested.firstName,
+          lastName: request.requested.lastName,
           skillLevel: request.requested.skillLevel,
         }))}
-        actionText={actionText}
         onAction={onAction}
       />
     );
@@ -164,43 +154,13 @@ export const SelectPartnershipComponent = ({
   const renderReceivedRequests = () => {
     if (receivedRequests.length === 0) return null;
 
-    return renderRequestsSection(receivedRequests, "Accept", acceptRequest);
+    return renderRequestsSection(receivedRequests, acceptRequest);
   };
 
   const renderSentRequests = () => {
     if (sentRequests.length === 0) return null;
 
-    return renderRequestsSection(sentRequests, "Awaiting approval");
-  };
-
-  const renderPartnersList = () => {
-    return (
-      <Container column>
-        {availablePartners &&
-        availablePartners.length === 0 &&
-        sentRequests.length === 0 &&
-        receivedRequests.length === 0 ? (
-          <ThemedText
-            textStyle={TextStyle.Body}
-            style={{ color: theme.colors.muted }}
-          >
-            No available partners. Make sure your friends have checked in!
-          </ThemedText>
-        ) : (
-          <Container column grow w100>
-            {renderSentRequests()}
-            {renderReceivedRequests()}
-            {availablePartners && (
-              <PlayerList
-                players={availablePartners}
-                actionText="Select"
-                onAction={(playerId) => selectPartner(playerId)}
-              />
-            )}
-          </Container>
-        )}
-      </Container>
-    );
+    return renderRequestsSection(sentRequests, cancelRequest);
   };
 
   const renderConfirmedPartnershipSection = () => {
@@ -213,24 +173,45 @@ export const SelectPartnershipComponent = ({
 
     return (
       <Container column grow w100 gap={gap.md}>
-        <Container column grow w100 spaceBetween>
-          <Container column grow w100 gap={gap.md}>
-            <PlayerListItem
-              player={{
-                id: otherPlayer.id,
-                name: otherPlayer.firstName + " " + otherPlayer.lastName,
-                skillLevel: otherPlayer.skillLevel,
-              }}
-              showBorder={false}
-            />
-            <ThemedText textStyle={TextStyle.Body} muted>
-              Make sure to check the matches you are playing together. You can
-              change your partner at any time.
+        <Container column grow w100>
+          <Container
+            column
+            centerHorizontal
+            w100
+            gap={gap.md}
+            padding={padding}
+            rounding={rounding}
+            style={{
+              borderWidth: 1,
+              borderColor: theme.colors.primary,
+              backgroundColor: theme.colors.primary + "08",
+            }}
+          >
+            <ThemedText textStyle={TextStyle.BodyMedium} muted>
+              You're partnered with
             </ThemedText>
+            {/* TODO: Add player icon */}
+            <LeagueMemberIconComponent
+              iconUrl={undefined}
+              name={otherPlayer.firstName + " " + otherPlayer.lastName}
+              size={40}
+            />
+            <Container column w100 gap={0} centerHorizontal>
+              <ThemedText textStyle={TextStyle.BodyMedium}>
+                {otherPlayer.firstName} {otherPlayer.lastName}
+              </ThemedText>
+              <ThemedText textStyle={TextStyle.BodyMedium} muted>
+                {otherPlayer.skillLevel}
+              </ThemedText>
+            </Container>
           </Container>
+          <ThemedText textStyle={TextStyle.BodyMedium} muted center>
+            Make sure to check the matches you are playing together. You can
+            change your partner at any time.
+          </ThemedText>
           <Button
             text="Change partner"
-            style={{ width: "100%" }}
+            style={{ width: "100%", marginTop: spacing.lg }}
             onPress={() => {
               if (!user) return;
               removePartnership(league.id, night.id, user.id);
@@ -241,46 +222,90 @@ export const SelectPartnershipComponent = ({
     );
   };
 
-  const renderCheckedInSection = () => {
+  const combinePartners = (): PartnerListItem[] => {
+    const partners: PartnerListItem[] = [];
+
+    for (const request of receivedRequests) {
+      partners.push({
+        id: request.requester.id,
+        player: {
+          id: request.requester.id,
+          firstName: request.requester.firstName,
+          lastName: request.requester.lastName,
+          skillLevel: request.requester.skillLevel,
+        },
+        variant: PartnershipItemVariant.RECEIVED_REQUEST,
+        onAction: () => acceptRequest(request.id),
+        actionBusy: acceptingRequest === request.id,
+      });
+    }
+
+    for (const player of availablePartners || []) {
+      partners.push({
+        id: player.id,
+        player: {
+          id: player.id,
+          firstName: player.firstName,
+          lastName: player.lastName,
+          skillLevel: player.skillLevel,
+        },
+        variant: PartnershipItemVariant.AVAILABLE_PARTNER,
+        onAction: (playerId) => selectPartner(playerId),
+        actionBusy: sendingRequest === player.id,
+      });
+    }
+
+    for (const request of sentRequests) {
+      partners.push({
+        id: request.requested.id,
+        player: {
+          id: request.requested.id,
+          firstName: request.requested.firstName,
+          lastName: request.requested.lastName,
+          skillLevel: request.requested.skillLevel,
+        },
+        variant: PartnershipItemVariant.SENT_REQUEST,
+        onAction: (playerId) => cancelRequest(request.id),
+        actionBusy: rejectingRequest === request.id,
+      });
+    }
+
+    return partners;
+  };
+
+  const renderPartnershipSection = () => {
     if (confirmedPartnership) {
       return renderConfirmedPartnershipSection();
     }
 
     return (
-      <Container column grow w100 gap={gap.md}>
+      <Container column grow w100 gap={0}>
         <SearchBar
           value={partnerSearch}
           onChangeText={(text) => setPartnerSearch(text)}
           placeholder="Search..."
         />
-        <ScrollArea style={{ padding: 0, width: "100%" }}>
-          {renderPartnersList()}
-        </ScrollArea>
-      </Container>
-    );
-  };
-
-  const renderPartnershipSelectionSection = () => {
-    return (
-      <Container column grow w100>
-        {isCheckedIn ? renderCheckedInSection() : renderCheckInSection()}
-      </Container>
-    );
-  };
-
-  const renderLoadingSection = () => {
-    return (
-      <Container>
-        <LoadingSpinner />
+        <Refresh
+          data={combinePartners()}
+          renderItem={({ item }) => (
+            <PlayerListItem
+              variant={item.variant}
+              player={item.player}
+              onAction={() => item.onAction(item.player.id)}
+              actionBusy={item.actionBusy}
+            />
+          )}
+          keyExtractor={(item) => item.player.id}
+          refreshing={refreshing}
+          onRefresh={refreshPartnershipData}
+        />
       </Container>
     );
   };
 
   return (
     <Container column grow w100>
-      {loadingPartnershipData || sendingRequest
-        ? renderLoadingSection()
-        : renderPartnershipSelectionSection()}
+      {renderPartnershipSection()}
     </Container>
   );
 };

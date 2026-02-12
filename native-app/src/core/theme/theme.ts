@@ -50,10 +50,12 @@ export const SharedTheme = {
   error: "#ef4444",
   warning: "#f97316",
   info: "#3b82f6",
+  danger: "#ef4444",
 };
 
 export interface AppThemeCoreColours extends ThemeCoreColours {
   colors: {
+    danger: string;
     primaryLight: string;
     primaryDark: string;
     sheetBackground: string;
@@ -109,6 +111,7 @@ export const DarkTheme: AppThemeCoreColours = {
     primaryLight: SharedTheme.primaryLight,
     primaryDark: SharedTheme.primaryDark,
     success: SharedTheme.success,
+    danger: SharedTheme.danger,
     muted: "#64748b", // slate-500
     error: SharedTheme.error,
     warning: SharedTheme.warning,
@@ -139,6 +142,7 @@ export const LightTheme: AppThemeCoreColours = {
     sheetBackground: "#ffffff",
     primaryDark: SharedTheme.primaryDark,
     success: SharedTheme.success,
+    danger: SharedTheme.danger,
     muted: "#64748b", // slate-500
     error: SharedTheme.error,
     warning: SharedTheme.warning,

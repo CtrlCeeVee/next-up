@@ -8,18 +8,20 @@ interface LoadingSpinnerProps {
   message?: string;
   size?: "small" | "large";
   style?: ViewStyle;
+  color?: string;
 }
 
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   message,
   size = "large",
   style,
+  color = undefined,
 }) => {
   const { theme } = useTheme();
 
   return (
     <View style={[styles.container, style]}>
-      <ActivityIndicator size={size} color={theme.colors.primary} />
+      <ActivityIndicator size={size} color={color || theme.colors.primary} />
       {message && (
         <ThemedText textStyle={TextStyle.Body} style={styles.message}>
           {message}

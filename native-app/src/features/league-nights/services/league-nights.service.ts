@@ -105,8 +105,8 @@ export class LeagueNightsService extends BaseService {
     const response = await this.post<any>(
       `/api/leagues/${leagueId}/nights/${nightId}/partnership-accept`,
       {
-        request_id: requestId,
-        user_id: userId,
+        requestId: requestId,
+        userId: userId,
       }
     );
     return response.data.partnership;
@@ -119,6 +119,7 @@ export class LeagueNightsService extends BaseService {
     requestId: string,
     userId: string
   ): Promise<void> {
+    console.log("rejecting partnership request", leagueId, nightId, requestId, userId);
     await this.post(
       `/api/leagues/${leagueId}/nights/${nightId}/partnership-reject`,
       {

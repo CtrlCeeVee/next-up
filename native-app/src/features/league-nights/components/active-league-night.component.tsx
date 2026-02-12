@@ -9,10 +9,11 @@ import { useState } from "react";
 import { Match } from "../types";
 import { MatchesList } from "../../matches/components";
 import { SelectPartnershipComponent } from "./select-partnership.component";
+import { TabScreen } from "../../../components/tab-screen.component";
 
 export interface ActiveLeagueNightComponentProps {
   league: League;
-  leagueNight?: LeagueNightInstance;
+  leagueNight?: LeagueNightInstance | null;
   matches: Match[];
 }
 
@@ -29,6 +30,7 @@ export const ActiveLeagueNightComponent: React.FC<
     ActiveTabs.Partnership
   );
 
+  console.log("leagueNight", leagueNight);
   console.log("matches", matches);
 
   const quote = [
@@ -41,16 +43,37 @@ export const ActiveLeagueNightComponent: React.FC<
     return quote[Math.floor(Math.random() * quote.length)];
   };
 
+  const tabChanged = (tab: ActiveTabs) => {
+    setSelectedTab(tab);
+  };
+
+  const renderMatches = () => {
+    return (
+      <Container
+        column
+        gap={gap.md}
+        padding={padding}
+        w100
+        style={{ marginTop: 12 }}
+      >
+        <MatchesList matches={matches} />
+      </Container>
+    );
+  };
+
+  const renderPartnership = () => {
+    if (!leagueNight) return null;
+    return (
+      <Container column gap={gap.md} paddingHorizontal={padding} style={{ paddingTop: padding }} grow w100>
+        <SelectPartnershipComponent league={league} night={leagueNight} />
+      </Container>
+    );
+  };
+
   const render = () => {
     if (!leagueNight) {
       return (
-        <Container
-          column
-          centerVertical
-          centerHorizontal
-          grow
-          gap={gap.md}
-        >
+        <Container column centerVertical centerHorizontal w100 gap={gap.md}>
           <Icon
             name="tennis-ball"
             size={48}
@@ -72,41 +95,30 @@ export const ActiveLeagueNightComponent: React.FC<
       );
     }
 
-    const tabChanged = (tab: ActiveTabs) => {
-      setSelectedTab(tab);
-    };
-
-    const renderMatches = () => {
-      return (
-        <Container column gap={gap.md} grow w100 style={{ marginTop: 12 }}>
-          <MatchesList matches={matches} />
-        </Container>
-      );
-    };
-
-    const renderPartnership = () => {
-      return (
-        <Container column gap={gap.md} grow w100>
-          <SelectPartnershipComponent league={league} night={leagueNight} />
-        </Container>
-      );
-    };
-
     return (
-      <Container column gap={gap.md} grow w100>
-        <PillTabs
-          options={[ActiveTabs.Partnership, ActiveTabs.Matches]}
-          onOptionChange={tabChanged}
-          initialOption={ActiveTabs.Partnership}
+      <Container column w100 grow>
+        <TabScreen
+          alignTabsToLeft
+          showBottomBorder={false}
+          tabs={[
+            {
+              name: ActiveTabs.Partnership,
+              label: "Partnership",
+              component: renderPartnership(),
+            },
+            {
+              name: ActiveTabs.Matches,
+              label: "Matches",
+              component: renderMatches(),
+            },
+          ]}
         />
-        {selectedTab === ActiveTabs.Partnership && renderPartnership()}
-        {selectedTab === ActiveTabs.Matches && renderMatches()}
       </Container>
     );
   };
 
   return (
-    <Container padding={padding} column grow>
+    <Container column w100 grow>
       {render()}
     </Container>
   );

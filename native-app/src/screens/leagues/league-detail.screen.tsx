@@ -1,23 +1,17 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
-  ScrollView,
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  FlatList,
   Platform,
   useWindowDimensions,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {
   ThemedText,
-  Card,
-  Button,
   ScreenContainer,
-  BackChevron,
   Container,
   LazyImage,
   ScrollArea,
@@ -29,18 +23,14 @@ import {
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
 import {
-  GlobalStyles,
   padding,
   TextStyle,
-  spacing,
   gap,
-  roundingLarge,
   rounding,
   defaultIconSize,
   roundingFull,
   roundingMedium,
   paddingSmall,
-  paddingLarge,
   MIN_TEXTLESS_BUTTON_SIZE,
 } from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
@@ -51,20 +41,12 @@ import { Routes } from "../../navigation/routes";
 import { useLeagueNightState } from "../../features/league-nights/state";
 import { leagueNightsService } from "../../di/services.registry";
 import { LeagueNightInstance, Match } from "../../features/league-nights/types";
-import {
-  LeagueDaysSummary,
-  LeagueDaysComponentSize,
-  LeagueInfoComponent,
-  LeagueNightsComponent,
-  LeagueSettingsComponent,
-} from "../../features/leagues/components";
+import { LeagueNightsComponent } from "../../features/leagues/components";
 import { TabConfig, TabScreen } from "../../components/tab-screen.component";
-import { HoverActionsComponent } from "../../components/hover-actions.component";
-import { ActiveLeagueNightComponent } from "../../features/league-nights/components/active-league-night.component";
 import { LeagueMembersComponent } from "../../features/leagues/components/league-members.component";
 import { TobBar } from "../../components/top-bar.component";
-import { HoverButton } from "../../components/hover-button.component";
 import { DateUtility } from "../../core/utilities";
+import { ActiveLeagueNightComponent } from "../../features/league-nights/components";
 
 type LeagueDetailRouteProp = RouteProp<
   LeaguesStackParamList,
@@ -113,6 +95,7 @@ export const LeagueDetailScreen = () => {
   const leagueLoading = useLeaguesState((state) => state.loading);
 
   const isMember = useMembershipState((state) => state.isMember);
+  const joinLeague = useMembershipState((state) => state.joinLeague);
   const leaveLeague = useMembershipState((state) => state.leaveLeague);
   const joining = useMembershipState((state) => state.joining);
   const leaving = useMembershipState((state) => state.leaving);
@@ -128,7 +111,8 @@ export const LeagueDetailScreen = () => {
     useState(true);
   const [leagueActionsSheetStage, setLeagueActionsSheetStage] = useState(0);
   const { height: windowHeight } = useWindowDimensions();
-  const [isSheetHandleShown, setSheetHandleShown] = useState(false);
+  const [hasPendingCheckInVisualState, setHasPendingCheckInVisualState] =
+    useState(false);
   const [leagueActionsContentHeight, setLeagueActionsContentHeight] = useState<
     number | null
   >(null);
@@ -140,6 +124,20 @@ export const LeagueDetailScreen = () => {
   const refreshCheckedInPlayers = useLeagueNightState(
     (state) => state.refreshCheckedInPlayers
   );
+
+  const isLeagueNightToday = () => {
+    return leagueNights.some((night) => DateUtility.isToday(night.date));
+  };
+
+  const isUserMember = isMember(leagueId);
+
+  const showActiveNight = useMemo(() => {
+    return activeLeagueNight && isUserMember;
+  }, [activeLeagueNight, isUserMember]);
+
+  const showJoinLeague = useMemo(() => {
+    return !isUserMember;
+  }, [isUserMember]);
 
   useEffect(() => {
     if (activeLeagueNight) {
@@ -155,13 +153,50 @@ export const LeagueDetailScreen = () => {
     return isCheckedIn;
   }, [checkedInPlayers, user]);
 
+  const shouldUseCheckedInVisualState =
+    isCheckedIn || hasPendingCheckInVisualState;
+
+  const sheetBackgroundColor = useMemo(() => {
+    if (showActiveNight) {
+      if (!shouldUseCheckedInVisualState) return theme.colors.accentDark;
+    }
+
+    if (showJoinLeague) {
+      return theme.colors.primaryDark;
+    }
+
+    return theme.colors.sheetBackground;
+  }, [
+    showActiveNight,
+    shouldUseCheckedInVisualState,
+    showJoinLeague,
+    theme.colors.accentDark,
+    theme.colors.primaryDark,
+    theme.colors.sheetBackground,
+  ]);
+
+  // const [isCheckedIn, setIsCheckedIn] = useState(false);
+  // useEffect(() => {
+  //   setInterval(() => {
+  //     setIsCheckedIn(!isCheckedIn);
+  //   }, 4000);
+
+  // }, []);
+
   useEffect(() => {
     if (isCheckedIn) {
-      setSheetHandleShown(true);
-    } else {
-      setSheetHandleShown(false);
+      setHasPendingCheckInVisualState(true);
+      return;
     }
-  }, [isCheckedIn]);
+
+    if (!checkingIn) {
+      setHasPendingCheckInVisualState(false);
+    }
+  }, [checkingIn, isCheckedIn]);
+
+  useEffect(() => {
+    setHasPendingCheckInVisualState(false);
+  }, [activeLeagueNight?.id, user?.id]);
 
   useEffect(() => {
     fetchLeague(leagueId);
@@ -203,110 +238,17 @@ export const LeagueDetailScreen = () => {
     );
   }
 
-  const isUserMember = isMember(leagueId);
-
-  const checkIn = () => {
+  const checkIn = async () => {
     if (!activeLeagueNight || !user || checkingIn) return;
-    checkInPlayer(leagueId, activeLeagueNight.id, user.id);
+    setHasPendingCheckInVisualState(true);
+    try {
+      await checkInPlayer(leagueId, activeLeagueNight.id, user.id);
+    } catch (error) {
+      setHasPendingCheckInVisualState(false);
+      throw error;
+    }
     setIsLeagueActionsSheetOpen(true);
     setLeagueActionsSheetStage(1);
-  };
-
-  const getNextUpActivity = () => {
-    return leagueNights.find((night) => night.status === "scheduled");
-  };
-
-  const renderHeaderComponent = () => {
-    const nextUpActivity = getNextUpActivity();
-    return (
-      <Container column centerHorizontal>
-        <Container column centerHorizontal>
-          <View
-            style={[
-              styles.leagueIcon,
-              {
-                backgroundColor: theme.colors.primary + "20",
-                borderColor: theme.colors.primary + "40",
-              },
-            ]}
-          >
-            <Icon
-              name="trophy"
-              size={defaultIconSize}
-              color={theme.colors.primary}
-            />
-          </View>
-
-          <ThemedText textStyle={TextStyle.Header}>
-            {currentLeague.name}
-          </ThemedText>
-        </Container>
-      </Container>
-    );
-  };
-
-  const getTabs = (): TabConfig[] => {
-    const tabs: TabConfig[] = [
-      {
-        name: "Details",
-        component: (
-          <LeagueInfoComponent
-            league={currentLeague}
-            leagueNights={[
-              {
-                leagueId,
-                day: "Monday",
-                time: "10:00 AM",
-                date: "2026-01-01",
-                status: "scheduled",
-                courtsAvailable: 4,
-                courtLabels: ["Court 1", "Court 2", "Court 3", "Court 4"],
-                autoAssignmentEnabled: false,
-                checkedInCount: 0,
-                partnershipsCount: 0,
-                possibleGames: 0,
-                checkins: [],
-                partnerships: [],
-                requests: [],
-                id: "1",
-              },
-            ]}
-          />
-        ),
-      },
-      {
-        name: "Active",
-        component: (
-          <ActiveLeagueNightComponent
-            league={currentLeague}
-            leagueNight={activeLeagueNight || undefined}
-            matches={matches}
-          />
-        ),
-        options: {
-          tabBarActiveTintColor: theme.colors.accent,
-          tabBarIndicatorStyle: {
-            backgroundColor: theme.colors.accent,
-          },
-        },
-      },
-      {
-        name: "Upcoming",
-        component: (
-          <LeagueNightsComponent
-            leagueNights={leagueNights}
-            isUserMember={isUserMember}
-            leagueId={leagueId}
-          />
-        ),
-      },
-    ];
-
-    return tabs;
-  };
-
-  const isLeagueNightToday = () => {
-    return leagueNights.some((night) => DateUtility.isToday(night.date));
   };
 
   const getLeagueDays = () => {
@@ -345,6 +287,11 @@ export const LeagueDetailScreen = () => {
       return 0;
     }
 
+    console.log(
+      "firstLeagueActionsSnapPointHeight",
+      firstLeagueActionsSnapPointHeight
+    );
+
     return firstLeagueActionsSnapPointHeight;
   };
 
@@ -367,7 +314,7 @@ export const LeagueDetailScreen = () => {
 
   const renderLiveNow = () => {
     return (
-      <Container row grow spaceBetween w100 style={{ paddingBottom: padding }}>
+      <Container row spaceBetween centerVertical w100>
         <Container column gap={0}>
           <Container row centerVertical gap={gap.sm}>
             <Icon name="moon" size={16} color={"#ffffff"} />
@@ -377,7 +324,7 @@ export const LeagueDetailScreen = () => {
             League Night started at 13:00
           </ThemedText>
         </Container>
-        {!isCheckedIn && (
+        {!isCheckedIn && !checkingIn && (
           <TouchableOpacity
             style={{
               backgroundColor: theme.colors.accent,
@@ -397,13 +344,13 @@ export const LeagueDetailScreen = () => {
             </ThemedText>
           </TouchableOpacity>
         )}
-        {isCheckedIn && (
+        {isCheckedIn && shouldUseCheckedInVisualState && (
           <ThemedText textStyle={TextStyle.Body} color={"white"}>
             <Icon
               name={
                 leagueActionsSheetStage === 0 ? "chevron-up" : "chevron-down"
               }
-              size={16}
+              size={defaultIconSize}
               color={"white"}
             />
           </ThemedText>
@@ -412,23 +359,91 @@ export const LeagueDetailScreen = () => {
     );
   };
 
-  const renderSheetContentHeader = () => {
+  const renderJoinLeague = () => {
     return (
-      <TouchableOpacity
-        onPress={() => {
-          setLeagueActionsSheetStage(leagueActionsSheetStage === 0 ? 1 : 0);
-        }}
-      >
-        {renderLiveNow()}
-      </TouchableOpacity>
+      <Container row centerVertical spaceBetween w100>
+        <Container row centerVertical gap={gap.sm}>
+          <Icon name="user-add" size={defaultIconSize} color={"white"} />
+          <ThemedText textStyle={TextStyle.Body} color={"white"}>
+            Join League
+          </ThemedText>
+        </Container>
+
+        <TouchableOpacity
+          onPress={() => {
+            if (user) {
+              setLeagueActionsSheetStage(0);
+              setIsLeagueActionsSheetOpen(true);
+              joinLeague(leagueId, user.id);
+            }
+          }}
+          style={{
+            backgroundColor: theme.colors.primary,
+            paddingVertical: paddingSmall,
+            paddingHorizontal: padding,
+            borderRadius: rounding,
+          }}
+        >
+          <ThemedText textStyle={TextStyle.Body} color={"white"}>
+            Join
+          </ThemedText>
+        </TouchableOpacity>
+      </Container>
     );
   };
 
-  const renderSheetContent = () => {
+  const renderSheetContentHeader = () => {
+    if (showActiveNight) {
+      return (
+        <TouchableOpacity
+          onPress={() => {
+            setLeagueActionsSheetStage(leagueActionsSheetStage === 0 ? 1 : 0);
+          }}
+        >
+          {renderLiveNow()}
+        </TouchableOpacity>
+      );
+    } else if (showJoinLeague) {
+      return renderJoinLeague();
+    }
+  };
+
+  const renderSheetBody = () => {
+    if (!isCheckedIn || !shouldUseCheckedInVisualState) {
+      return null;
+    }
+
     return (
-      <Container column w100>
-        {renderSheetContentHeader()}
-        {checkingIn && <LoadingSpinner size="large" message="Checking in..." />}
+      <ActiveLeagueNightComponent
+        league={currentLeague}
+        leagueNight={activeLeagueNight ?? null}
+        matches={matches}
+      />
+    );
+  };
+
+  const renderSheetHeader = () => {
+    return (
+      <Container
+        column
+        w100
+        paddingHorizontal={padding}
+        style={{
+          paddingBottom: padding,
+        }}
+      >
+        <Container column w100>
+          {renderSheetContentHeader()}
+          {checkingIn && (
+            <Container w100 centerHorizontal>
+              <LoadingSpinner
+                size="large"
+                message="Checking you in..."
+                color={"white"}
+              />
+            </Container>
+          )}
+        </Container>
       </Container>
     );
   };
@@ -470,24 +485,7 @@ export const LeagueDetailScreen = () => {
             }}
           >
             <LeagueMembersComponent
-              members={[
-                {
-                  id: "1",
-                  name: "John Doe",
-                  email: "john.doe@example.com",
-                  skillLevel: "Beginner",
-                  role: "player",
-                  joinedAt: new Date().toISOString(),
-                },
-                {
-                  id: "2",
-                  name: "Jane Doe",
-                  email: "jane.doe@example.com",
-                  skillLevel: "Beginner",
-                  role: "player",
-                  joinedAt: new Date().toISOString(),
-                },
-              ]}
+              members={currentLeague.members || []}
               isMember={false}
             />
           </Container>
@@ -663,34 +661,44 @@ export const LeagueDetailScreen = () => {
         </Container>
       </ScrollArea>
 
-      <AppBottomSheet
-        isOpen={isLeagueActionsSheetOpen}
-        showHandle={isSheetHandleShown}
-        onClose={() => setIsLeagueActionsSheetOpen(false)}
-        enableDynamicSizing={false}
-        enableDragging={true}
-        allowSwipeToClose={false}
-        actionOnBackdropPress={ActionOnBackdropPress.COLLAPSE}
-        snapPoints={leagueActionsSnapPoints}
-        sheetIndex={leagueActionsSheetStage}
-        backdropAppearsOnIndex={1}
-        backdropDisappearsOnIndex={0}
-        onStageChange={(stageIndex) => {
-          if (stageIndex >= 0) {
-            setLeagueActionsSheetStage(stageIndex);
+      {(showActiveNight || !isUserMember) && (
+        <AppBottomSheet
+          isOpen={isLeagueActionsSheetOpen}
+          showHandle={
+            !!showActiveNight && shouldUseCheckedInVisualState && isCheckedIn
           }
-        }}
-        sheetBackgroundStyle={{
-          ...(!isCheckedIn && { backgroundColor: theme.colors.accentDark }),
-        }}
-        onContentLayout={(height) => {
-          if (height > 0) {
-            setLeagueActionsContentHeight(height);
-          }
-        }}
-      >
-        {renderSheetContent()}
-      </AppBottomSheet>
+          onClose={() => setIsLeagueActionsSheetOpen(false)}
+          enableDynamicSizing={false}
+          enableDragging={true}
+          allowSwipeToClose={false}
+          actionOnBackdropPress={ActionOnBackdropPress.COLLAPSE}
+          snapPoints={leagueActionsSnapPoints}
+          sheetIndex={leagueActionsSheetStage}
+          backdropAppearsOnIndex={1}
+          backdropDisappearsOnIndex={0}
+          onStageChange={(stageIndex) => {
+            if (stageIndex >= 0) {
+              setLeagueActionsSheetStage(stageIndex);
+            }
+          }}
+          sheetBackgroundColor={sheetBackgroundColor}
+          headerContent={renderSheetHeader()}
+          onHeaderLayout={(height) => {
+            if (height > 0) {
+              console.log("height", height);
+              setLeagueActionsContentHeight(height);
+            }
+          }}
+          contentContainerStyle={{
+            width: "100%",
+            flex: 1,
+            flexGrow: 1,
+          }}
+          persistBodyContent
+        >
+          {renderSheetBody()}
+        </AppBottomSheet>
+      )}
     </ScreenContainer>
   );
 };

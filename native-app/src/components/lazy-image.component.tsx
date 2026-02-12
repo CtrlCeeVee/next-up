@@ -24,18 +24,6 @@ interface LazyImageProps {
 
 const DEFAULT_FALLBACK_BACKGROUND_COLOR = "#e5e7eb";
 
-const isRemoteImageSource = (source: ImageSourcePropType): boolean => {
-  if (typeof source !== "object" || source === null) {
-    return false;
-  }
-
-  if (Array.isArray(source)) {
-    return source.some((imageSource) => Boolean(imageSource?.uri));
-  }
-
-  return "uri" in source && Boolean(source.uri);
-};
-
 export const LazyImage: React.FC<LazyImageProps> = ({
   source,
   width,
@@ -46,13 +34,12 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   resizeMode = "cover",
   fallbackBackgroundColor = DEFAULT_FALLBACK_BACKGROUND_COLOR,
 }) => {
-  const [isImageLoading, setIsImageLoading] = React.useState<boolean>(
-    isRemoteImageSource(source)
-  );
+  const [isImageLoading, setIsImageLoading] = React.useState<boolean>(false);
 
-  React.useEffect(() => {
-    setIsImageLoading(isRemoteImageSource(source));
-  }, [source]);
+  const updateLoadingState = (loading: boolean) => {
+    console.log("updateLoadingState", loading);
+    setIsImageLoading(loading);
+  };
 
   return (
     <View
@@ -72,8 +59,8 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       <Image
         source={source}
         resizeMode={resizeMode}
-        onLoadStart={() => setIsImageLoading(true)}
-        onLoadEnd={() => setIsImageLoading(false)}
+        onLoadStart={() => updateLoadingState(true)}
+        onLoadEnd={() => updateLoadingState(false)}
         style={[
           {
             width: "100%",

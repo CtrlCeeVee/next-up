@@ -53,7 +53,8 @@ export const LeagueMembersComponent = ({
       return (
         <LeagueMemberIconComponent
           key={member.id}
-          member={member}
+          iconUrl={member.imageUrl}
+          name={member.name}
           size={iconSize}
           style={iconStyle}
         />

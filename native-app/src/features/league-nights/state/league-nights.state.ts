@@ -240,14 +240,19 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
   ) => {
     set({ sendingRequest: receiverId, error: null });
     try {
-      await leagueNightsService.sendPartnershipRequest(
+      const request = await leagueNightsService.sendPartnershipRequest(
         leagueId,
         nightId,
         senderId,
         receiverId
       );
-      await get().refreshPartnershipRequests(leagueId, nightId, senderId);
-      set({ sendingRequest: null });
+      console.log("request", request);
+
+      set({
+        sentRequests: [...get().sentRequests, request],
+        
+        sendingRequest: null,
+      });
     } catch (error) {
       set({
         error:

@@ -2,11 +2,13 @@ import { Image, ImageStyle, StyleProp, StyleSheet } from "react-native";
 import { LeagueMember } from "../../membership/types";
 
 export const LeagueMemberIconComponent = ({
-  member,
+  iconUrl,
+  name,
   size = 40,
   style,
 }: {
-  member: LeagueMember;
+  name: string;
+  iconUrl?: string;
   size?: number;
   style?: StyleProp<ImageStyle>;
 }) => {
@@ -21,9 +23,7 @@ export const LeagueMemberIconComponent = ({
   return (
     <Image
       source={{
-        uri:
-          member.imageUrl ||
-          `https://ui-avatars.com/api/?name=${member.name}&size=100`,
+        uri: iconUrl || `https://ui-avatars.com/api/?name=${name}&size=100`,
       }}
       style={[styles.image, style]}
     />

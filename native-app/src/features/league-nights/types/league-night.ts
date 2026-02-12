@@ -1,4 +1,5 @@
 import { BaseModel } from "../../../core/models";
+import { Player } from "../../player/types";
 
 export interface LeagueNightInstance extends BaseModel {
   leagueId: string;
@@ -19,7 +20,8 @@ export interface LeagueNightInstance extends BaseModel {
 
 export interface CheckedInPlayer {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   skillLevel: "Beginner" | "Intermediate" | "Advanced";
   checkedInAt: string;
@@ -29,8 +31,8 @@ export interface CheckedInPlayer {
 
 export interface Partnership {
   id: string;
-  player1_id: string;
-  player2_id: string;
+  player1: Player;
+  player2: Player;
   confirmed_at: string;
   is_active: boolean;
 }

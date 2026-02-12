@@ -1,4 +1,5 @@
 import { BaseModel } from "../../../core/models";
+import { Player } from "../../player/types";
 
 export interface Membership extends BaseModel {
   league_id: string;
@@ -8,12 +9,7 @@ export interface Membership extends BaseModel {
   joined_at: string;
 }
 
-export interface LeagueMember {
-  id: string;
-  name: string;
-  email: string;
-  skillLevel: "Beginner" | "Intermediate" | "Advanced";
+export interface LeagueMember extends Player {
   role: "player" | "admin";
-  imageUrl?: string;
   joinedAt: string;
 }

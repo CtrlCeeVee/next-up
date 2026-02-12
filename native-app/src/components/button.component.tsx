@@ -12,6 +12,7 @@ import { useTheme } from "../core/theme";
 import { rounding, padding, paddingSmall } from "../core/styles/global";
 import { GlobalTextStyles, TextStyle } from "../core/styles/text";
 import { Icon, IconName } from "../icons";
+import { ThemedText } from "./themed-text.component";
 
 interface ButtonProps {
   onPress: () => void;
@@ -23,7 +24,8 @@ interface ButtonProps {
   loading?: boolean;
   leftIcon?: IconName;
   style?: ViewStyle;
-  textStyle?: RNTextStyle;
+  textStyle?: TextStyle;
+  backgroundColor?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -36,7 +38,8 @@ export const Button: React.FC<ButtonProps> = ({
   loading = false,
   leftIcon,
   style,
-  textStyle,
+  textStyle = TextStyle.BodyMedium,
+  backgroundColor,
 }) => {
   const { theme } = useTheme();
   const buttonText = text || title || ""; // Support both props
@@ -85,6 +88,7 @@ export const Button: React.FC<ButtonProps> = ({
       ...baseStyle,
       ...sizeStyle,
       ...variantStyle,
+      ...(backgroundColor && { backgroundColor }),
       opacity: disabled || loading ? 0.5 : 1,
     };
   };
@@ -133,7 +137,7 @@ export const Button: React.FC<ButtonProps> = ({
               style={styles.leftIcon}
             />
           )}
-          <Text style={[getTextStyle(), textStyle]}>{buttonText}</Text>
+          <ThemedText textStyle={textStyle}>{buttonText}</ThemedText>
         </View>
       )}
     </TouchableOpacity>

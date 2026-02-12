@@ -95,7 +95,10 @@ export type IconName =
   | "target"
   | "sparkle"
   | "moon"
-  | "checkmark";
+  | "checkmark"
+  // inbox
+  | "inbox"
+  | "outbox";
 
 /**
  * Icon component props

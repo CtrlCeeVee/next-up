@@ -110,4 +110,8 @@ export const IconMap: Record<IconName, string> = {
   target: "location",
   sparkle: "sparkles",
   checkmark: "checkmark",
+
+  // inbox
+  inbox: "mail-unread",
+  outbox: "send",
 };
