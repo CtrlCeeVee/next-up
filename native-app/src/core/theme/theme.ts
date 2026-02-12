@@ -45,7 +45,7 @@ export const SharedTheme = {
   primaryDark: "#16a34a", // primary-600
   accent: "#8b5cf6", // accent-500
   accentLight: "#a855f7", // accent-400
-  accentDark: "#7c3aed", // accent-600
+  accentDark: "#33236A", // accent-600
   success: "#22c55e",
   error: "#ef4444",
   warning: "#f97316",
@@ -63,6 +63,7 @@ export interface AppThemeCoreColours extends ThemeCoreColours {
     warning: string;
     info: string;
     accent: string;
+    accentDark: string;
     inputBackground: string;
     cardGradient: [string, string];
     refreshControlBackground: string;
@@ -113,6 +114,7 @@ export const DarkTheme: AppThemeCoreColours = {
     warning: SharedTheme.warning,
     info: SharedTheme.info,
     accent: SharedTheme.accent,
+    accentDark: SharedTheme.accentDark,
     inputBackground: "rgba(30, 41, 59, 0.8)", // secondary-800
     refreshControlBackground: "#27272a", // secondary-800
   },
@@ -142,6 +144,7 @@ export const LightTheme: AppThemeCoreColours = {
     warning: SharedTheme.warning,
     info: SharedTheme.info,
     accent: SharedTheme.accent,
+    accentDark: SharedTheme.accentDark,
     inputBackground: "#f0f0f0", // slightly-darker white
     refreshControlBackground: "#f0f0f0", // slightly-darker white
   },

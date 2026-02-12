@@ -3,6 +3,8 @@ import {
   LayoutChangeEvent,
   StyleProp,
   StyleSheet,
+  useWindowDimensions,
+  View,
   ViewStyle,
 } from "react-native";
 import BottomSheet, {
@@ -11,7 +13,9 @@ import BottomSheet, {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useTheme } from "../core/theme";
-import { padding, rounding, spacing } from "../core/styles";
+import { padding, rounding, spacing, TextStyle } from "../core/styles";
+import { ThemedText } from "./themed-text.component";
+import { Container } from "./container.component";
 
 export enum ActionOnBackdropPress {
   CLOSE = "close",
@@ -24,7 +28,7 @@ interface AppBottomSheetProps {
   onClose: () => void;
   children: React.ReactNode;
   snapPoints?: Array<string | number>;
-  initialSnapIndex?: number;
+  sheetIndex?: number;
   enableDynamicSizing?: boolean;
   enableDragging?: boolean;
   showHandle?: boolean;
@@ -44,14 +48,14 @@ interface AppBottomSheetProps {
 }
 
 const DEFAULT_SNAP_POINTS: Array<string> = ["35%", "65%"];
-const DEFAULT_HANDLE_HEIGHT = 10;
+const DEFAULT_HANDLE_HEIGHT = 18;
 
 export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
   isOpen,
   onClose,
   children,
   snapPoints = DEFAULT_SNAP_POINTS,
-  initialSnapIndex = 0,
+  sheetIndex = 0,
   enableDynamicSizing = false,
   enableDragging = true,
   showHandle = true,
@@ -69,18 +73,42 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
   contentContainerStyle,
 }) => {
   const { theme } = useTheme();
+  const { height: windowHeight } = useWindowDimensions();
+
   const bottomSheetReference = useRef<BottomSheet>(null);
-  const memoizedSnapPoints = useMemo(() => snapPoints, [snapPoints]);
+
+  const getSnapPointHeight = (snapPoint: string | number): number => {
+    if (typeof snapPoint === "number") {
+      console.log("snapPoint", snapPoint);
+      return snapPoint + DEFAULT_HANDLE_HEIGHT;
+    }
+
+    if (snapPoint.endsWith("%")) {
+      return (
+        windowHeight * (Number.parseFloat(snapPoint.replace("%", "")) / 100) +
+        DEFAULT_HANDLE_HEIGHT
+      );
+    }
+
+    return 0;
+  };
+
+  const memoizedSnapPoints = useMemo(() => {
+    console.log("snapPoints", snapPoints);
+    return snapPoints.map((snapPoint) => {
+      return getSnapPointHeight(snapPoint);
+    });
+  }, [snapPoints]);
   const isDraggingEnabled = enableDragging && showHandle;
 
   useEffect(() => {
     if (isOpen) {
-      bottomSheetReference.current?.snapToIndex(initialSnapIndex);
+      bottomSheetReference.current?.snapToIndex(sheetIndex);
       return;
     }
 
     bottomSheetReference.current?.close();
-  }, [initialSnapIndex, isOpen]);
+  }, [sheetIndex, isOpen]);
 
   const backdropPressBehavior = useMemo(() => {
     switch (actionOnBackdropPress) {
@@ -121,7 +149,7 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
   return (
     <BottomSheet
       ref={bottomSheetReference}
-      index={isOpen ? initialSnapIndex : -1}
+      index={isOpen ? sheetIndex : -1}
       snapPoints={memoizedSnapPoints}
       enableDynamicSizing={enableDynamicSizing}
       onClose={onClose}
@@ -132,7 +160,26 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
       enablePanDownToClose={isDraggingEnabled && allowSwipeToClose}
       enableHandlePanningGesture={isDraggingEnabled}
       enableContentPanningGesture={isDraggingEnabled}
-      handleComponent={showHandle ? undefined : null}
+      handleComponent={() => (
+        <Container
+          row
+          grow
+          centerHorizontal
+          centerVertical
+          style={{ height: DEFAULT_HANDLE_HEIGHT }}
+        >
+          {showHandle && (
+            <View
+              style={{
+                width: 44,
+                height: 4,
+                backgroundColor: theme.colors.muted,
+                borderRadius: rounding,
+              }}
+            />
+          )}
+        </Container>
+      )}
       style={modalStyle}
       backgroundStyle={[
         {
@@ -155,11 +202,7 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
     >
       <BottomSheetView
         onLayout={handleSheetContentLayout}
-        style={[
-          styles.contentContainer,
-          !showHandle && styles.hiddenHandleContentContainer,
-          contentContainerStyle,
-        ]}
+        style={[styles.contentContainer, contentContainerStyle]}
       >
         {children}
       </BottomSheetView>
@@ -171,9 +214,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: padding,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.lg,
-  },
-  hiddenHandleContentContainer: {
-    paddingTop: spacing.sm + DEFAULT_HANDLE_HEIGHT,
+    // paddingBottom: spacing.lg,
   },
 });

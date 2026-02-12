@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   ScrollView,
@@ -24,6 +24,7 @@ import {
   MapSnapshot,
   AppBottomSheet,
   ActionOnBackdropPress,
+  LoadingSpinner,
 } from "../../components";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
@@ -124,10 +125,40 @@ export const LeagueDetailScreen = () => {
     useState(true);
   const [leagueActionsSheetStage, setLeagueActionsSheetStage] = useState(0);
   const { height: windowHeight } = useWindowDimensions();
-  const [isSheetHandleShown] = useState(false);
+  const [isSheetHandleShown, setSheetHandleShown] = useState(false);
   const [leagueActionsContentHeight, setLeagueActionsContentHeight] = useState<
     number | null
   >(null);
+  const checkedInPlayers = useLeagueNightState(
+    (state) => state.checkedInPlayers
+  );
+  const checkInPlayer = useLeagueNightState((state) => state.checkInPlayer);
+  const checkingIn = useLeagueNightState((state) => state.checkingIn);
+  const refreshCheckedInPlayers = useLeagueNightState(
+    (state) => state.refreshCheckedInPlayers
+  );
+
+  useEffect(() => {
+    if (activeLeagueNight) {
+      refreshCheckedInPlayers(leagueId, activeLeagueNight.id);
+    }
+  }, [activeLeagueNight, leagueId]);
+
+  const isCheckedIn = useMemo(() => {
+    if (!user) return false;
+    const isCheckedIn = checkedInPlayers.some(
+      (player) => player.id === user.id
+    );
+    return isCheckedIn;
+  }, [checkedInPlayers, user]);
+
+  useEffect(() => {
+    if (isCheckedIn) {
+      setSheetHandleShown(true);
+    } else {
+      setSheetHandleShown(false);
+    }
+  }, [isCheckedIn]);
 
   useEffect(() => {
     fetchLeague(leagueId);
@@ -170,6 +201,13 @@ export const LeagueDetailScreen = () => {
   }
 
   const isUserMember = isMember(leagueId);
+
+  const checkIn = () => {
+    if (!activeLeagueNight || !user || checkingIn) return;
+    checkInPlayer(leagueId, activeLeagueNight.id, user.id);
+    setIsLeagueActionsSheetOpen(true);
+    setLeagueActionsSheetStage(1);
+  };
 
   const getNextUpActivity = () => {
     return leagueNights.find((night) => night.status === "scheduled");
@@ -319,6 +357,74 @@ export const LeagueDetailScreen = () => {
     firstLeagueActionsSnapPointHeight,
     LEAGUE_ACTIONS_SNAP_POINTS[1],
   ];
+
+  const renderLiveNow = () => {
+    return (
+      <Container row grow spaceBetween w100 style={{ paddingBottom: padding }}>
+        <Container column gap={0}>
+          <Container row centerVertical gap={gap.sm}>
+            <Icon name="moon" size={16} color={"#ffffff"} />
+            <ThemedText textStyle={TextStyle.Body}>Live Now</ThemedText>
+          </Container>
+          <ThemedText textStyle={TextStyle.BodySmall} color="#cbcbcb">
+            League Night started at 13:00
+          </ThemedText>
+        </Container>
+        {!isCheckedIn && (
+          <TouchableOpacity
+            style={{
+              backgroundColor: theme.colors.accent,
+              paddingVertical: paddingSmall,
+              paddingHorizontal: padding,
+              borderRadius: rounding,
+            }}
+            onPress={checkIn}
+          >
+            <ThemedText
+              textStyle={TextStyle.BodySmall}
+              color={"white"}
+              growHorizontal
+              center
+            >
+              Check in
+            </ThemedText>
+          </TouchableOpacity>
+        )}
+        {isCheckedIn && (
+          <ThemedText textStyle={TextStyle.Body} color={"white"}>
+            <Icon
+              name={
+                leagueActionsSheetStage === 0 ? "chevron-up" : "chevron-down"
+              }
+              size={16}
+              color={"white"}
+            />
+          </ThemedText>
+        )}
+      </Container>
+    );
+  };
+
+  const renderSheetContentHeader = () => {
+    return (
+      <TouchableOpacity
+        onPress={() => {
+          setLeagueActionsSheetStage(leagueActionsSheetStage === 0 ? 1 : 0);
+        }}
+      >
+        {renderLiveNow()}
+      </TouchableOpacity>
+    );
+  };
+
+  const renderSheetContent = () => {
+    return (
+      <Container column w100>
+        {renderSheetContentHeader()}
+        {checkingIn && <LoadingSpinner size="large" message="Checking in..." />}
+      </Container>
+    );
+  };
 
   return (
     <ScreenContainer safeAreaColour={theme.backgroundGradient[0]}>
@@ -530,7 +636,7 @@ export const LeagueDetailScreen = () => {
         allowSwipeToClose={false}
         actionOnBackdropPress={ActionOnBackdropPress.COLLAPSE}
         snapPoints={leagueActionsSnapPoints}
-        initialSnapIndex={0}
+        sheetIndex={leagueActionsSheetStage}
         backdropAppearsOnIndex={1}
         backdropDisappearsOnIndex={0}
         onStageChange={(stageIndex) => {
@@ -538,46 +644,16 @@ export const LeagueDetailScreen = () => {
             setLeagueActionsSheetStage(stageIndex);
           }
         }}
-        sheetBackgroundStyle={
-          {
-            backgroundColor: "#33236A",
-          }
-        }
+        sheetBackgroundStyle={{
+          ...(!isCheckedIn && { backgroundColor: theme.colors.accentDark }),
+        }}
         onContentLayout={(height) => {
           if (height > 0) {
             setLeagueActionsContentHeight(height);
           }
         }}
       >
-        <Container row spaceBetween centerVertical w100 gap={gap.sm}>
-          <Container column gap={0}>
-            <Container row centerVertical gap={gap.sm}>
-              <Icon name="moon" size={16} color={"#ffffff"} />
-              <ThemedText textStyle={TextStyle.Body}>Live Now</ThemedText>
-            </Container>
-            <ThemedText textStyle={TextStyle.BodySmall} color="#cbcbcb">
-              League Night started at 13:00
-            </ThemedText>
-          </Container>
-          <TouchableOpacity
-            style={{
-              backgroundColor: theme.colors.accent,
-              paddingVertical: paddingSmall,
-              paddingHorizontal: padding,
-              borderRadius: rounding,
-            }}
-            onPress={() => {}}
-          >
-            <ThemedText
-              textStyle={TextStyle.BodySmall}
-              color={"white"}
-              growHorizontal
-              center
-            >
-              Check in
-            </ThemedText>
-          </TouchableOpacity>
-        </Container>
+        {renderSheetContent()}
       </AppBottomSheet>
     </ScreenContainer>
   );
