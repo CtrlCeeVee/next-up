@@ -6,6 +6,7 @@ import { LeagueNightsService } from "../features/league-nights/services";
 import { MembershipService } from "../features/membership/services";
 import { ProfilesService } from "../features/profiles/services";
 import { PushNotificationsService } from "../features/push-notifications/services";
+import { WebsocketsService } from "../features/websockets/services/websockets.service";
 
 // Create service instances
 export const authService = new AuthService();
@@ -14,6 +15,7 @@ export const leagueNightsService = new LeagueNightsService();
 export const membershipService = new MembershipService();
 export const profilesService = new ProfilesService();
 export const pushNotificationsService = new PushNotificationsService();
+export const websocketsService = new WebsocketsService();
 
 // Initialize and register services
 function initializeServices() {
@@ -27,6 +29,7 @@ function initializeServices() {
     InjectableType.PUSH_NOTIFICATIONS,
     pushNotificationsService
   );
+  registerInjectable(InjectableType.WEBSOCKETS, websocketsService);
   console.log("Services initialized successfully");
 }
 
