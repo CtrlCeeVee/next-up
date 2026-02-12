@@ -12,6 +12,9 @@ export * from "./search-bar.component";
 export * from "./scroll-area.component";
 export * from "./container.component";
 export * from "./map.component";
+export * from "./lazy-image.component";
+export * from "./map-snapshot.component";
+export * from "./bottom-sheet.component";
 
 // Auth components
 export * from "./auth";

@@ -1,18 +1,12 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 
-import { Card, Container, ScrollArea, ThemedText } from "../../../components";
+import { Container, ThemedText } from "../../../components";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
 import { TextStyle } from "../../../core/styles/text";
-import {
-  padding,
-  paddingLarge,
-  paddingSmall,
-  rounding,
-  spacing,
-} from "../../../core/styles";
+import { padding, paddingLarge, rounding, spacing } from "../../../core/styles";
 import { gap } from "../../../core/styles";
 import { LeagueNightInstance } from "../../league-nights/types";
 import { Routes } from "../../../navigation/routes";
@@ -28,7 +22,6 @@ interface DateInfo {
   day: string;
   month: {
     short: string;
-    long: string;
   };
 }
 
@@ -54,89 +47,106 @@ export const LeagueNightsComponent = ({
       day: dateObj.getDate().toString(),
       month: {
         short: dateObj.toLocaleString("default", { month: "short" }),
-        long: dateObj.toLocaleString("default", { month: "long" }),
       },
     };
   };
 
   return (
-    <Container column grow w100>
-      {/* Upcoming League Nights */}
-      {isUserMember && leagueNights.length > 0 && (
-        <ScrollArea>
-          <ThemedText textStyle={TextStyle.Body}>Upcoming Nights</ThemedText>
-
-          {leagueNights.map((night) => {
-            const dateInfo = getDateInfo(night.date);
-            return (
-              <TouchableOpacity
-                key={night.id}
-                onPress={() => handleNavigateToNight(night.id)}
-                activeOpacity={0.7}
-              >
-                <Container
-                  row
-                  w100
-                  spaceBetween
-                  centerVertical
-                  paddingHorizontal={paddingLarge}
-                  paddingVertical={padding}
-                  rounding={rounding}
-                  style={{
-                    backgroundColor:
-                      night.status === "active"
-                        ? theme.colors.primary + "10"
-                        : "transparent",
-                    borderColor:
-                      night.status === "active"
-                        ? theme.colors.primary
-                        : theme.colors.border,
-                    borderWidth: 1,
-                  }}
+    <Container column gap={gap.md}>
+      {leagueNights.length > 0 && (
+        <Container column w100>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carouselContent}
+          >
+            {leagueNights.map((night, index) => {
+              const dateInfo = getDateInfo(night.date);
+              return (
+                <TouchableOpacity
+                  key={night.id}
+                  onPress={() => handleNavigateToNight(night.id)}
+                  activeOpacity={0.85}
+                  style={[
+                    styles.carouselCard,
+                    {
+                      marginRight:
+                        index === leagueNights.length - 1 ? 0 : gap.md,
+                      backgroundColor:
+                        night.status === "active"
+                          ? theme.colors.primary + "10"
+                          : theme.colors.background,
+                      borderColor:
+                        night.status === "active"
+                          ? theme.colors.primary
+                          : theme.colors.border,
+                    },
+                  ]}
                 >
-                  <Container row centerVertical gap={gap.lg}>
-                    <Container column centerHorizontal>
-                      <ThemedText textStyle={TextStyle.BodyMedium}>
-                        {dateInfo.day}
-                      </ThemedText>
-                      <ThemedText textStyle={TextStyle.BodySmall}>
-                        {dateInfo.month.short}
-                      </ThemedText>
-                    </Container>
-                    <Container column>
-                      <ThemedText textStyle={TextStyle.BodyMedium}>
-                        {night.day}
-                      </ThemedText>
-                      <ThemedText textStyle={TextStyle.BodySmall}>
-                        At {night.time}
-                      </ThemedText>
-                    </Container>
-                    {DateUtility.isToday(night.date) && (
+                  <Container row spaceBetween centerVertical>
+                    <Container row centerVertical gap={gap.md}>
                       <Container
+                        column
+                        centerHorizontal
                         paddingVertical={spacing.xs}
-                        paddingHorizontal={spacing.md}
+                        paddingHorizontal={spacing.sm}
                         rounding={rounding}
-                        style={{
-                          backgroundColor: theme.colors.primary,
-                        }}
                       >
+                        <ThemedText textStyle={TextStyle.BodyMedium}>
+                          {dateInfo.day}
+                        </ThemedText>
                         <ThemedText textStyle={TextStyle.BodySmall}>
-                          Today
+                          {dateInfo.month.short}
                         </ThemedText>
                       </Container>
-                    )}
+                      <Container column gap={gap.xs}>
+                        <ThemedText textStyle={TextStyle.BodyMedium}>
+                          {night.day}
+                        </ThemedText>
+                        <ThemedText textStyle={TextStyle.BodySmall} muted>
+                          At {night.time}
+                        </ThemedText>
+                      </Container>
+                      {DateUtility.isToday(night.date) && (
+                        <Container
+                          rounding={rounding}
+                          paddingVertical={spacing.xs}
+                          paddingHorizontal={spacing.md}
+                          style={{
+                            backgroundColor: theme.colors.primary,
+                          }}
+                        >
+                          <ThemedText textStyle={TextStyle.BodySmall}>
+                            Today
+                          </ThemedText>
+                        </Container>
+                      )}
+                    </Container>
+                    <Icon
+                      name="chevron-right"
+                      size={20}
+                      color={theme.colors.text + "60"}
+                    />
                   </Container>
-                  <Icon
-                    name="chevron-right"
-                    size={20}
-                    color={theme.colors.text + "60"}
-                  />
-                </Container>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollArea>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </Container>
       )}
     </Container>
   );
 };
+
+const styles = StyleSheet.create({
+  carouselContent: {
+    paddingRight: padding,
+  },
+  carouselCard: {
+    width: 280,
+    borderWidth: 1,
+    borderRadius: rounding,
+    paddingHorizontal: paddingLarge,
+    paddingVertical: padding,
+  },
+});
