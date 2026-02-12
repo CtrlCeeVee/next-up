@@ -6,6 +6,12 @@ import { Screen } from "./screen";
 import { useToastState } from "../features/toast/state/toast.state";
 import Constants from "expo-constants";
 import { ExecutionEnvironment } from "expo-constants";
+import { useLeagueNightState } from "../features/league-nights/state";
+import { useAuthState } from "../features/auth/state";
+import { getService, InjectableType, useInjection } from "../di/di";
+import { WebsocketsService } from "../features/websockets/services/websockets.service";
+import { NativeRealtimeEventName } from "../features/websockets/types";
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
@@ -59,6 +65,20 @@ if (!isExpoGo()) {
 }
 
 export const App = () => {
+  const websocketsService = getService<WebsocketsService>(
+    InjectableType.WEBSOCKETS
+  );
+
+  useEffect(() => {
+    websocketsService.connect();
+    websocketsService.subscribe(NativeRealtimeEventName.MATCH, (payload) => {
+      console.log("match update", payload);
+    });
+    return () => {
+      websocketsService.disconnect();
+    };
+  }, []);
+
   return (
     <ThemeProvider>
       <Screen />

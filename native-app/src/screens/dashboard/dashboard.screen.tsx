@@ -53,7 +53,6 @@ export const DashboardScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const { theme, isDark } = useTheme();
   const { user } = useAuthState();
-  // const { memberships, getMemberships } = useMembershipState();
   const { leagues, fetchLeagues, loading: leaguesLoading } = useLeaguesState();
 
   // const [myLeagues, setMyLeagues] = useState<LeagueWithNight[]>([]);
@@ -212,7 +211,7 @@ export const DashboardScreen = () => {
               <ActivityIndicator size="large" color={theme.colors.primary} />
             </Card>
           ) : nextUpLeagueNightInstances.length > 0 ? (
-            <View style={{gap: gap.md}}>
+            <View style={{ gap: gap.md }}>
               <View style={styles.sectionHeader}>
                 <Icon name="zap" size={20} color={theme.colors.primary} />
                 <ThemedText textStyle={TextStyle.Subheader}>Next Up</ThemedText>

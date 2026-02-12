@@ -8,6 +8,7 @@ export enum InjectableType {
   MEMBERSHIP = "membership-service",
   PROFILES = "profiles-service",
   PUSH_NOTIFICATIONS = "push-notifications-service",
+  WEBSOCKETS = "websockets-service",
 }
 
 // Service instances will be stored here

@@ -44,6 +44,10 @@ interface LeagueNightState {
     nightId: string,
     userId: string
   ) => Promise<void>;
+  updatePartnershipRequest: (
+    request: PartnershipRequest,
+    userId: string
+  ) => void;
 
   // Check-in actions
   checkInPlayer: (
@@ -195,6 +199,16 @@ export const useLeagueNightState = create<LeagueNightState>((set, get) => ({
       console.error("Error refreshing partnership requests:", error);
     }
     set({ loadingPartnershipData: false });
+  },
+
+  updatePartnershipRequest: (request: PartnershipRequest, userId: string) => {
+    if (request.leagueNightInstanceId !== get().leagueNightInstance?.id) return;
+
+    if (request.requester.id === userId) {
+      set({ sentRequests: [...get().sentRequests, request] });
+    } else {
+      set({ receivedRequests: [...get().receivedRequests, request] });
+    }
   },
 
   // Check in player

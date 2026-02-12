@@ -65,6 +65,7 @@ import { LeagueMembersComponent } from "../../features/leagues/components/league
 import { TobBar } from "../../components/top-bar.component";
 import { HoverButton } from "../../components/hover-button.component";
 import { DateUtility } from "../../core/utilities";
+import { SelectPartnershipComponent } from "../../features/league-nights/components/select-partnership.component";
 
 type LeagueDetailRouteProp = RouteProp<
   LeaguesStackParamList,
@@ -425,10 +426,16 @@ export const LeagueDetailScreen = () => {
   };
 
   const renderSheetContent = () => {
+    if (!activeLeagueNight) return null;
+
     return (
       <Container column w100>
         {renderSheetContentHeader()}
         {checkingIn && <LoadingSpinner size="large" message="Checking in..." />}
+        <SelectPartnershipComponent
+          league={currentLeague}
+          night={activeLeagueNight || undefined}
+        />
       </Container>
     );
   };
