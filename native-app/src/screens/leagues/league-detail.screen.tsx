@@ -39,6 +39,8 @@ import {
   roundingFull,
   roundingMedium,
   paddingSmall,
+  paddingLarge,
+  MIN_TEXTLESS_BUTTON_SIZE,
 } from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
 import { useLeaguesState } from "../../features/leagues/state";
@@ -61,6 +63,7 @@ import { ActiveLeagueNightComponent } from "../../features/league-nights/compone
 import { LeagueMembersComponent } from "../../features/leagues/components/league-members.component";
 import { TobBar } from "../../components/top-bar.component";
 import { HoverButton } from "../../components/hover-button.component";
+import { DateUtility } from "../../core/utilities";
 
 type LeagueDetailRouteProp = RouteProp<
   LeaguesStackParamList,
@@ -127,7 +130,7 @@ export const LeagueDetailScreen = () => {
   const [isSheetHandleShown] = useState(false);
   const [leagueActionsContentHeight, setLeagueActionsContentHeight] = useState<
     number | null
-  >(null);
+  >(0);
 
   useEffect(() => {
     fetchLeague(leagueId);
@@ -264,6 +267,10 @@ export const LeagueDetailScreen = () => {
     return tabs;
   };
 
+  const isLeagueNightToday = () => {
+    return leagueNights.some((night) => DateUtility.isToday(night.date));
+  };
+
   const getLeagueDays = () => {
     const days = currentLeague.leagueDays;
     if (!days || days.length === 0) return "No schedule set";
@@ -387,24 +394,40 @@ export const LeagueDetailScreen = () => {
               zIndex: 1,
             }}
           >
-            {/* <ThemedText textStyle={TextStyle.BodyMedium}>
-              Tag will go here
-            </ThemedText> */}
-            <Container
-              row
-              centerVertical
-              paddingVertical={paddingSmall}
-              paddingHorizontal={padding}
-              rounding={rounding}
-              style={{
-                backgroundColor: theme.colors.accent,
-              }}
-            >
-              <Icon name="moon" size={16} color={"white"} />
-              <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
-                Active now
-              </ThemedText>
-            </Container>
+            {activeLeagueNight && !isLeagueNightToday() && (
+              <Container
+                row
+                centerVertical
+                paddingVertical={paddingSmall}
+                paddingHorizontal={padding}
+                rounding={rounding}
+                style={{
+                  backgroundColor: theme.colors.accent,
+                }}
+              >
+                <Icon name="moon" size={16} color={"white"} />
+                <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
+                  Active now
+                </ThemedText>
+              </Container>
+            )}
+            {!activeLeagueNight && isLeagueNightToday() && (
+              <Container
+                row
+                centerVertical
+                paddingVertical={paddingSmall}
+                paddingHorizontal={padding}
+                rounding={rounding}
+                style={{
+                  backgroundColor: theme.colors.primary,
+                }}
+              >
+                <Icon name="calendar" size={16} color={"white"} />
+                <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
+                  Today
+                </ThemedText>
+              </Container>
+            )}
           </Container>
         </Container>
 
@@ -443,12 +466,17 @@ export const LeagueDetailScreen = () => {
                 }}
                 style={styles.heartButtonContainer}
                 accessibilityRole="button"
-                accessibilityLabel="Open league actions"
+                accessibilityLabel="Toggle favorite league"
               >
                 <Container
+                  column
+                  centerHorizontal
+                  centerVertical
                   rounding={roundingFull}
                   padding={paddingSmall}
-                  style={{ backgroundColor: theme.colors.text + "10" }}
+                  style={{
+                    backgroundColor: theme.colors.text + "10",
+                  }}
                 >
                   <Icon
                     name="heart"
@@ -476,7 +504,15 @@ export const LeagueDetailScreen = () => {
         </Container>
 
         {/* Upcoming League Nights */}
-        <Container column w100 gap={gap.sm} style={{ paddingLeft: padding }}>
+        <Container
+          column
+          w100
+          gap={gap.sm}
+          style={{
+            paddingLeft: padding,
+            ...(leagueNights.length === 0 && { paddingRight: padding }),
+          }}
+        >
           <ThemedText textStyle={TextStyle.Body}>Upcoming Nights</ThemedText>
           <LeagueNightsComponent
             leagueNights={leagueNights}
@@ -521,64 +557,101 @@ export const LeagueDetailScreen = () => {
         </Container>
       </ScrollArea>
 
-      <AppBottomSheet
-        isOpen={isLeagueActionsSheetOpen}
-        showHandle={isSheetHandleShown}
-        onClose={() => setIsLeagueActionsSheetOpen(false)}
-        enableDynamicSizing={false}
-        enableDragging={true}
-        allowSwipeToClose={false}
-        actionOnBackdropPress={ActionOnBackdropPress.COLLAPSE}
-        snapPoints={leagueActionsSnapPoints}
-        initialSnapIndex={0}
-        backdropAppearsOnIndex={1}
-        backdropDisappearsOnIndex={0}
-        onStageChange={(stageIndex) => {
-          if (stageIndex >= 0) {
-            setLeagueActionsSheetStage(stageIndex);
-          }
-        }}
-        sheetBackgroundStyle={
-          {
-            backgroundColor: "#33236A",
-          }
-        }
-        onContentLayout={(height) => {
-          if (height > 0) {
-            setLeagueActionsContentHeight(height);
-          }
-        }}
-      >
-        <Container row spaceBetween centerVertical w100 gap={gap.sm}>
-          <Container column gap={0}>
-            <Container row centerVertical gap={gap.sm}>
-              <Icon name="moon" size={16} color={"#ffffff"} />
-              <ThemedText textStyle={TextStyle.Body}>Live Now</ThemedText>
+      {((isUserMember && activeLeagueNight) || !isUserMember) && (
+        <AppBottomSheet
+          isOpen={isLeagueActionsSheetOpen}
+          showHandle={isSheetHandleShown}
+          onClose={() => setIsLeagueActionsSheetOpen(false)}
+          enableDynamicSizing={false}
+          enableDragging={true}
+          allowSwipeToClose={false}
+          actionOnBackdropPress={ActionOnBackdropPress.COLLAPSE}
+          snapPoints={leagueActionsSnapPoints}
+          initialSnapIndex={0}
+          backdropAppearsOnIndex={1}
+          backdropDisappearsOnIndex={0}
+          onStageChange={(stageIndex) => {
+            if (stageIndex >= 0) {
+              setLeagueActionsSheetStage(stageIndex);
+            }
+          }}
+          sheetBackgroundStyle={{
+            ...(activeLeagueNight &&
+              isUserMember && { backgroundColor: "#33236A" }),
+            ...(!isUserMember && {
+              backgroundColor: theme.colors.primaryDark,
+            }),
+          }}
+          onContentLayout={(height) => {
+            if (height > 0) {
+              setLeagueActionsContentHeight(height);
+            }
+          }}
+        >
+          {isUserMember && activeLeagueNight && (
+            <Container row spaceBetween centerVertical w100 gap={gap.sm}>
+              <Container column gap={0}>
+                <Container row centerVertical gap={gap.sm}>
+                  <Icon name="moon" size={16} color={"#ffffff"} />
+                  <ThemedText textStyle={TextStyle.Body}>Live Now</ThemedText>
+                </Container>
+                <ThemedText textStyle={TextStyle.BodySmall} color="#cbcbcb">
+                  League Night started at 13:00
+                </ThemedText>
+              </Container>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: theme.colors.accent,
+                  paddingVertical: paddingSmall,
+                  paddingHorizontal: padding,
+                  borderRadius: rounding,
+                }}
+                onPress={() => {}}
+              >
+                <ThemedText
+                  textStyle={TextStyle.BodyMedium}
+                  color={"white"}
+                  growHorizontal
+                  center
+                >
+                  Check in
+                </ThemedText>
+              </TouchableOpacity>
             </Container>
-            <ThemedText textStyle={TextStyle.BodySmall} color="#cbcbcb">
-              League Night started at 13:00
-            </ThemedText>
-          </Container>
-          <TouchableOpacity
-            style={{
-              backgroundColor: theme.colors.accent,
-              paddingVertical: paddingSmall,
-              paddingHorizontal: padding,
-              borderRadius: rounding,
-            }}
-            onPress={() => {}}
-          >
-            <ThemedText
-              textStyle={TextStyle.BodySmall}
-              color={"white"}
-              growHorizontal
-              center
-            >
-              Check in
-            </ThemedText>
-          </TouchableOpacity>
-        </Container>
-      </AppBottomSheet>
+          )}
+
+          {!isUserMember && (
+            <Container row spaceBetween centerVertical w100 gap={gap.sm}>
+              <Container column gap={0}>
+                <Container row centerVertical gap={gap.sm}>
+                  <Icon name="user-add" size={16} color={"#ffffff"} />
+                  <ThemedText textStyle={TextStyle.Body}>
+                    Become a member
+                  </ThemedText>
+                </Container>
+              </Container>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: theme.colors.primary,
+                  paddingVertical: paddingSmall,
+                  paddingHorizontal: paddingLarge,
+                  borderRadius: rounding,
+                }}
+                onPress={() => {}}
+              >
+                <ThemedText
+                  textStyle={TextStyle.BodyMedium}
+                  color={"white"}
+                  growHorizontal
+                  center
+                >
+                  Join
+                </ThemedText>
+              </TouchableOpacity>
+            </Container>
+          )}
+        </AppBottomSheet>
+      )}
     </ScreenContainer>
   );
 };
@@ -620,6 +693,10 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   heartButtonContainer: {
-    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: MIN_TEXTLESS_BUTTON_SIZE,
+    height: MIN_TEXTLESS_BUTTON_SIZE,
   },
 });

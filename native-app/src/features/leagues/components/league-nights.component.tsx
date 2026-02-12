@@ -6,7 +6,7 @@ import { Container, ThemedText } from "../../../components";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
 import { TextStyle } from "../../../core/styles/text";
-import { padding, paddingLarge, rounding, spacing } from "../../../core/styles";
+import { defaultIconSize, padding, paddingLarge, rounding, spacing } from "../../../core/styles";
 import { gap } from "../../../core/styles";
 import { LeagueNightInstance } from "../../league-nights/types";
 import { Routes } from "../../../navigation/routes";
@@ -52,10 +52,11 @@ export const LeagueNightsComponent = ({
   };
 
   return (
-    <Container column gap={gap.md}>
+    <Container column w100 gap={gap.md}>
       {leagueNights.length > 0 && (
         <Container column w100>
           <ScrollView
+            style={{ width: "100%" }}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.carouselContent}
@@ -132,6 +133,14 @@ export const LeagueNightsComponent = ({
               );
             })}
           </ScrollView>
+        </Container>
+      )}
+      {leagueNights.length === 0 && (
+        <Container column w100 centerHorizontal>
+          <Icon name="tennis-ball" size={defaultIconSize} color={theme.colors.text + "60"} />
+          <ThemedText textStyle={TextStyle.BodyMedium} muted>
+            No upcoming league nights
+          </ThemedText>
         </Container>
       )}
     </Container>
