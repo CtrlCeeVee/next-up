@@ -1,12 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
-import { StyleProp, StyleSheet, ViewStyle } from "react-native";
+import {
+  LayoutChangeEvent,
+  StyleProp,
+  StyleSheet,
+  ViewStyle,
+} from "react-native";
 import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useTheme } from "../core/theme";
-import { padding, spacing } from "../core/styles";
+import { padding, rounding, spacing } from "../core/styles";
 
 export enum ActionOnBackdropPress {
   CLOSE = "close",
@@ -30,6 +35,7 @@ interface AppBottomSheetProps {
   backdropDisappearsOnIndex?: number;
   backdropOpacity?: number;
   onStageChange?: (stageIndex: number) => void;
+  onContentLayout?: (height: number) => void;
   modalStyle?: StyleProp<ViewStyle>;
   sheetBackgroundStyle?: StyleProp<ViewStyle>;
   handleStyle?: StyleProp<ViewStyle>;
@@ -38,7 +44,7 @@ interface AppBottomSheetProps {
 }
 
 const DEFAULT_SNAP_POINTS: Array<string> = ["35%", "65%"];
-const DEFAULT_HANDLE_HEIGHT = 24;
+const DEFAULT_HANDLE_HEIGHT = 10;
 
 export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
   isOpen,
@@ -55,6 +61,7 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
   backdropDisappearsOnIndex = -1,
   backdropOpacity = 0.35,
   onStageChange,
+  onContentLayout,
   modalStyle,
   sheetBackgroundStyle,
   handleStyle,
@@ -75,16 +82,21 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
     bottomSheetReference.current?.close();
   }, [initialSnapIndex, isOpen]);
 
-  const getBackdropPressBehavior = () => {
-    console.log("actionOnBackdropPress", actionOnBackdropPress);
+  const backdropPressBehavior = useMemo(() => {
     switch (actionOnBackdropPress) {
       case ActionOnBackdropPress.CLOSE:
-        return "close";
+        return ActionOnBackdropPress.CLOSE;
       case ActionOnBackdropPress.COLLAPSE:
-        return "collapse";
+        return ActionOnBackdropPress.COLLAPSE;
       case ActionOnBackdropPress.NONE:
-        return "none";
+      default:
+        return ActionOnBackdropPress.NONE;
     }
+  }, [actionOnBackdropPress]);
+
+  const handleSheetContentLayout = (event: LayoutChangeEvent) => {
+    const { height } = event.nativeEvent.layout;
+    onContentLayout?.(height);
   };
 
   const renderBackdrop = useCallback(
@@ -95,17 +107,14 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
         disappearsOnIndex={backdropDisappearsOnIndex}
         opacity={backdropOpacity}
         enableTouchThrough={true}
-        onPress={() => {
-          console.log("press");
-        }}
-        pressBehavior={getBackdropPressBehavior()}
+        pressBehavior={backdropPressBehavior}
       />
     ),
     [
       backdropAppearsOnIndex,
       backdropDisappearsOnIndex,
       backdropOpacity,
-      getBackdropPressBehavior,
+      backdropPressBehavior,
     ]
   );
 
@@ -128,10 +137,10 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
       backgroundStyle={[
         {
           backgroundColor: theme.colors.sheetBackground,
-          borderColor: theme.colors.border,
-          borderWidth: 1,
-          borderTopLeftRadius: 20,
-          borderTopRightRadius: 20,
+          // borderColor: theme.colors.border,
+          // borderWidth: 1,
+          borderTopLeftRadius: rounding,
+          borderTopRightRadius: rounding,
         },
         sheetBackgroundStyle,
       ]}
@@ -145,6 +154,7 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
       ]}
     >
       <BottomSheetView
+        onLayout={handleSheetContentLayout}
         style={[
           styles.contentContainer,
           !showHandle && styles.hiddenHandleContentContainer,

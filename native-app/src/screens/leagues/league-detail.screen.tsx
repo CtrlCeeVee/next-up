@@ -60,6 +60,7 @@ import { HoverActionsComponent } from "../../components/hover-actions.component"
 import { ActiveLeagueNightComponent } from "../../features/league-nights/components/active-league-night.component";
 import { LeagueMembersComponent } from "../../features/leagues/components/league-members.component";
 import { TobBar } from "../../components/top-bar.component";
+import { HoverButton } from "../../components/hover-button.component";
 
 type LeagueDetailRouteProp = RouteProp<
   LeaguesStackParamList,
@@ -73,6 +74,7 @@ type LeagueDetailNavigationProp = NativeStackNavigationProp<
 const SOFT_HYPHEN = "\u00AD";
 const MAX_WORD_SEGMENT_LENGTH = 12;
 const LEAGUE_ACTIONS_SNAP_POINTS: Array<string> = ["20%", "75%"];
+const LEAGUE_ACTIONS_FIRST_SNAP_FALLBACK = 140;
 
 const hyphenateLongWord = (word: string): string => {
   if (word.length <= MAX_WORD_SEGMENT_LENGTH) {
@@ -122,6 +124,10 @@ export const LeagueDetailScreen = () => {
     useState(true);
   const [leagueActionsSheetStage, setLeagueActionsSheetStage] = useState(0);
   const { height: windowHeight } = useWindowDimensions();
+  const [isSheetHandleShown] = useState(false);
+  const [leagueActionsContentHeight, setLeagueActionsContentHeight] = useState<
+    number | null
+  >(null);
 
   useEffect(() => {
     fetchLeague(leagueId);
@@ -294,11 +300,28 @@ export const LeagueDetailScreen = () => {
       return 0;
     }
 
-    return getSnapPointHeight(LEAGUE_ACTIONS_SNAP_POINTS[0]);
+    return firstLeagueActionsSnapPointHeight;
   };
 
+  const secondLeagueActionsSnapPointHeight = getSnapPointHeight(
+    LEAGUE_ACTIONS_SNAP_POINTS[1]
+  );
+  const measuredLeagueActionsContentHeight =
+    leagueActionsContentHeight ?? LEAGUE_ACTIONS_FIRST_SNAP_FALLBACK;
+  const firstLeagueActionsSnapPointHeight = Math.max(
+    1,
+    Math.min(
+      measuredLeagueActionsContentHeight,
+      secondLeagueActionsSnapPointHeight - 1
+    )
+  );
+  const leagueActionsSnapPoints: Array<string | number> = [
+    firstLeagueActionsSnapPointHeight,
+    LEAGUE_ACTIONS_SNAP_POINTS[1],
+  ];
+
   return (
-    <ScreenContainer>
+    <ScreenContainer safeAreaColour={theme.backgroundGradient[0]}>
       <TobBar showBackButton={true} showSettingsButton={false} />
       <ScrollArea
         innerPadding={0}
@@ -364,16 +387,31 @@ export const LeagueDetailScreen = () => {
               zIndex: 1,
             }}
           >
-            <ThemedText textStyle={TextStyle.BodyMedium}>
+            {/* <ThemedText textStyle={TextStyle.BodyMedium}>
               Tag will go here
-            </ThemedText>
+            </ThemedText> */}
+            <Container
+              row
+              centerVertical
+              paddingVertical={paddingSmall}
+              paddingHorizontal={padding}
+              rounding={rounding}
+              style={{
+                backgroundColor: theme.colors.accent,
+              }}
+            >
+              <Icon name="moon" size={16} color={"white"} />
+              <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
+                Active now
+              </ThemedText>
+            </Container>
           </Container>
         </Container>
 
         {/* League Info */}
         <Container column w100 gap={gap.sm} paddingHorizontal={padding}>
           <Container column w100>
-            {!isUserMember && (
+            {isUserMember && (
               <Container row centerVertical gap={2}>
                 <Icon
                   name="check-circle"
@@ -485,12 +523,13 @@ export const LeagueDetailScreen = () => {
 
       <AppBottomSheet
         isOpen={isLeagueActionsSheetOpen}
+        showHandle={isSheetHandleShown}
         onClose={() => setIsLeagueActionsSheetOpen(false)}
         enableDynamicSizing={false}
         enableDragging={true}
         allowSwipeToClose={false}
         actionOnBackdropPress={ActionOnBackdropPress.COLLAPSE}
-        snapPoints={LEAGUE_ACTIONS_SNAP_POINTS}
+        snapPoints={leagueActionsSnapPoints}
         initialSnapIndex={0}
         backdropAppearsOnIndex={1}
         backdropDisappearsOnIndex={0}
@@ -499,88 +538,44 @@ export const LeagueDetailScreen = () => {
             setLeagueActionsSheetStage(stageIndex);
           }
         }}
-        sheetBackgroundStyle={{
-          borderTopLeftRadius: rounding,
-          borderTopRightRadius: rounding,
+        sheetBackgroundStyle={
+          {
+            backgroundColor: "#33236A",
+          }
+        }
+        onContentLayout={(height) => {
+          if (height > 0) {
+            setLeagueActionsContentHeight(height);
+          }
         }}
       >
-        <Container column gap={gap.md}>
-          <ThemedText textStyle={TextStyle.Body}>League Actions</ThemedText>
-          <ThemedText textStyle={TextStyle.BodySmall} muted>
-            Drag up for full details. Drag down to collapse back to preview.
-          </ThemedText>
-          <Container
-            column
-            gap={gap.xs}
-            paddingVertical={paddingSmall}
-            paddingHorizontal={paddingSmall}
-            rounding={rounding}
-            style={{ backgroundColor: theme.colors.text + "08" }}
-          >
-            <ThemedText textStyle={TextStyle.BodySmall} muted>
-              League
-            </ThemedText>
-            <ThemedText textStyle={TextStyle.BodyMedium}>
-              {currentLeague.name}
-            </ThemedText>
-            <ThemedText textStyle={TextStyle.BodySmall} muted>
-              {currentLeague.location}
+        <Container row spaceBetween centerVertical w100 gap={gap.sm}>
+          <Container column gap={0}>
+            <Container row centerVertical gap={gap.sm}>
+              <Icon name="moon" size={16} color={"#ffffff"} />
+              <ThemedText textStyle={TextStyle.Body}>Live Now</ThemedText>
+            </Container>
+            <ThemedText textStyle={TextStyle.BodySmall} color="#cbcbcb">
+              League Night started at 13:00
             </ThemedText>
           </Container>
-
-          {leagueActionsSheetStage === 1 && (
-            <Container column gap={gap.sm}>
-              <Container column gap={gap.sm}>
-                <Container
-                  column
-                  gap={gap.xs}
-                  paddingVertical={paddingSmall}
-                  paddingHorizontal={paddingSmall}
-                  rounding={rounding}
-                  style={{ backgroundColor: theme.colors.text + "08" }}
-                >
-                  <ThemedText textStyle={TextStyle.BodySmall} muted>
-                    League Schedule
-                  </ThemedText>
-                  <ThemedText textStyle={TextStyle.BodyMedium}>
-                    {getLeagueDays()}
-                  </ThemedText>
-                  <ThemedText textStyle={TextStyle.BodySmall} muted>
-                    Upcoming nights: {leagueNights.length}
-                  </ThemedText>
-                </Container>
-              </Container>
-              <Container
-                column
-                gap={gap.xs}
-                paddingVertical={paddingSmall}
-                paddingHorizontal={paddingSmall}
-                rounding={rounding}
-                style={{ backgroundColor: theme.colors.text + "08" }}
-              >
-                <ThemedText textStyle={TextStyle.BodySmall} muted>
-                  Quick Context
-                </ThemedText>
-                <ThemedText textStyle={TextStyle.BodySmall}>
-                  This full stage is intended for richer content, like roster
-                  controls, league actions, and schedule deep-links.
-                </ThemedText>
-              </Container>
-            </Container>
-          )}
-          <TouchableOpacity onPress={() => setIsLeagueActionsSheetOpen(false)}>
-            <Container
-              row
-              centerHorizontal
-              centerVertical
-              paddingVertical={paddingSmall}
-              rounding={rounding}
-              style={{ backgroundColor: theme.colors.primary }}
+          <TouchableOpacity
+            style={{
+              backgroundColor: theme.colors.accent,
+              paddingVertical: paddingSmall,
+              paddingHorizontal: padding,
+              borderRadius: rounding,
+            }}
+            onPress={() => {}}
+          >
+            <ThemedText
+              textStyle={TextStyle.BodySmall}
+              color={"white"}
+              growHorizontal
+              center
             >
-              <ThemedText textStyle={TextStyle.BodyMedium} color={"white"}>
-                Close
-              </ThemedText>
-            </Container>
+              Check in
+            </ThemedText>
           </TouchableOpacity>
         </Container>
       </AppBottomSheet>

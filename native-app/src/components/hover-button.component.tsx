@@ -14,13 +14,13 @@ import { IconName } from "../icons";
 
 export const HoverButton = ({
   children,
-  leftIcon,
+  leftIcon = undefined,
   onPress,
   backgroundColor,
   showRightChevron = false,
 }: {
   children: React.ReactNode;
-  leftIcon: IconName;
+  leftIcon?: IconName;
   backgroundColor: string;
   onPress: () => void;
   showRightChevron?: boolean;

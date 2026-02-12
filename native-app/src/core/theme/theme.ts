@@ -99,7 +99,9 @@ export const DarkTheme: AppThemeCoreColours = {
     border: "#29364d",
     card: "#27272a", // secondary-800
     cardGradient: ["rgba(39, 42, 58, 0.8)", "rgba(30, 41, 59, 0.8)"], // secondary-800
-    sheetBackground: "#0f172a", // secondary-800
+    // sheetBackground: "#13263A",
+    // sheetBackground: "#162B42",
+    sheetBackground: "#1b314B",
     text: "#F0F0F0", // Light gray
     notification: "#F0F0F0",
     primary: SharedTheme.primary,
