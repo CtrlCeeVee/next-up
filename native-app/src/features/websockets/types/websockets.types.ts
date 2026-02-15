@@ -26,8 +26,20 @@ type NativeRealtimeEventPayloadMap = {
 export type NativeRealtimeEventPayload<T extends NativeRealtimeEventName> =
   NativeRealtimeEventPayloadMap[T];
 
+export enum NativeRealtimeMessageType {
+  INSERT = "insert",
+  UPDATE = "update",
+  DELETE = "delete",
+}
+
 export interface NativeRealtimeMessage<T extends NativeRealtimeEventName> {
   event: T;
+  type: NativeRealtimeMessageType;
+  payload: NativeRealtimeEventPayload<T>;
+}
+
+export interface NativeMessage<T extends NativeRealtimeEventName> {
+  type: NativeRealtimeMessageType;
   payload: NativeRealtimeEventPayload<T>;
 }
 
@@ -36,11 +48,11 @@ export interface RealtimeSubscriptionConfig<T extends NativeRealtimeEventName> {
    * Event type to listen for. Use "*" to receive all events.
    */
   event: T | "*";
-  callback: (payload: NativeRealtimeEventPayload<T>) => void;
+   callback: (message: NativeMessage<T>) => void;
 }
 
 export type InternalSubscription<T extends NativeRealtimeEventName> = {
   id: number;
   event: RealtimeSubscriptionConfig<T>["event"];
-  callback: (payload: NativeRealtimeEventPayload<T>) => void;
+  callback: (message: NativeMessage<T>) => void;
 };

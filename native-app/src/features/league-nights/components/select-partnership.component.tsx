@@ -25,8 +25,13 @@ import {
 } from "./player-list-item.component";
 import { LeagueMemberIconComponent } from "../../leagues/components/league-member-icon.component";
 import { BasePlayerDetails, Player } from "../../player/types";
-import { leagueNightsService } from "../../../di";
+import { getService, InjectableType, leagueNightsService } from "../../../di";
 import { GetCheckedInPlayerResponse } from "../services/responses";
+import { WebsocketsService } from "../../websockets/services/websockets.service";
+import {
+  NativeRealtimeEventName,
+  NativeRealtimeMessageType,
+} from "../../websockets/types/websockets.types";
 
 export interface SelectPartnershipEffects {
   onSelectPartner: (playerId: string) => Promise<void>;
@@ -73,6 +78,58 @@ export const SelectPartnershipComponent = ({
   const [checkedInPlayersResponse, setCheckedInPlayersResponse] = useState<
     GetCheckedInPlayerResponse[]
   >([]);
+  const websocketsService = getService<WebsocketsService>(
+    InjectableType.WEBSOCKETS
+  );
+
+  useEffect(() => {
+    const upsertPartnershipRequest = (
+      partnershipRequest: PartnershipRequest,
+      deleted: boolean
+    ) => {
+      if (!user) return;
+
+      if (deleted) {
+        setSentRequests(
+          sentRequests.filter((request) => request.id !== partnershipRequest.id)
+        );
+        setReceivedRequests(
+          receivedRequests.filter(
+            (request) => request.id !== partnershipRequest.id
+          )
+        );
+        return;
+      }
+
+      if (partnershipRequest.requester.id === user.id) {
+        const newSentRequests = sentRequests.filter(
+          (request) => request.id !== partnershipRequest.id
+        );
+        if (partnershipRequest.status === "pending" && !deleted) {
+          newSentRequests.push(partnershipRequest);
+        }
+        setSentRequests(newSentRequests);
+      } else if (partnershipRequest.requested.id === user.id) {
+        const newReceivedRequests = receivedRequests.filter(
+          (request) => request.id !== partnershipRequest.id
+        );
+        if (partnershipRequest.status === "pending" && !deleted) {
+          newReceivedRequests.push(partnershipRequest);
+        }
+        setReceivedRequests(newReceivedRequests);
+      }
+    };
+
+    websocketsService.subscribe(
+      NativeRealtimeEventName.PARTNERSHIP_REQUEST,
+      (message) => {
+        upsertPartnershipRequest(
+          message.payload,
+          message.type === NativeRealtimeMessageType.DELETE
+        );
+      }
+    );
+  }, []);
 
   const fetchPartnershipRequests = async () => {
     if (!user) return;
@@ -92,7 +149,7 @@ export const SelectPartnershipComponent = ({
       league.id,
       night.id
     );
-    setCheckedInPlayersResponse(response.checkedInPlayers);
+    setCheckedInPlayersResponse(response.checkins);
   };
 
   const availablePartners = useMemo(() => {
@@ -112,7 +169,86 @@ export const SelectPartnershipComponent = ({
             request.requester.id === checkedInPlayerResponse.checkin.id
         )
     );
-  }, [checkedInPlayersResponse, user, sentRequests, receivedRequests]);
+  }, [
+    checkedInPlayersResponse,
+    user,
+    sentRequests,
+    receivedRequests,
+    partnerSearch,
+  ]);
+
+  const combinedPartners = useMemo(() => {
+    const partners: PartnerListItem[] = [];
+
+    for (const request of receivedRequests) {
+      partners.push({
+        id: request.requester.id,
+        player: {
+          id: request.requester.id,
+          firstName: request.requester.firstName,
+          lastName: request.requester.lastName,
+          skillLevel: request.requester.skillLevel,
+        },
+        variant: PartnershipItemVariant.RECEIVED_REQUEST,
+        onAction: () => acceptRequest(request.id),
+        actionBusy: acceptingRequest === request.id,
+      });
+    }
+
+    for (const player of availablePartners || []) {
+      partners.push({
+        id: player.profile.id,
+        player: {
+          id: player.profile.id,
+          firstName: player.profile.firstName,
+          lastName: player.profile.lastName,
+          skillLevel: player.profile.skillLevel,
+        },
+        variant: PartnershipItemVariant.AVAILABLE_PARTNER,
+        onAction: (playerId) => selectPartner(playerId),
+        actionBusy: sendingRequest === player.profile.id,
+      });
+    }
+
+    for (const request of sentRequests) {
+      partners.push({
+        id: request.requested.id,
+        player: {
+          id: request.requested.id,
+          firstName: request.requested.firstName,
+          lastName: request.requested.lastName,
+          skillLevel: request.requested.skillLevel,
+        },
+        variant: PartnershipItemVariant.SENT_REQUEST,
+        onAction: (playerId) => cancelRequest(request.id),
+        actionBusy: rejectingRequest === request.id,
+      });
+    }
+
+    return partners;
+  }, [
+    checkedInPlayersResponse,
+    user,
+    sentRequests,
+    receivedRequests,
+    partnerSearch,
+  ]);
+
+  const filteredPartners = useMemo(() => {
+    return combinedPartners.filter((partner) => {
+      return (
+        partner.player.firstName
+          .toLowerCase()
+          .includes(partnerSearch.toLowerCase()) ||
+        partner.player.lastName
+          .toLowerCase()
+          .includes(partnerSearch.toLowerCase()) ||
+        partner.player.skillLevel
+          .toLowerCase()
+          .includes(partnerSearch.toLowerCase())
+      );
+    });
+  }, [combinedPartners, partnerSearch]);
 
   useEffect(() => {
     fetchPartnershipRequests();
@@ -122,6 +258,7 @@ export const SelectPartnershipComponent = ({
   const selectPartner = async (playerId: string) => {
     if (!user) return;
     try {
+      console.log('selectPartner', playerId);
       setSendingRequest(playerId);
       await leagueNightsService.sendPartnershipRequest(
         league.id,
@@ -200,18 +337,6 @@ export const SelectPartnershipComponent = ({
     );
   };
 
-  const renderReceivedRequests = () => {
-    if (receivedRequests.length === 0) return null;
-
-    return renderRequestsSection(receivedRequests, acceptRequest);
-  };
-
-  const renderSentRequests = () => {
-    if (sentRequests.length === 0) return null;
-
-    return renderRequestsSection(sentRequests, cancelRequest);
-  };
-
   const renderConfirmedPartnershipSection = () => {
     if (!confirmedPartnership || !user) return null;
 
@@ -270,57 +395,6 @@ export const SelectPartnershipComponent = ({
     );
   };
 
-  const combinePartners = (): PartnerListItem[] => {
-    const partners: PartnerListItem[] = [];
-
-    for (const request of receivedRequests) {
-      partners.push({
-        id: request.requester.id,
-        player: {
-          id: request.requester.id,
-          firstName: request.requester.firstName,
-          lastName: request.requester.lastName,
-          skillLevel: request.requester.skillLevel,
-        },
-        variant: PartnershipItemVariant.RECEIVED_REQUEST,
-        onAction: () => acceptRequest(request.id),
-        actionBusy: acceptingRequest === request.id,
-      });
-    }
-
-    for (const player of availablePartners || []) {
-      partners.push({
-        id: player.profile.id,
-        player: {
-          id: player.profile.id,
-          firstName: player.profile.firstName,
-          lastName: player.profile.lastName,
-          skillLevel: player.profile.skillLevel,
-        },
-        variant: PartnershipItemVariant.AVAILABLE_PARTNER,
-        onAction: (playerId) => selectPartner(playerId),
-        actionBusy: sendingRequest === player.profile.id,
-      });
-    }
-
-    for (const request of sentRequests) {
-      partners.push({
-        id: request.requested.id,
-        player: {
-          id: request.requested.id,
-          firstName: request.requested.firstName,
-          lastName: request.requested.lastName,
-          skillLevel: request.requested.skillLevel,
-        },
-        variant: PartnershipItemVariant.SENT_REQUEST,
-        onAction: (playerId) => cancelRequest(request.id),
-        actionBusy: rejectingRequest === request.id,
-      });
-    }
-
-    return partners;
-  };
-
   const renderPartnershipSection = () => {
     if (confirmedPartnership) {
       return renderConfirmedPartnershipSection();
@@ -333,20 +407,35 @@ export const SelectPartnershipComponent = ({
           onChangeText={(text) => setPartnerSearch(text)}
           placeholder="Search..."
         />
-        <Refresh
-          data={combinePartners()}
-          renderItem={({ item }) => (
-            <PlayerListItem
-              variant={item.variant}
-              player={item.player}
-              onAction={() => item.onAction(item.player.id)}
-              actionBusy={item.actionBusy}
-            />
-          )}
-          keyExtractor={(item) => item.player.id}
-          refreshing={refreshing}
-          onRefresh={fetchPartnershipRequests}
-        />
+        <Container column grow w100 padding={padding}>
+          <Refresh
+            data={filteredPartners}
+            renderItem={({ item }) => (
+              <PlayerListItem
+                variant={item.variant}
+                player={item.player}
+                onAction={() => item.onAction(item.player.id)}
+                actionBusy={item.actionBusy}
+              />
+            )}
+            keyExtractor={(item) => item.player.id}
+            refreshing={refreshing}
+            onRefresh={fetchPartnershipRequests}
+            ListEmptyComponent={
+              <Container
+                column
+                grow
+                w100
+                centerHorizontal
+                style={{ marginTop: spacing.lg }}
+              >
+                <ThemedText textStyle={TextStyle.Body} muted>
+                  No partners found
+                </ThemedText>
+              </Container>
+            }
+          />
+        </Container>
       </Container>
     );
   };

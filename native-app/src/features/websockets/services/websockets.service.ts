@@ -2,6 +2,7 @@ import { config } from "../../../config";
 import {
   ConnectionStatus,
   InternalSubscription,
+  NativeMessage,
   NativeRealtimeEventName,
   NativeRealtimeEventPayload,
   NativeRealtimeMessage,
@@ -75,7 +76,7 @@ export class WebsocketsService {
     this.subscriptions.forEach((sub) => {
       console.log("sub", sub.event, message.event);
       if (sub.event === "*" || sub.event === message.event) {
-        sub.callback(message.payload);
+        sub.callback(message);
       }
     });
   }
@@ -89,7 +90,7 @@ export class WebsocketsService {
 
   public subscribe<T extends NativeRealtimeEventName>(
     event: T | "*",
-    callback: (payload: NativeRealtimeEventPayload<T>) => void
+    callback: (message: NativeMessage<T>) => void
   ) {
     const subscription = {
       id: this.nextSubscriptionId++,
