@@ -20,9 +20,15 @@ import { Icon } from "../../../icons";
 export const LeagueMembersComponent = ({
   members,
   isMember,
+  backgroundColour = "white",
+  showCount = true,
+  countColour = "black",
 }: {
   members: LeagueMember[];
   isMember: boolean;
+  backgroundColour?: string;
+  showCount?: boolean;
+  countColour?: string;
 }) => {
   const { theme } = useTheme();
 
@@ -92,7 +98,9 @@ export const LeagueMembersComponent = ({
 
   return (
     <Container
-      style={{ backgroundColor: "white" }}
+      style={{
+        backgroundColor: backgroundColour,
+      }}
       column
       centerHorizontal
       centerVertical
@@ -104,9 +112,15 @@ export const LeagueMembersComponent = ({
         <Container row gap={gap.md} centerHorizontal>
           {renderMemberIcons()}
         </Container>
-        <ThemedText textStyle={TextStyle.BodyMedium} center color={"black"}>
-          {members.length} members
-        </ThemedText>
+        {showCount && (
+          <ThemedText
+            textStyle={TextStyle.BodyMedium}
+            center
+            color={countColour}
+          >
+            {members.length} members
+          </ThemedText>
+        )}
       </Container>
     </Container>
   );

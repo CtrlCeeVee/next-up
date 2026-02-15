@@ -5,3 +5,5 @@ export * from "./league-days-summary.component";
 export * from "./league-info.component";
 export * from "./league-nights.component";
 export * from "./league-settings.component";
+export * from "./league-logo.component";
+export * from "./my-leagues.component";

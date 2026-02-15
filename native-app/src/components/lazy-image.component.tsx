@@ -6,6 +6,7 @@ import {
   ImageResizeMode,
   ImageSourcePropType,
   ImageStyle,
+  LayoutChangeEvent,
   StyleProp,
   View,
   ViewStyle,
@@ -20,6 +21,7 @@ interface LazyImageProps {
   containerStyle?: StyleProp<ViewStyle>;
   resizeMode?: ImageResizeMode;
   fallbackBackgroundColor?: string;
+  onLayout?: (event: LayoutChangeEvent) => void;
 }
 
 const DEFAULT_FALLBACK_BACKGROUND_COLOR = "#e5e7eb";
@@ -33,16 +35,13 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   containerStyle,
   resizeMode = "cover",
   fallbackBackgroundColor = DEFAULT_FALLBACK_BACKGROUND_COLOR,
+  onLayout,
 }) => {
   const [isImageLoading, setIsImageLoading] = React.useState<boolean>(false);
 
-  const updateLoadingState = (loading: boolean) => {
-    console.log("updateLoadingState", loading);
-    setIsImageLoading(loading);
-  };
-
   return (
     <View
+      onLayout={onLayout}
       style={[
         {
           width,
@@ -59,8 +58,8 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       <Image
         source={source}
         resizeMode={resizeMode}
-        onLoadStart={() => updateLoadingState(true)}
-        onLoadEnd={() => updateLoadingState(false)}
+        onLoadStart={() => setIsImageLoading(true)}
+        onLoadEnd={() => setIsImageLoading(false)}
         style={[
           {
             width: "100%",

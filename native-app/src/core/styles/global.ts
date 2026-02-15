@@ -27,6 +27,7 @@ export const gap = {
   md: spacing.md, // 12
   lg: spacing.lg, // 16
   xl: spacing.xl, // 24
+  xxl: spacing.xxl, // 32
 };
 
 // Border radius constants

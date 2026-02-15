@@ -142,7 +142,15 @@ export const LeagueNightsComponent = ({
         </Container>
       )}
       {leagueNights.length === 0 && (
-        <Container column w100 centerHorizontal>
+        <Container
+          column
+          w100
+          centerHorizontal
+          paddingHorizontal={padding}
+          paddingVertical={paddingLarge}
+          rounding={rounding}
+          style={{ backgroundColor: theme.colors.muted + "10" }}
+        >
           <Icon
             name="tennis-ball"
             size={defaultIconSize}

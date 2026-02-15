@@ -1,6 +1,6 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
-import { ThemedText, Card } from "../../../components";
+import { ThemedText, Card, Container, LazyImage } from "../../../components";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
 import {
@@ -11,10 +11,16 @@ import {
   roundingSmall,
   paddingSmall,
   paddingXSmall,
+  rounding,
+  padding,
+  roundingMedium,
 } from "../../../core/styles";
 import { BadgeComponent } from "../../../components/badge.component";
 import { League } from "../types";
 import { LeagueDaysSummary } from "./league-days-summary.component";
+import { FavouriteButtonComponent } from "../../../components/favourite-button.component";
+import { LinearGradient } from "expo-linear-gradient";
+import { LeagueMembersComponent } from "./league-members.component";
 
 interface LeagueCardProps {
   league: League;
@@ -44,95 +50,176 @@ export const LeagueCard: React.FC<LeagueCardProps> = ({
     );
   };
 
+  const renderBadges = () => {
+    return (
+      <Container row centerVertical startHorizontal>
+        {isMember && (
+          <BadgeComponent
+            icon="check-circle"
+            text="Member"
+            color={theme.colors.success}
+          />
+        )}
+        {isTonight && (
+          <BadgeComponent
+            icon="moon"
+            text="Tonight"
+            color={theme.colors.accent}
+          />
+        )}
+        {!isTonight && (
+          <BadgeComponent
+            icon="moon"
+            text="Not tonight"
+            color={theme.colors.muted}
+          />
+        )}
+      </Container>
+    );
+  };
+
   return (
-    <TouchableOpacity onPress={onPress}>
-      <Card style={styles.leagueCard} variant="elevated">
-        {/* Top Section: Member Badge & Chevron */}
-        {
-          <View style={styles.topSection}>
-            <View style={styles.badgeContainer}>
-              {isMember && (
-                <BadgeComponent
-                  icon="check-circle"
-                  text="Member"
-                  color={theme.colors.success}
+    <TouchableOpacity onPress={onPress} style={{ width: "100%" }}>
+      <Card
+        linearGradientColors={[
+          theme.colors.cardColour,
+          theme.colors.cardColour,
+        ]}
+        style={styles.leagueCard}
+        variant="elevated"
+      >
+        {/* <Container
+          style={{
+            position: "absolute",
+            top: 0,
+            right: 0,
+            zIndex: 0,
+            width: "30%",
+            height: "50%",
+          }}
+        >
+          <LinearGradient
+            colors={[theme.colors.cardColour, "transparent"]}
+            start={{ x: 0, y: 1 }}
+            end={{ x: 1, y: 0 }}
+            style={{
+              position: "absolute",
+              width: "100%",
+              height: "100%",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 2,
+            }}
+          />
+          <LazyImage
+            source={{
+              uri:
+                league.image ||
+                "https://a57.foxnews.com/static.foxnews.com/foxnews.com/content/uploads/2024/07/1200/675/pickleball-paddle-court.jpg?ve=1&tl=1",
+            }}
+            style={{
+              zIndex: 1,
+            }}
+            width="100%"
+            height="100%"
+          />
+        </Container> */}
+
+        <Container
+          column
+          spaceBetween
+          paddingHorizontal={padding}
+          paddingVertical={padding}
+          gap={gap.md}
+        >
+          <Container row spaceBetween startVertical gap={gap.xs}>
+            <Container column grow gap={gap.sm}>
+              <Container row centerVertical startHorizontal>
+                {renderBadges()}
+              </Container>
+              <Container row w100 gap={gap.sm}>
+                <LazyImage
+                  source={{
+                    uri:
+                      league.logo ||
+                      "https://static.vecteezy.com/ti/vetor-gratis/p1/36489045-aguia-cabeca-logotipo-modelo-icone-ilustracao-projeto-para-o-negocio-e-corporativo-vetor.jpg",
+                  }}
+                  style={{
+                    borderWidth: 2,
+                    borderColor: theme.colors.border,
+                  }}
+                  rounding={roundingFull}
+                  width={40}
+                  height={40}
                 />
-              )}
-              {!isMember && (
-                <BadgeComponent
-                  icon="plus-circle"
-                  text="Can Join"
-                  color={theme.colors.info}
-                />
-              )}
-              {isTonight && (
-                <BadgeComponent
-                  icon="calendar"
-                  text="Tonight"
-                  // purple colour
-                  color={theme.colors.accent}
-                />
-              )}
-            </View>
-            {renderChevron()}
-          </View>
-        }
+                <Container column style={{ flexGrow: 1 }}>
+                  <ThemedText textStyle={TextStyle.BodyMedium}>
+                    {league.name}
+                  </ThemedText>
+                  {league.location && (
+                    <Container row startVertical gap={gap.xs} w100>
+                      <ThemedText
+                        textStyle={TextStyle.BodySmall}
+                        startVertical
+                        muted
+                        grow
+                        wrap
+                      >
+                        {league.location}
+                      </ThemedText>
+                    </Container>
+                  )}
+                </Container>
+              </Container>
+            </Container>
 
-        {/* Middle Section: League Name & Location */}
-        <View style={styles.middleSection}>
-          <View style={styles.leagueNameContainer}>
-            <ThemedText textStyle={TextStyle.Body} style={styles.leagueName}>
-              {league.name}
-            </ThemedText>
-          </View>
-          {league.location && (
-            <View style={styles.locationRow}>
-              <ThemedText
-                textStyle={TextStyle.BodySmall}
-                style={styles.locationText}
-              >
-                {league.location}
+            <FavouriteButtonComponent
+              onPress={() => {}}
+              style={{
+                alignItems: "flex-end",
+                justifyContent: "flex-start",
+              }}
+            />
+            {/* {renderChevron()} */}
+          </Container>
+
+          <Container row endVertical w100 spaceBetween>
+            <Container column startHorizontal>
+              <Container row centerVertical endHorizontal gap={gap.xs}>
+                <ThemedText textStyle={TextStyle.BodySmall}>
+                  12 Jun 19:00
+                </ThemedText>
+              </Container>
+              <ThemedText textStyle={TextStyle.BodySmall} muted>
+                Next Up
               </ThemedText>
-            </View>
-          )}
-        </View>
-
-        {/* Bottom Section: Time, Days, Members */}
-        <View style={styles.bottomSection}>
-          <View style={[styles.bottomItem, styles.alignLeft]}>
-            <View style={styles.bottomItemText}>
-              <ThemedText
-                textStyle={TextStyle.BodySmall}
-                style={styles.bottomText}
-              >
-                {league.startTime.split(":").slice(0, 2).join(":")}
+            </Container>
+            <Container
+              column
+              startHorizontal
+              style={{
+                position: "absolute",
+                left: "50%",
+                transform: [{ translateX: "-50%" }],
+              }}
+            >
+              <LeagueDaysSummary leagueDays={league.leagueDays} />
+            </Container>
+            <Container column endHorizontal>
+              <Container row centerVertical endHorizontal gap={gap.xs}>
+                <Icon name="users" size={12} color={theme.colors.text + "60"} />
+                <ThemedText textStyle={TextStyle.BodySmall}>
+                  {league.totalPlayers}
+                </ThemedText>
+              </Container>
+              <ThemedText textStyle={TextStyle.BodySmall} muted>
+                Members
               </ThemedText>
-            </View>
-            <ThemedText textStyle={TextStyle.BodySmall} muted>
-              Start Time
-            </ThemedText>
-          </View>
-
-          {league.leagueDays && league.leagueDays.length > 0 && (
-            <LeagueDaysSummary leagueDays={league.leagueDays} />
-          )}
-
-          <View style={[styles.bottomItem, styles.alignRight]}>
-            <View style={styles.bottomItemText}>
-              <Icon name="users" size={12} color={theme.colors.text + "60"} />
-              <ThemedText
-                textStyle={TextStyle.BodySmall}
-                style={styles.bottomText}
-              >
-                {league.totalPlayers}
-              </ThemedText>
-            </View>
-
-            <ThemedText textStyle={TextStyle.BodySmall} muted>
-              Members
-            </ThemedText>
-          </View>
-        </View>
+            </Container>
+          </Container>
+        </Container>
       </Card>
     </TouchableOpacity>
   );
@@ -142,16 +229,9 @@ const styles = StyleSheet.create({
   leagueCard: {
     marginBottom: spacing.lg,
     gap: gap.xs,
-  },
-  topSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  badgeContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: gap.xs,
+    width: "100%",
+    padding: 0,
+    borderRadius: rounding,
   },
   chevronCircle: {
     width: 26,
@@ -159,56 +239,5 @@ const styles = StyleSheet.create({
     borderRadius: roundingFull,
     justifyContent: "center",
     alignItems: "center",
-  },
-  middleSection: {
-    marginBottom: spacing.lg,
-    gap: gap.xs,
-  },
-  leagueNameContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    minHeight: 26,
-  },
-  leagueName: {
-    fontWeight: "700",
-    fontSize: 18,
-  },
-  locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: gap.xs,
-  },
-  locationText: {
-    opacity: 0.6,
-    fontSize: 13,
-  },
-  bottomSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-  },
-  bottomItem: {
-    flexDirection: "column",
-    alignItems: "center",
-    gap: gap.xs,
-  },
-  bottomItemText: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: gap.xs,
-  },
-  alignRight: {
-    alignItems: "flex-end",
-  },
-  alignLeft: {
-    alignItems: "flex-start",
-  },
-  alignCenter: {
-    alignItems: "center",
-  },
-  bottomText: {
-    opacity: 0.8,
-    fontWeight: "600",
   },
 });

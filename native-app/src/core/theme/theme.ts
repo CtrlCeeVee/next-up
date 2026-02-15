@@ -69,6 +69,7 @@ export interface AppThemeCoreColours extends ThemeCoreColours {
     inputBackground: string;
     cardGradient: [string, string];
     refreshControlBackground: string;
+    cardColour: string;
   } & ThemeCoreColours["colors"];
 }
 
@@ -102,6 +103,7 @@ export const DarkTheme: AppThemeCoreColours = {
     border: "#29364d",
     card: "#27272a", // secondary-800
     cardGradient: ["rgba(39, 42, 58, 0.8)", "rgba(30, 41, 59, 0.8)"], // secondary-800
+    cardColour: "rgb(39, 42, 58, 1)",
     // sheetBackground: "#13263A",
     // sheetBackground: "#162B42",
     sheetBackground: "#1b314B",
@@ -135,6 +137,7 @@ export const LightTheme: AppThemeCoreColours = {
     border: "#f0f0f0",
     card: "#FFFFFF", //slightly-darker white
     cardGradient: ["rgba(255, 255, 255, 0.9)", "rgba(248, 250, 252, 0.85)"], // slightly-darker white
+    cardColour: "rgb(255, 255, 255, 1)",
     text: "#18181b", // secondary-900
     notification: "#18181b",
     primary: SharedTheme.primary,

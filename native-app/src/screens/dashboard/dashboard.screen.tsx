@@ -28,6 +28,7 @@ import type { League } from "../../features/leagues/types";
 import { BadgeComponent } from "../../components/badge.component";
 import { useLeagueNightState } from "../../features/league-nights/state";
 import { LeagueNightInstance } from "../../features/league-nights/types";
+import { MyLeagues } from "../../features/leagues/components";
 
 type NavigationProp = NativeStackNavigationProp<AppTabParamList>;
 
@@ -352,130 +353,7 @@ export const DashboardScreen = () => {
               )}
             </View>
 
-            {loading ? (
-              <View style={styles.loadingList}>
-                {[1, 2].map((i) => (
-                  <Card key={i} style={styles.loadingCard}>
-                    <ActivityIndicator color={theme.colors.primary} />
-                  </Card>
-                ))}
-              </View>
-            ) : myLeagues.length > 0 ? (
-              <View style={styles.leaguesList}>
-                {myLeagues.map((league) => (
-                  <TouchableOpacity
-                    key={league.id}
-                    style={styles.leagueCard}
-                    onPress={() => {
-                      navigation.navigate(Routes.Leagues, {
-                        screen: Routes.LeagueDetail,
-                        params: {
-                          leagueId: league.id,
-                        },
-                      });
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Card style={styles.leagueCardInner}>
-                      <View style={styles.leagueCardContent}>
-                        <View style={styles.leagueCardLeft}>
-                          <ThemedText
-                            textStyle={TextStyle.Body}
-                            style={styles.leagueCardTitle}
-                          >
-                            {league.name}
-                          </ThemedText>
-                          <View style={styles.leagueCardLocation}>
-                            <Icon
-                              name="map-pin"
-                              size={14}
-                              color={theme.colors.text + "60"}
-                            />
-                            <ThemedText
-                              textStyle={TextStyle.BodySmall}
-                              style={styles.leagueCardLocationText}
-                            >
-                              {league.location}
-                            </ThemedText>
-                          </View>
-                          <View style={styles.leagueCardDays}>
-                            {league.leagueDays?.map((day) => (
-                              <BadgeComponent
-                                key={day}
-                                icon="calendar"
-                                text={day + "s " + league.startTime}
-                                color={theme.colors.text}
-                              />
-                            ))}
-                          </View>
-                        </View>
-                        <Icon
-                          name="trophy"
-                          size={28}
-                          color={theme.colors.primary}
-                        />
-                      </View>
-                    </Card>
-                  </TouchableOpacity>
-                ))}
-
-                {/* Join More Leagues Card */}
-                <TouchableOpacity
-                  style={styles.joinMoreCard}
-                  onPress={() =>
-                    navigation.navigate(Routes.Leagues, {
-                      screen: Routes.BrowseLeagues,
-                    })
-                  }
-                  activeOpacity={0.7}
-                >
-                  <Card style={styles.joinMoreCardInner}>
-                    <View style={styles.joinMoreCardContent}>
-                      <Icon
-                        name="plus"
-                        size={32}
-                        color={theme.colors.text + "40"}
-                      />
-                      <ThemedText
-                        textStyle={TextStyle.Body}
-                        style={styles.joinMoreText}
-                      >
-                        Browse More Leagues
-                      </ThemedText>
-                    </View>
-                  </Card>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <Card style={styles.emptyLeaguesCard}>
-                <Icon name="zap" size={28} color={theme.colors.text + "40"} />
-                <ThemedText
-                  textStyle={TextStyle.BodyMedium}
-                  style={styles.emptyLeaguesText}
-                >
-                  You haven't joined any leagues yet
-                </ThemedText>
-                <TouchableOpacity
-                  style={[
-                    styles.browseButton,
-                    { backgroundColor: theme.colors.primary },
-                  ]}
-                  onPress={() =>
-                    navigation.navigate(Routes.Leagues, {
-                      screen: Routes.BrowseLeagues,
-                    })
-                  }
-                  activeOpacity={0.8}
-                >
-                  <ThemedText
-                    textStyle={TextStyle.Button}
-                    style={styles.browseButtonText}
-                  >
-                    Browse Leagues
-                  </ThemedText>
-                </TouchableOpacity>
-              </Card>
-            )}
+            <MyLeagues leagues={myLeagues} />
           </View>
         </View>
       </ScrollView>

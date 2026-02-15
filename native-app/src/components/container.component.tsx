@@ -3,7 +3,8 @@ import { gap, TextStyle } from "../core";
 import { ThemedText } from "./themed-text.component";
 
 interface ContainerProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  margin?: number;
   style?: ViewStyle;
   row?: boolean;
   column?: boolean;
@@ -21,6 +22,7 @@ interface ContainerProps {
   paddingVertical?: number;
   grow?: boolean;
   w100?: boolean;
+  h100?: boolean;
   wrap?: boolean;
   rounding?: number;
   debugColor?: boolean;
@@ -32,6 +34,7 @@ const DEFAULT_GAP = gap.xs;
 
 export const Container = ({
   children,
+  margin = 0,
   style = {},
   row = false,
   column = false,
@@ -49,6 +52,7 @@ export const Container = ({
   paddingVertical = 0,
   grow = false,
   w100 = false,
+  h100 = false,
   wrap = false,
   rounding = 0,
   debugColor = false,
@@ -93,11 +97,13 @@ export const Container = ({
       flexWrap: wrap ? "wrap" : "nowrap",
       gap: gap,
       ...style,
+      ...(margin && { margin: margin }),
       ...(grow && { flex: 1 }),
       ...(padding && { padding: padding }),
       ...(paddingHorizontal && { paddingHorizontal: paddingHorizontal }),
       ...(paddingVertical && { paddingVertical: paddingVertical }),
       ...(w100 && { width: "100%" }),
+      ...(h100 && { height: "100%" }),
       ...(rounding && { borderRadius: rounding }),
       ...(debugColor && { backgroundColor: "red" }),
     },

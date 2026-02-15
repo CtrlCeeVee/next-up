@@ -98,7 +98,8 @@ export type IconName =
   | "checkmark"
   // inbox
   | "inbox"
-  | "outbox";
+  | "outbox"
+  | "fire";
 
 /**
  * Icon component props
