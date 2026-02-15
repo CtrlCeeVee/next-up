@@ -11,6 +11,5 @@ export * from "./features/auth/state";
 export * from "./features/leagues/state";
 export * from "./features/membership/state";
 export * from "./features/profiles/state";
-export * from "./features/push-notifications/state";
 export * from "./features/toast/state";
 export * from "./features/toast/types";

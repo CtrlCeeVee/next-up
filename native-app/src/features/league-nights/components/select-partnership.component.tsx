@@ -9,20 +9,35 @@ import {
 } from "../../../core/styles";
 import { ThemedText } from "../../../components";
 import { Button } from "../../../components";
-import { useLeagueNightState } from "../state";
 import { useAuthState } from "../../auth/state";
 import { useEffect, useMemo, useState } from "react";
 import { League } from "../../leagues/types";
-import { LeagueNightInstance, PartnershipRequest } from "../types";
+import {
+  CheckedInPlayer,
+  ConfirmedPartnership,
+  LeagueNightInstance,
+  PartnershipRequest,
+} from "../types";
 import { PlayerList } from "./player-list.component";
 import {
   PartnershipItemVariant,
   PlayerListItem,
 } from "./player-list-item.component";
 import { LeagueMemberIconComponent } from "../../leagues/components/league-member-icon.component";
-import { BasePlayerDetails } from "../../player/types";
+import { BasePlayerDetails, Player } from "../../player/types";
+import { leagueNightsService } from "../../../di";
+import { GetCheckedInPlayerResponse } from "../services/responses";
 
-interface SelectPartnershipComponentProps {
+export interface SelectPartnershipEffects {
+  onSelectPartner: (playerId: string) => Promise<void>;
+  onCancelRequest: (requestId: string) => Promise<void>;
+  onAcceptRequest: (requestId: string) => Promise<void>;
+  onRejectRequest: (requestId: string) => Promise<void>;
+  onRemovePartnership: (playerId: string) => Promise<void>;
+  onRefreshPartnershipData: () => Promise<void>;
+}
+
+export interface SelectPartnershipComponentProps {
   league: League;
   night: LeagueNightInstance;
 }
@@ -42,95 +57,129 @@ export const SelectPartnershipComponent = ({
   const { theme } = useTheme();
   const [partnerSearch, setPartnerSearch] = useState("");
   const user = useAuthState((state) => state.user);
-  const checkInPlayer = useLeagueNightState((state) => state.checkInPlayer);
-  const refreshCheckedInPlayers = useLeagueNightState(
-    (state) => state.refreshCheckedInPlayers
+  const [acceptingRequest, setAcceptingRequest] = useState<string | null>(null);
+  const [sendingRequest, setSendingRequest] = useState<string | null>(null);
+  const [rejectingRequest, setRejectingRequest] = useState<string | null>(null);
+  const [removingPartnership, setRemovingPartnership] = useState<string | null>(
+    null
   );
-  const refreshPartnershipRequests = useLeagueNightState(
-    (state) => state.refreshPartnershipRequests
-  );
-  const loadingPartnershipData = useLeagueNightState(
-    (state) => state.loadingPartnershipData
-  );
-  const sendingRequest = useLeagueNightState((state) => state.sendingRequest);
-  const sendPartnershipRequest = useLeagueNightState(
-    (state) => state.sendPartnershipRequest
-  );
-  const rejectingRequest = useLeagueNightState(
-    (state) => state.rejectingRequest
-  );
-  const rejectPartnershipRequest = useLeagueNightState(
-    (state) => state.rejectPartnershipRequest
-  );
-  const acceptingRequest = useLeagueNightState(
-    (state) => state.acceptingRequest
-  );
-  const acceptPartnershipRequest = useLeagueNightState(
-    (state) => state.acceptPartnershipRequest
-  );
-  const sentRequests = useLeagueNightState((state) => state.sentRequests);
-  const receivedRequests = useLeagueNightState(
-    (state) => state.receivedRequests
-  );
-  const confirmedPartnership = useLeagueNightState(
-    (state) => state.confirmedPartnership
-  );
-  const removePartnership = useLeagueNightState(
-    (state) => state.removePartnership
-  );
-
   const [refreshing, setRefreshing] = useState(false);
+  const [sentRequests, setSentRequests] = useState<PartnershipRequest[]>([]);
+  const [receivedRequests, setReceivedRequests] = useState<
+    PartnershipRequest[]
+  >([]);
+  const [confirmedPartnership, setConfirmedPartnership] =
+    useState<ConfirmedPartnership | null>(null);
+  const [checkedInPlayersResponse, setCheckedInPlayersResponse] = useState<
+    GetCheckedInPlayerResponse[]
+  >([]);
 
-  useEffect(() => {
-    refreshPartnershipData();
-  }, [user, league, night]);
-
-  const refreshPartnershipData = async () => {
-    if (user?.id) {
-      setRefreshing(true);
-      await Promise.all([
-        refreshPartnershipRequests(league.id, night.id, user.id),
-        refreshCheckedInPlayers(league.id, night.id),
-      ]);
-      setRefreshing(false);
-    }
+  const fetchPartnershipRequests = async () => {
+    if (!user) return;
+    const response = await leagueNightsService.getPartnershipRequests(
+      league.id,
+      night.id,
+      user.id
+    );
+    setSentRequests(response.sentRequests);
+    setReceivedRequests(response.receivedRequests);
+    setConfirmedPartnership(response.confirmedPartnership);
   };
 
-  const checkedInPlayers = useLeagueNightState(
-    (state) => state.checkedInPlayers
-  );
+  const fetchCheckedInPlayers = async () => {
+    if (!user) return;
+    const response = await leagueNightsService.getCheckedInPlayers(
+      league.id,
+      night.id
+    );
+    setCheckedInPlayersResponse(response.checkedInPlayers);
+  };
 
   const availablePartners = useMemo(() => {
     if (!user || !sentRequests || !receivedRequests) {
       return undefined;
     }
-    return checkedInPlayers.filter(
-      (player) =>
-        player.id !== user.id &&
-        !player.hasPartner &&
-        !sentRequests.some((request) => request.requested.id === player.id) &&
-        !receivedRequests.some((request) => request.requester.id === player.id)
+    return checkedInPlayersResponse.filter(
+      (checkedInPlayerResponse) =>
+        checkedInPlayerResponse.checkin.id !== user.id &&
+        !checkedInPlayerResponse.hasPartner &&
+        !sentRequests.some(
+          (request) =>
+            request.requested.id === checkedInPlayerResponse.checkin.id
+        ) &&
+        !receivedRequests.some(
+          (request) =>
+            request.requester.id === checkedInPlayerResponse.checkin.id
+        )
     );
-  }, [checkedInPlayers, user, sentRequests, receivedRequests]);
+  }, [checkedInPlayersResponse, user, sentRequests, receivedRequests]);
 
-  const checkIn = () => {
+  useEffect(() => {
+    fetchPartnershipRequests();
+    fetchCheckedInPlayers();
+  }, [user]);
+
+  const selectPartner = async (playerId: string) => {
     if (!user) return;
-    checkInPlayer(league.id, night.id, user.id);
+    try {
+      setSendingRequest(playerId);
+      await leagueNightsService.sendPartnershipRequest(
+        league.id,
+        night.id,
+        user.id,
+        playerId
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSendingRequest(null);
+    }
   };
 
-  const selectPartner = (playerId: string) => {
+  const cancelRequest = async (requestId: string) => {
     if (!user) return;
-    sendPartnershipRequest(league.id, night.id, user.id, playerId);
+    try {
+      setRejectingRequest(requestId);
+      await leagueNightsService.rejectPartnershipRequest(
+        league.id,
+        night.id,
+        requestId,
+        user.id
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setRejectingRequest(null);
+    }
   };
 
-  const cancelRequest = (requestId: string) => {
+  const acceptRequest = async (requestId: string) => {
     if (!user) return;
-    rejectPartnershipRequest(league.id, night.id, requestId, user.id);
+    try {
+      setAcceptingRequest(requestId);
+      await leagueNightsService.acceptPartnershipRequest(
+        league.id,
+        night.id,
+        requestId,
+        user.id
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setAcceptingRequest(null);
+    }
   };
 
-  const acceptRequest = (requestId: string) => {
+  const removePartnership = async () => {
     if (!user) return;
-    acceptPartnershipRequest(league.id, night.id, requestId, user.id);
+    try {
+      setRemovingPartnership(user.id);
+      await leagueNightsService.removePartnership(league.id, night.id, user.id);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setRemovingPartnership(null);
+    }
   };
 
   const renderRequestsSection = (
@@ -213,8 +262,7 @@ export const SelectPartnershipComponent = ({
             text="Change partner"
             style={{ width: "100%", marginTop: spacing.lg }}
             onPress={() => {
-              if (!user) return;
-              removePartnership(league.id, night.id, user.id);
+              removePartnership();
             }}
           />
         </Container>
@@ -242,16 +290,16 @@ export const SelectPartnershipComponent = ({
 
     for (const player of availablePartners || []) {
       partners.push({
-        id: player.id,
+        id: player.profile.id,
         player: {
-          id: player.id,
-          firstName: player.firstName,
-          lastName: player.lastName,
-          skillLevel: player.skillLevel,
+          id: player.profile.id,
+          firstName: player.profile.firstName,
+          lastName: player.profile.lastName,
+          skillLevel: player.profile.skillLevel,
         },
         variant: PartnershipItemVariant.AVAILABLE_PARTNER,
         onAction: (playerId) => selectPartner(playerId),
-        actionBusy: sendingRequest === player.id,
+        actionBusy: sendingRequest === player.profile.id,
       });
     }
 
@@ -297,7 +345,7 @@ export const SelectPartnershipComponent = ({
           )}
           keyExtractor={(item) => item.player.id}
           refreshing={refreshing}
-          onRefresh={refreshPartnershipData}
+          onRefresh={fetchPartnershipRequests}
         />
       </Container>
     );

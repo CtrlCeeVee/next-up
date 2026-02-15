@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   ScrollView,
@@ -9,9 +9,18 @@ import {
 import { ThemedText, Card, ScreenContainer } from "../../components";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
-import { GlobalStyles, padding, TextStyle, spacing, gap, roundingLarge } from "../../core/styles";
+import {
+  GlobalStyles,
+  padding,
+  TextStyle,
+  spacing,
+  gap,
+  roundingLarge,
+} from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
 import { useProfilesState } from "../../features/profiles/state";
+import { PlayerStats, PlayerStreaks } from "../../features/profiles/types";
+import { profilesService } from "../../di";
 
 interface StatCardProps {
   icon: any;
@@ -90,13 +99,27 @@ const StatCard: React.FC<StatCardProps> = ({
 export const StatsScreen = () => {
   const { theme } = useTheme();
   const { user } = useAuthState();
-  const { stats, streaks, fetchStats, fetchStreaks, loading } =
-    useProfilesState();
+
+  const [stats, setStats] = useState<PlayerStats | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [streaks, setStreaks] = useState<PlayerStreaks | null>(null);
+
+  const fetchStats = useCallback(async () => {
+    if (!user) return;
+    const response = await profilesService.getPlayerStats(user.id);
+    setStats(response);
+  }, [user]);
+
+  const fetchStreaks = useCallback(async () => {
+    if (!user) return;
+    const response = await profilesService.getPlayerStreaks(user.id);
+    setStreaks(response);
+  }, [user]);
 
   useEffect(() => {
     if (user) {
-      fetchStats(user.id);
-      fetchStreaks(user.id);
+      fetchStats();
+      fetchStreaks();
     }
   }, [user]);
 

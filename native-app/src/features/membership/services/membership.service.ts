@@ -1,5 +1,6 @@
 import { BaseService } from "../../../core/services";
 import type { Membership, LeagueMember } from "../types";
+import { GetMembershipsResponse } from "./responses";
 
 export class MembershipService extends BaseService {
   constructor() {
@@ -18,24 +19,22 @@ export class MembershipService extends BaseService {
   }
 
   // Leave a league
-  async leaveLeague(
-    leagueId: string,
-    userId: string
-  ): Promise<void> {
+  async leaveLeague(leagueId: string, userId: string): Promise<void> {
     await this.request(`/api/leagues/${leagueId}/leave`, {
       method: "DELETE",
       body: JSON.stringify({ user_id: userId }),
     });
   }
 
-  async getAll(userId: string): Promise<Membership[]> {
-    const response = await this.get<any>(`/api/leagues/memberships?user_id=${userId}`);
+  async getAll(userId: string): Promise<GetMembershipsResponse> {
+    const response = await this.get<any>(
+      `/api/leagues/memberships?user_id=${userId}`
+    );
     return response.data;
   }
 
-  // Get league members
-  async getLeagueMembers(leagueId: string): Promise<LeagueMember[]> {
-    const response = await this.get<any>(`/api/leagues/${leagueId}/members`);
+  async getLeagueMemberships(leagueId: string): Promise<GetMembershipsResponse> {
+    const response = await this.get<any>(`/api/leagues/${leagueId}/memberships`);
     return response.data;
   }
 }

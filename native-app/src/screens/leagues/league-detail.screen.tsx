@@ -34,19 +34,28 @@ import {
   MIN_TEXTLESS_BUTTON_SIZE,
 } from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
-import { useLeaguesState } from "../../features/leagues/state";
-import { useMembershipState } from "../../features/membership/state";
 import { LeaguesStackParamList } from "../../navigation/types";
 import { Routes } from "../../navigation/routes";
-import { useLeagueNightState } from "../../features/league-nights/state";
-import { leagueNightsService } from "../../di/services.registry";
-import { LeagueNightInstance, Match } from "../../features/league-nights/types";
+import { getService, InjectableType, leagueNightsService } from "../../di";
+import {
+  CheckedInPlayer,
+  LeagueNightInstance,
+} from "../../features/league-nights/types";
 import { LeagueNightsComponent } from "../../features/leagues/components";
-import { TabConfig, TabScreen } from "../../components/tab-screen.component";
 import { LeagueMembersComponent } from "../../features/leagues/components/league-members.component";
 import { TobBar } from "../../components/top-bar.component";
 import { DateUtility } from "../../core/utilities";
 import { ActiveLeagueNightComponent } from "../../features/league-nights/components";
+import { League } from "../../features/leagues/types";
+import { LeaguesService } from "../../features/leagues/services";
+import { MembershipService } from "../../features/membership/services";
+import { Player } from "../../features/player/types";
+import { SelectPartnershipEffects } from "../../features/league-nights/components/select-partnership.component";
+import { GetCheckedInPlayerResponse } from "../../features/league-nights/services/responses";
+
+interface LeagueDetailScreenParams {
+  leagueId: string;
+}
 
 type LeagueDetailRouteProp = RouteProp<
   LeaguesStackParamList,
@@ -90,23 +99,12 @@ export const LeagueDetailScreen = () => {
   const navigation = useNavigation<LeagueDetailNavigationProp>();
   const { theme, isDark } = useTheme();
   const { user } = useAuthState();
-  const fetchLeague = useLeaguesState((state) => state.fetchLeague);
-  const currentLeague = useLeaguesState((state) => state.currentLeague);
-  const leagueLoading = useLeaguesState((state) => state.loading);
-
-  const isMember = useMembershipState((state) => state.isMember);
-  const joinLeague = useMembershipState((state) => state.joinLeague);
-  const leaveLeague = useMembershipState((state) => state.leaveLeague);
-  const joining = useMembershipState((state) => state.joining);
-  const leaving = useMembershipState((state) => state.leaving);
-  const membersByLeague = useMembershipState((state) => state.membersByLeague);
-
-  const { leagueId } = route.params as { leagueId: string };
-
+  const [league, setLeague] = useState<League | null>(null);
+  const [leagueLoading, setLeagueLoading] = useState(true);
+  const [memberships, setMemberships] = useState<Record<string, boolean>>({});
   const [leagueNights, setLeagueNights] = useState<LeagueNightInstance[]>([]);
   const [activeLeagueNight, setActiveLeagueNight] =
     useState<LeagueNightInstance | null>(null);
-  const [matches, setMatches] = useState<Match[]>([]);
   const [isLeagueActionsSheetOpen, setIsLeagueActionsSheetOpen] =
     useState(true);
   const [leagueActionsSheetStage, setLeagueActionsSheetStage] = useState(0);
@@ -116,20 +114,34 @@ export const LeagueDetailScreen = () => {
   const [leagueActionsContentHeight, setLeagueActionsContentHeight] = useState<
     number | null
   >(null);
-  const checkedInPlayers = useLeagueNightState(
-    (state) => state.checkedInPlayers
+  const [checkedInPlayersResponse, setCheckedInPlayersResponse] = useState<
+    GetCheckedInPlayerResponse[]
+  >([]);
+  const [checkingIn, setCheckingIn] = useState(false);
+  const leaguesService = getService<LeaguesService>(InjectableType.LEAGUES);
+  const membershipService = getService<MembershipService>(
+    InjectableType.MEMBERSHIP
   );
-  const checkInPlayer = useLeagueNightState((state) => state.checkInPlayer);
-  const checkingIn = useLeagueNightState((state) => state.checkingIn);
-  const refreshCheckedInPlayers = useLeagueNightState(
-    (state) => state.refreshCheckedInPlayers
-  );
+
+  const { leagueId } = route.params as LeagueDetailScreenParams;
+
+  const fetchCheckedInPlayers = async () => {
+    if (!activeLeagueNight) return;
+
+    const response = await leagueNightsService.getCheckedInPlayers(
+      leagueId,
+      activeLeagueNight.id
+    );
+    setCheckedInPlayersResponse(response.checkedInPlayers);
+  };
 
   const isLeagueNightToday = () => {
     return leagueNights.some((night) => DateUtility.isToday(night.date));
   };
 
-  const isUserMember = isMember(leagueId);
+  const isUserMember = useMemo(() => {
+    return memberships[leagueId] ?? false;
+  }, [memberships, leagueId]);
 
   const showActiveNight = useMemo(() => {
     return activeLeagueNight && isUserMember;
@@ -140,18 +152,16 @@ export const LeagueDetailScreen = () => {
   }, [isUserMember]);
 
   useEffect(() => {
-    if (activeLeagueNight) {
-      refreshCheckedInPlayers(leagueId, activeLeagueNight.id);
-    }
+    fetchCheckedInPlayers();
   }, [activeLeagueNight, leagueId]);
 
   const isCheckedIn = useMemo(() => {
     if (!user) return false;
-    const isCheckedIn = checkedInPlayers.some(
-      (player) => player.id === user.id
+    const isCheckedIn = checkedInPlayersResponse.some(
+      (playerResponse) => playerResponse.checkin.id === user.id
     );
     return isCheckedIn;
-  }, [checkedInPlayers, user]);
+  }, [checkedInPlayersResponse, user]);
 
   const shouldUseCheckedInVisualState =
     isCheckedIn || hasPendingCheckInVisualState;
@@ -175,14 +185,6 @@ export const LeagueDetailScreen = () => {
     theme.colors.sheetBackground,
   ]);
 
-  // const [isCheckedIn, setIsCheckedIn] = useState(false);
-  // useEffect(() => {
-  //   setInterval(() => {
-  //     setIsCheckedIn(!isCheckedIn);
-  //   }, 4000);
-
-  // }, []);
-
   useEffect(() => {
     if (isCheckedIn) {
       setHasPendingCheckInVisualState(true);
@@ -199,33 +201,39 @@ export const LeagueDetailScreen = () => {
   }, [activeLeagueNight?.id, user?.id]);
 
   useEffect(() => {
-    fetchLeague(leagueId);
+    const fetchLeague = async () => {
+      const response = await leaguesService.getById(leagueId);
+      setLeague(response);
+    };
+
+    const fetchLeagueNights = async () => {
+      const response = await leagueNightsService.getAllLeagueNights(leagueId);
+      setLeagueNights(response.nights);
+      setActiveLeagueNight(
+        response.nights.find((night) => night.status === "active") || null
+      );
+    };
+
+    const fetchMemberships = async () => {
+      const response = await membershipService.getAll(user?.id || "");
+      const membershipsMap = response.memberships.reduce(
+        (acc, membershipResponse) => {
+          acc[membershipResponse.membership.leagueId] = true;
+          return acc;
+        },
+        {} as Record<string, boolean>
+      );
+      setMemberships(membershipsMap);
+    };
+
+    setLeagueLoading(true);
+    fetchLeague();
     fetchLeagueNights();
+    fetchMemberships();
+    setLeagueLoading(false);
   }, [leagueId, user]);
 
-  useEffect(() => {
-    fetchMatches();
-  }, [activeLeagueNight, user]);
-
-  const fetchLeagueNights = async () => {
-    const response = await leagueNightsService.getAllLeagueNights(leagueId);
-    setLeagueNights(response);
-    setActiveLeagueNight(
-      response.find((night) => night.status === "active") || null
-    );
-  };
-
-  const fetchMatches = async () => {
-    if (!activeLeagueNight || !user) return;
-    const response = await leagueNightsService.getMatches(
-      leagueId,
-      activeLeagueNight.id,
-      user.id
-    );
-    setMatches(response);
-  };
-
-  if (leagueLoading || !currentLeague) {
+  if (leagueLoading || !league) {
     return (
       <ScreenContainer>
         <View style={styles.loadingContainer}>
@@ -240,19 +248,24 @@ export const LeagueDetailScreen = () => {
 
   const checkIn = async () => {
     if (!activeLeagueNight || !user || checkingIn) return;
-    setHasPendingCheckInVisualState(true);
+    setCheckingIn(true);
     try {
-      await checkInPlayer(leagueId, activeLeagueNight.id, user.id);
+      await leagueNightsService.checkInPlayer(
+        leagueId,
+        activeLeagueNight.id,
+        user.id
+      );
     } catch (error) {
-      setHasPendingCheckInVisualState(false);
-      throw error;
+      console.error("Error checking in player:", error);
+    } finally {
+      setCheckingIn(false);
     }
     setIsLeagueActionsSheetOpen(true);
     setLeagueActionsSheetStage(1);
   };
 
   const getLeagueDays = () => {
-    const days = currentLeague.leagueDays;
+    const days = league?.leagueDays || [];
     if (!days || days.length === 0) return "No schedule set";
 
     if (days.length === 1) return days[0] + "s";
@@ -374,7 +387,7 @@ export const LeagueDetailScreen = () => {
             if (user) {
               setLeagueActionsSheetStage(0);
               setIsLeagueActionsSheetOpen(true);
-              joinLeague(leagueId, user.id);
+              membershipService.joinLeague(leagueId, user.id);
             }
           }}
           style={{
@@ -415,9 +428,8 @@ export const LeagueDetailScreen = () => {
 
     return (
       <ActiveLeagueNightComponent
-        league={currentLeague}
+        league={league}
         leagueNight={activeLeagueNight ?? null}
-        matches={matches}
       />
     );
   };
@@ -485,8 +497,8 @@ export const LeagueDetailScreen = () => {
             }}
           >
             <LeagueMembersComponent
-              members={currentLeague.members || []}
-              isMember={false}
+              members={league?.members || []}
+              isMember={isUserMember}
             />
           </Container>
 
@@ -559,7 +571,7 @@ export const LeagueDetailScreen = () => {
                   textStyle={TextStyle.Header}
                   style={styles.leagueNameText}
                 >
-                  {hyphenateLeagueName(currentLeague.name)}
+                  {hyphenateLeagueName(league?.name || "")}
                 </ThemedText>
               </Container>
 
@@ -595,7 +607,7 @@ export const LeagueDetailScreen = () => {
           <Container row centerVertical gap={gap.sm}>
             <Icon name="map-pin" size={16} color={theme.colors.text + "60"} />
             <ThemedText textStyle={TextStyle.BodyMedium} muted>
-              {currentLeague.location}
+              {league?.location || ""}
             </ThemedText>
           </Container>
 
@@ -630,8 +642,8 @@ export const LeagueDetailScreen = () => {
           <ThemedText textStyle={TextStyle.Body}>Venue</ThemedText>
           <Container w100>
             <MapSnapshot
-              latitude={currentLeague.latitude || 0}
-              longitude={currentLeague.longitude || 0}
+              latitude={league?.latitude || 0}
+              longitude={league?.longitude || 0}
               width="100%"
               height={200}
               rounding={rounding}

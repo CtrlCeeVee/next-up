@@ -4,7 +4,6 @@ import { ThemedText, Card, Button } from "./";
 import { Icon } from "../icons";
 import { useTheme } from "../core/theme";
 import { GlobalStyles, padding, spacing, gap, roundingLarge } from "../core/styles";
-import { usePushNotificationsState } from "../features/push-notifications/state";
 import { useAuthState } from "../features/auth/state";
 
 /**
@@ -12,18 +11,7 @@ import { useAuthState } from "../features/auth/state";
  * Manages push notification permissions and registration
  */
 export const NotificationPermissionCard: React.FC = () => {
-  const { theme } = useTheme();
-  const { user } = useAuthState();
-  const {
-    token,
-    permissionStatus,
-    loading,
-    error,
-    requestPermission,
-    registerDevice,
-    unregisterDevice,
-    clearError,
-  } = usePushNotificationsState();
+  const { isSupported, isSubscribed, isLoading, error, permission, subscribe, unsubscribe } = usePushNotifications();
 
   const [isRegistered, setIsRegistered] = useState(false);
 
