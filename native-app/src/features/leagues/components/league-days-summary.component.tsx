@@ -80,15 +80,25 @@ const getDayItemGap = (size: LeagueDaysComponentSize) => {
 export const LeagueDaysSummary = ({
   leagueDays,
   size = LeagueDaysComponentSize.Small,
+  todayColour,
+  activeColour,
+  inactiveColour,
 }: {
   leagueDays: string[];
   size?: LeagueDaysComponentSize;
+  todayColour?: string;
+  activeColour?: string;
+  inactiveColour?: string;
 }) => {
   const { theme } = useTheme();
   const activeDays = leagueDays.map((day) => DAY_NAMES.indexOf(day));
   const todayDayOfWeek = new Date().getDay();
 
-  const todayColour = theme.colors.accent;
+  const colours = {
+    today: todayColour || theme.colors.accent,
+    active: activeColour || theme.colors.text,
+    inactive: inactiveColour || theme.colors.muted,
+  };
 
   return (
     <View style={[styles.daysContainer, { gap: getDayItemGap(size) }]}>
@@ -108,13 +118,15 @@ export const LeagueDaysSummary = ({
                   borderWidth: getDayCircleBorderWidth(size),
                   backgroundColor: isActive
                     ? index === todayDayOfWeek
-                      ? todayColour
-                      : theme.colors.text
+                      ? colours.today
+                      : colours.active
                     : "transparent",
                   borderColor:
                     index === todayDayOfWeek
-                      ? todayColour
-                      : theme.colors.text + "30",
+                      ? colours.today
+                      : isActive
+                        ? colours.active
+                        : colours.inactive,
                 },
               ]}
             />
@@ -124,10 +136,10 @@ export const LeagueDaysSummary = ({
                 {
                   color:
                     index === todayDayOfWeek
-                      ? todayColour
+                      ? colours.today
                       : isActive
-                        ? theme.colors.text
-                        : theme.colors.text + "30",
+                        ? colours.active
+                        : colours.inactive,
                 },
               ]}
             >

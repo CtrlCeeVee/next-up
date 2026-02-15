@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { ThemedText, Card, ScreenContainer } from "../../components";
+import { ThemedText, Card, ScreenContainer, Container } from "../../components";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
 import {
@@ -28,7 +28,10 @@ import type { League } from "../../features/leagues/types";
 import { BadgeComponent } from "../../components/badge.component";
 import { useLeagueNightState } from "../../features/league-nights/state";
 import { LeagueNightInstance } from "../../features/league-nights/types";
-import { MyLeagues } from "../../features/leagues/components";
+import {
+  LeagueNightsComponent,
+  MyLeagues,
+} from "../../features/leagues/components";
 
 type NavigationProp = NativeStackNavigationProp<AppTabParamList>;
 
@@ -127,15 +130,15 @@ export const DashboardScreen = () => {
   // Quick action buttons
   const quickActions = [
     {
-      icon: "zap" as const,
+      icon: "moon" as const,
       label: "Tonight",
-      gradient: [theme.colors.primary],
+      gradient: ["#a855f7", "#9333ea"],
       onPress: () => navigation.navigate(Routes.Home),
     },
     {
       icon: "trophy" as const,
       label: "My Leagues",
-      gradient: ["#a855f7", "#9333ea"],
+      gradient: [theme.colors.primary],
       onPress: () =>
         navigation.navigate(Routes.Leagues, { screen: Routes.BrowseLeagues }),
     },
@@ -211,129 +214,21 @@ export const DashboardScreen = () => {
             <Card style={styles.loadingCard}>
               <ActivityIndicator size="large" color={theme.colors.primary} />
             </Card>
-          ) : nextUpLeagueNightInstances.length > 0 ? (
-            <View style={{ gap: gap.md }}>
-              <View style={styles.sectionHeader}>
-                <Icon name="zap" size={20} color={theme.colors.primary} />
-                <ThemedText textStyle={TextStyle.Subheader}>Next Up</ThemedText>
-              </View>
-              {nextUpLeagueNightInstances.map((leagueNightInstance) => {
-                const league =
-                  getLeagueForLeagueNightInstance(leagueNightInstance);
-                if (!league) return null;
-
-                return (
-                  <View style={styles.section} key={leagueNightInstance.id}>
-                    <Card
-                      style={styles.activeCard}
-                      linearGradientColors={
-                        isDark
-                          ? ["rgb(74 222 128 / .05)", "rgb(52 211 153 / .1)"]
-                          : undefined
-                      }
-                    >
-                      <View style={styles.activeCardContent}>
-                        <ThemedText
-                          textStyle={TextStyle.Header}
-                          style={[
-                            styles.activeCardTitle,
-                            { color: theme.colors.primary },
-                          ]}
-                        >
-                          {league.name}
-                        </ThemedText>
-                        <View style={styles.activeCardBadges}>
-                          <BadgeComponent icon="zap" text="Today" />
-                          <BadgeComponent
-                            icon="clock"
-                            text={league.startTime || ""}
-                            color={theme.colors.text}
-                          />
-                          <BadgeComponent
-                            icon="users"
-                            text={league.totalPlayers?.toString() || ""}
-                            color={theme.colors.text}
-                          />
-                        </View>
-                        <View style={styles.locationRow}>
-                          <Icon
-                            name="map-pin"
-                            size={16}
-                            color={theme.colors.text + "80"}
-                          />
-                          <ThemedText
-                            textStyle={TextStyle.Body}
-                            style={styles.locationText}
-                          >
-                            {league.location}
-                          </ThemedText>
-                        </View>
-                        <TouchableOpacity
-                          style={[
-                            styles.viewDetailsButton,
-                            { backgroundColor: theme.colors.primary },
-                          ]}
-                          onPress={() => {
-                            if (leagueNightInstance?.date) {
-                              (navigation as any).navigate(Routes.Leagues, {
-                                screen: Routes.LeagueNight,
-                                params: {
-                                  leagueId: leagueNightInstance.id,
-                                  nightId: leagueNightInstance.date,
-                                },
-                              });
-                            }
-                          }}
-                          activeOpacity={0.8}
-                        >
-                          <ThemedText
-                            textStyle={TextStyle.Button}
-                            style={styles.viewDetailsText}
-                          >
-                            View Details
-                          </ThemedText>
-                        </TouchableOpacity>
-                      </View>
-                    </Card>
-                  </View>
-                );
-              })}
-            </View>
           ) : (
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Icon
-                  name="calendar"
-                  size={20}
-                  color={theme.colors.text + "60"}
-                />
-                <ThemedText textStyle={TextStyle.Body}>Next Up</ThemedText>
-              </View>
-              <Card style={styles.emptyCard}>
-                <ThemedText
-                  textStyle={TextStyle.Body}
-                  style={styles.emptyCardText}
-                >
-                  No games scheduled for today
-                </ThemedText>
-                <ThemedText
-                  textStyle={TextStyle.BodySmall}
-                  style={styles.emptyCardSubtext}
-                >
-                  Check your leagues below for upcoming games
-                </ThemedText>
-              </Card>
-            </View>
+            <Container column w100 gap={gap.md}>
+              <ThemedText textStyle={TextStyle.Body}>Next Up</ThemedText>
+              <LeagueNightsComponent
+                leagueNights={nextUpLeagueNightInstances}
+                isUserMember={false}
+              />
+            </Container>
           )}
 
           {/* Your Leagues Section */}
           <View style={styles.section}>
             <View style={styles.sectionHeaderRow}>
               <View style={styles.sectionHeader}>
-                <Icon name="trophy" size={20} color={theme.colors.primary} />
-                <ThemedText textStyle={TextStyle.Subheader}>
-                  Your Leagues
-                </ThemedText>
+                <ThemedText textStyle={TextStyle.Body}>My Leagues</ThemedText>
               </View>
               {myLeagues.length > 0 && (
                 <TouchableOpacity
