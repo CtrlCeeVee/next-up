@@ -400,7 +400,9 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
           <Container
             w100
             style={{
-              backgroundColor: selectedBackgroundColor,
+              // backgroundColor: selectedBackgroundColor,
+              borderWidth: 1,
+              borderColor: selectedBackgroundColor,
               marginTop: SELECTED_ICON_Y_TRANSFORM,
             }}
             rounding={roundingMedium}
@@ -409,66 +411,69 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
             <TouchableOpacity
               onPress={() => navigateToLeague(selectedLeague)}
               style={{ width: "100%", height: "100%" }}
+              activeOpacity={0.9}
             >
-              <Container
-                row
-                padding={padding}
-                rounding={roundingMedium}
-                style={{
-                  alignItems: "stretch",
-                  backgroundColor: theme.colors.cardColour,
-                }}
-                w100
-              >
-                <Container column style={{ flex: 1, minWidth: 0 }}>
-                  <Container column gap={gap.md} w100>
-                    <Container row spaceBetween w100>
-                      {selectedLeague && renderBadges(selectedLeague)}
-                      <Icon
-                        name="chevron-right"
-                        size={defaultIconSize}
-                        color={theme.colors.text}
-                      />
-                    </Container>
-                    <Container row startVertical w100 gap={gap.sm}>
-                      <LeagueLogoComponent
-                        // logo={league.logo}
-                        logo="https://static.vecteezy.com/ti/vetor-gratis/p1/36489045-aguia-cabeca-logotipo-modelo-icone-ilustracao-projeto-para-o-negocio-e-corporativo-vetor.jpg"
-                        name={selectedLeague?.name || ""}
-                        style={{ marginTop: gap.xs }}
-                      />
-                      <Container column gap={gap.md} style={{ flexGrow: 1 }}>
-                        <Container column gap={gap.xs} w100>
-                          <ThemedText textStyle={TextStyle.Body}>
-                            {selectedLeague?.name}
-                          </ThemedText>
-                          <ThemedText textStyle={TextStyle.BodySmall} muted>
-                            {selectedLeague?.location}
-                          </ThemedText>
-                        </Container>
+              <Card style={{ borderRadius: 0, borderWidth: 0 }}>
+                <Container
+                  row
+                  // padding={padding}
+                  rounding={roundingMedium}
+                  style={{
+                    alignItems: "stretch",
+                    // backgroundColor: theme.colors.cardColour,
+                  }}
+                  w100
+                >
+                  <Container column style={{ flex: 1, minWidth: 0 }}>
+                    <Container column gap={gap.md} w100>
+                      <Container row spaceBetween w100>
+                        {selectedLeague && renderBadges(selectedLeague)}
+                        <Icon
+                          name="chevron-right"
+                          size={defaultIconSize}
+                          color={theme.colors.text}
+                        />
+                      </Container>
+                      <Container row startVertical w100 gap={gap.sm}>
+                        <LeagueLogoComponent
+                          // logo={league.logo}
+                          logo="https://static.vecteezy.com/ti/vetor-gratis/p1/36489045-aguia-cabeca-logotipo-modelo-icone-ilustracao-projeto-para-o-negocio-e-corporativo-vetor.jpg"
+                          name={selectedLeague?.name || ""}
+                          style={{ marginTop: gap.xs }}
+                        />
+                        <Container column gap={gap.md} style={{ flexGrow: 1 }}>
+                          <Container column gap={gap.xs} w100>
+                            <ThemedText textStyle={TextStyle.Body}>
+                              {selectedLeague?.name}
+                            </ThemedText>
+                            <ThemedText textStyle={TextStyle.BodySmall} muted>
+                              {selectedLeague?.location}
+                            </ThemedText>
+                          </Container>
 
-                        {/* <ThemedText textStyle={TextStyle.BodySmall}>
+                          {/* <ThemedText textStyle={TextStyle.BodySmall}>
                     {getLeagueDays(selectedLeague)}
                   </ThemedText> */}
 
-                        <LeagueDaysSummary
-                          leagueDays={selectedLeague?.leagueDays || []}
-                          todayColour={theme.colors.accent}
-                          activeColour={"white"}
-                          inactiveColour={"#ffffff90"}
-                        />
+                          <LeagueDaysSummary
+                            leagueDays={selectedLeague?.leagueDays || []}
+                            todayColour={theme.colors.accent}
+                            activeColour={"white"}
+                            inactiveColour={"#ffffff90"}
+                          />
+                        </Container>
                       </Container>
                     </Container>
                   </Container>
-                </Container>
 
-                <Container
-                  column
-                  spaceBetween
-                  endHorizontal
-                  style={{ alignSelf: "stretch", flexShrink: 0 }}
-                ></Container>
-              </Container>
+                  <Container
+                    column
+                    spaceBetween
+                    endHorizontal
+                    style={{ alignSelf: "stretch", flexShrink: 0 }}
+                  ></Container>
+                </Container>
+              </Card>
             </TouchableOpacity>
           </Container>
         )}

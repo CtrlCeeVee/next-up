@@ -31,6 +31,12 @@ interface DateInfo {
   };
 }
 
+const RandomNoLeagueNightSentence = [
+  "Stay home and watch some pickleball!",
+  "Stay home and enjoy a nice cup of tea!",
+  "Rest up before your next league night!",
+];
+
 export const LeagueNightsComponent = ({
   leagueNights,
   isUserMember,
@@ -62,6 +68,12 @@ export const LeagueNightsComponent = ({
     };
   };
 
+  const getRandomNoLeagueNightSentence = () => {
+    return RandomNoLeagueNightSentence[
+      Math.floor(Math.random() * RandomNoLeagueNightSentence.length)
+    ];
+  };
+
   return (
     <Container column w100 gap={gap.md}>
       {leagueNights.length > 0 && (
@@ -84,14 +96,6 @@ export const LeagueNightsComponent = ({
                     {
                       marginRight:
                         index === leagueNights.length - 1 ? 0 : gap.md,
-                      // backgroundColor:
-                      //   night.status === "active"
-                      //     ? theme.colors.primary + "10"
-                      //     : theme.colors.background,
-                      // borderColor:
-                      //   night.status === "active"
-                      //     ? theme.colors.primary
-                      //     : theme.colors.border,
                     },
                   ]}
                 >
@@ -149,24 +153,29 @@ export const LeagueNightsComponent = ({
         </Container>
       )}
       {leagueNights.length === 0 && (
-        <Container
-          column
-          w100
-          centerHorizontal
-          paddingHorizontal={padding}
-          paddingVertical={paddingLarge}
-          rounding={rounding}
-          style={{ backgroundColor: theme.colors.muted + "10" }}
-        >
-          <Icon
-            name="tennis-ball"
-            size={defaultIconSize}
-            color={theme.colors.text + "60"}
-          />
-          <ThemedText textStyle={TextStyle.BodyMedium} muted>
-            No upcoming league nights
-          </ThemedText>
-        </Container>
+        <Card>
+          <Container
+            column
+            w100
+            centerHorizontal
+            // paddingHorizontal={padding}
+            // paddingVertical={paddingLarge}
+            // rounding={rounding}
+            // style={{ backgroundColor: theme.colors.muted + "10" }}
+          >
+            <Icon
+              name="tennis-ball"
+              size={defaultIconSize}
+              color={theme.colors.text + "60"}
+            />
+            <ThemedText textStyle={TextStyle.BodyMedium} muted>
+              No upcoming league nights
+            </ThemedText>
+            <ThemedText textStyle={TextStyle.BodySmall} muted>
+              {getRandomNoLeagueNightSentence()}
+            </ThemedText>
+          </Container>
+        </Card>
       )}
     </Container>
   );

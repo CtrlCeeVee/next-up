@@ -102,7 +102,7 @@ export const DarkTheme: AppThemeCoreColours = {
     background: "#283142", // secondary-950
     border: "#29364d",
     card: "#27272a", // secondary-800
-    cardGradient: ["rgba(39, 42, 58, 0.8)", "rgba(30, 41, 59, 0.8)"], // secondary-800
+    cardGradient: ["rgba(39, 42, 58, 0.4)", "rgba(30, 41, 59, 0.4)"], // secondary-800
     cardColour: "#272a3a",
     // sheetBackground: "#13263A",
     // sheetBackground: "#162B42",
@@ -136,7 +136,7 @@ export const LightTheme: AppThemeCoreColours = {
     background: "#f0f0f0",
     border: "#f0f0f0",
     card: "#FFFFFF", //slightly-darker white
-    cardGradient: ["rgba(255, 255, 255, 0.9)", "rgba(248, 250, 252, 0.85)"], // slightly-darker white
+    cardGradient: ["rgba(255, 255, 255, 0.4)", "rgba(248, 250, 252, 0.4)"], // slightly-darker white
     cardColour: "#ffffff",
     text: "#18181b", // secondary-900
     notification: "#18181b",

@@ -218,7 +218,7 @@ export const DashboardScreen = () => {
             <Container column w100 gap={gap.md}>
               <ThemedText textStyle={TextStyle.Body}>Next Up</ThemedText>
               <LeagueNightsComponent
-                leagueNights={nextUpLeagueNightInstances}
+                leagueNights={[]}
                 isUserMember={false}
               />
             </Container>
