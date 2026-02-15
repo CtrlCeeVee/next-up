@@ -16,6 +16,9 @@ export * from "./lazy-image.component";
 export * from "./map-snapshot.component";
 export * from "./bottom-sheet.component";
 
+// Shimmer components
+export * from "./shimmer-component";
+
 // Auth components
 export * from "./auth";
 
@@ -24,3 +27,6 @@ export * from "./toast";
 
 // Navigation components
 export * from "./back-chevron.component";
+
+// Modal components
+export * from "./modal";

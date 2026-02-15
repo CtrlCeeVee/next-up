@@ -150,7 +150,7 @@ export const LeagueNightsComponent = ({
       return (
         <TouchableOpacity
           onPress={() => onLeagueNightPress(night)}
-          activeOpacity={0.85}
+          activeOpacity={0.5}
           style={{
             width: fillWidth ? "100%" : 280,
             marginRight: fillWidth
@@ -186,7 +186,9 @@ export const LeagueNightsComponent = ({
       {leagueNights.length > 0 && (
         <Container column w100>
           {leagueNights.length === 1 ? (
-            renderLeagueNightCard(leagueNights[0], true, 0)
+            <Container w100 style={{ paddingRight: padding }}>
+              {renderLeagueNightCard(leagueNights[0], true, 0)}
+            </Container>
           ) : (
             <ScrollView
               style={{ width: "100%" }}

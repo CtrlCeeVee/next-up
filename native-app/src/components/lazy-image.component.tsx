@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   ActivityIndicator,
   DimensionValue,
@@ -11,6 +11,7 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import { ShimmerComponent } from "./shimmer-component";
 
 interface LazyImageProps {
   source: ImageSourcePropType;
@@ -25,6 +26,7 @@ interface LazyImageProps {
 }
 
 const DEFAULT_FALLBACK_BACKGROUND_COLOR = "#e5e7eb";
+const MAX_LOADING_TIME = 1000;
 
 export const LazyImage: React.FC<LazyImageProps> = ({
   source,
@@ -38,6 +40,21 @@ export const LazyImage: React.FC<LazyImageProps> = ({
   onLayout,
 }) => {
   const [isImageLoading, setIsImageLoading] = React.useState<boolean>(false);
+  const [hasBeenLoaded, setHasBeenLoaded] = React.useState<boolean>(false);
+
+  const onLoadStart = useCallback(() => {
+    if (hasBeenLoaded) return;
+    setIsImageLoading(true); // Set loading to true when the image starts loading
+
+    setTimeout(() => {
+      setIsImageLoading(false);
+    }, MAX_LOADING_TIME);
+  }, [setIsImageLoading]);
+
+  const onLoadEnd = useCallback(() => {
+    setIsImageLoading(false); // Set loading to false when the image load ends (success or failure)
+    setHasBeenLoaded(true);
+  }, [setIsImageLoading]);
 
   return (
     <View
@@ -58,8 +75,8 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       <Image
         source={source}
         resizeMode={resizeMode}
-        onLoadStart={() => setIsImageLoading(true)}
-        onLoadEnd={() => setIsImageLoading(false)}
+        onLoadStart={onLoadStart}
+        onLoadEnd={onLoadEnd}
         style={[
           {
             width: "100%",
@@ -70,7 +87,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
         ]}
       />
 
-      {isImageLoading && (
+      {isImageLoading ? (
         <View
           style={{
             position: "absolute",
@@ -82,9 +99,14 @@ export const LazyImage: React.FC<LazyImageProps> = ({
             alignItems: "center",
           }}
         >
-          <ActivityIndicator />
+          <ShimmerComponent
+            width="100%"
+            height="100%"
+            rounding={rounding}
+            baseColor={DEFAULT_FALLBACK_BACKGROUND_COLOR}
+          />
         </View>
-      )}
+      ) : null}
     </View>
   );
 };

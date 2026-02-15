@@ -55,6 +55,7 @@ export const SharedTheme = {
 
 export interface AppThemeCoreColours extends ThemeCoreColours {
   colors: {
+    secondary: string;
     danger: string;
     primaryLight: string;
     primaryDark: string;
@@ -109,6 +110,7 @@ export const DarkTheme: AppThemeCoreColours = {
     sheetBackground: "#1b314B",
     text: "#F0F0F0", // Light gray
     notification: "#F0F0F0",
+    secondary: "#f0f0f0", // slightly-darker white
     primary: SharedTheme.primary,
     primaryLight: SharedTheme.primaryLight,
     primaryDark: SharedTheme.primaryDark,
@@ -140,6 +142,7 @@ export const LightTheme: AppThemeCoreColours = {
     cardColour: "#ffffff",
     text: "#18181b", // secondary-900
     notification: "#18181b",
+    secondary: "#f0f0f0", // slightly-darker white
     primary: SharedTheme.primary,
     primaryLight: SharedTheme.primaryLight,
     sheetBackground: "#ffffff",

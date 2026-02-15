@@ -35,7 +35,7 @@ export const LeagueCard: React.FC<LeagueCardProps> = ({
   isMember,
   onPress,
 }) => {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
 
   const renderChevron = () => {
     return (
@@ -80,14 +80,7 @@ export const LeagueCard: React.FC<LeagueCardProps> = ({
 
   return (
     <TouchableOpacity onPress={onPress} style={{ width: "100%" }}>
-      <Card
-        linearGradientColors={[
-          theme.colors.cardColour,
-          theme.colors.cardColour,
-        ]}
-        style={styles.leagueCard}
-        variant="elevated"
-      >
+      <Card style={styles.leagueCard} variant="elevated">
         {/* <Container
           style={{
             position: "absolute",
@@ -175,14 +168,7 @@ export const LeagueCard: React.FC<LeagueCardProps> = ({
               </Container>
             </Container>
 
-            <FavouriteButtonComponent
-              onPress={() => {}}
-              style={{
-                alignItems: "flex-end",
-                justifyContent: "flex-start",
-              }}
-            />
-            {/* {renderChevron()} */}
+            {renderChevron()}
           </Container>
 
           <Container row endVertical w100 spaceBetween>

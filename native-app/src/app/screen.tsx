@@ -7,6 +7,7 @@ import { useAppFonts } from "../core/font";
 import { NavigationProvider } from "../navigation";
 import { SplashScreen } from "../screens/splash/splash.screen";
 import { ToastContainer } from "../components/toast";
+import { ModalManager } from "../components/modal";
 
 export const Screen = () => {
   const { theme, isDark } = useTheme();
@@ -40,6 +41,7 @@ export const Screen = () => {
       <View style={styles.container}>
         <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
           <ToastContainer />
+          <ModalManager />
           <StatusBar
             barStyle={isDark ? "light-content" : "dark-content"}
             backgroundColor="transparent"
