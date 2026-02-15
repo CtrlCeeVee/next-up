@@ -64,18 +64,6 @@ export interface ConfirmedPartnership {
   player2Id: string;
   isActive: boolean;
   createdAt: string;
-  player1: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    skillLevel: string;
-  };
-  player2: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    skillLevel: string;
-  };
 }
 
 export interface PartnershipRequestsResponse {
