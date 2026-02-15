@@ -20,14 +20,14 @@ import {
   roundingLarge,
 } from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
-import { useLeaguesState } from "../../features/leagues/state";
-import { useMembershipState } from "../../features/membership/state";
 import { AppTabParamList } from "../../navigation/types";
 import { Routes } from "../../navigation/routes";
 import type { League } from "../../features/leagues/types";
 import { BadgeComponent } from "../../components/badge.component";
-import { useLeagueNightState } from "../../features/league-nights/state";
 import { LeagueNightInstance } from "../../features/league-nights/types";
+import { getService, InjectableType } from "../../di";
+import { LeaguesService } from "../../features/leagues/services";
+import { LeagueNightsService } from "../../features/league-nights/services";
 import {
   LeagueNightsComponent,
   MyLeagues,
@@ -43,30 +43,22 @@ interface LeagueWithNight extends Omit<League, "startTime" | "totalPlayers"> {
 }
 
 export const DashboardScreen = () => {
-  // League night state
-  const nextUpLeagueNightInstances = useLeagueNightState(
-    (state) => state.nextUpLeagueNightInstances
-  );
-  const fetchNextUpLeagueNightInstances = useLeagueNightState(
-    (state) => state.fetchNextUpLeagueNightInstances
-  );
-
-  const myLeagues = useLeaguesState((state) => state.myLeagues);
-  const fetchMyLeagues = useLeaguesState((state) => state.fetchMyLeagues);
-
   const navigation = useNavigation<NavigationProp>();
   const { theme, isDark } = useTheme();
   const { user } = useAuthState();
-  const { leagues, fetchLeagues, loading: leaguesLoading } = useLeaguesState();
-
-  // const [myLeagues, setMyLeagues] = useState<LeagueWithNight[]>([]);
-  // const [activeTonight, setActiveTonight] = useState<LeagueWithNight | null>(
-  //   null
-  // );
+  const [leagues, setLeagues] = useState<League[]>([]);
+  const [myLeagues, setMyLeagues] = useState<League[]>([]);
+  const [nextUpLeagueNightInstances, setNextUpLeagueNightInstances] = useState<
+    LeagueNightInstance[]
+  >([]);
   const [loading, setLoading] = useState(true);
 
-  // Extract first name from user metadata
   const firstName = user?.user_metadata?.first_name || "there";
+
+  const leaguesService = getService<LeaguesService>(InjectableType.LEAGUES);
+  const leagueNightsService = getService<LeagueNightsService>(
+    InjectableType.LEAGUE_NIGHTS
+  );
 
   useEffect(() => {
     async function fetchDashboardData() {
@@ -76,9 +68,13 @@ export const DashboardScreen = () => {
         setLoading(true);
 
         // Fetch all leagues
-        await fetchLeagues();
-        await fetchMyLeagues(user.id);
-        await fetchNextUpLeagueNightInstances(3, user.id);
+        const leagues = await leaguesService.getAll();
+        setLeagues(leagues);
+        const myLeagues = await leaguesService.getMyLeagues(user.id);
+        setMyLeagues(myLeagues);
+        const nextUpLeagueNightInstances =
+          await leagueNightsService.getNextUpLeagueNightInstances(3, user.id);
+        setNextUpLeagueNightInstances(nextUpLeagueNightInstances);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -95,39 +91,6 @@ export const DashboardScreen = () => {
     return leagues.find((league) => league.id === leagueNightInstance.leagueId);
   };
 
-  // Filter and process user's leagues
-  // useEffect(() => {
-  //   if (!leagues || !user) return;
-
-  //   // const userLeagues = leagues
-  //   //   .filter((league) => (memberships[league.id] ? true : false))
-  //   //   .map((league) => {
-  //   //     // Check if league has a night happening today
-  //   //     const today = new Date().toLocaleDateString("en-US", {
-  //   //       weekday: "long",
-  //   //     });
-  //   //     const hasNightToday = league.leagueDays?.includes(today) ?? false;
-
-  //   //     // Generate nightId for today (format: YYYY-MM-DD)
-  //   //     const todayDate = new Date().toISOString().split("T")[0];
-
-  //   //     return {
-  //   //       ...league,
-  //   //       hasNightToday,
-  //   //       nightId: todayDate,
-  //   //       startTime: "7:00 PM", // TODO: Get from league night instance
-  //   //       totalPlayers: 0, // TODO: Fetch from API
-  //   //     };
-  //   //   });
-
-  //   // setMyLeagues(userLeagues);
-
-  //   // Find active league night for tonight (if any)
-  //   // const todayLeague = userLeagues.find((league) => league.hasNightToday);
-  //   // setActiveTonight(todayLeague || null);
-  // }, [leagues]);
-
-  // Quick action buttons
   const quickActions = [
     {
       icon: "moon" as const,

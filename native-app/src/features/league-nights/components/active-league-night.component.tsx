@@ -1,20 +1,29 @@
 import { Container, ThemedText } from "../../../components";
 import { gap, padding, TextStyle } from "../../../core/styles";
-import { LeagueNightInstance } from "../types/league-night";
+import {
+  ConfirmedPartnership,
+  LeagueNightInstance,
+  PartnershipRequest,
+  CheckedInPlayer,
+} from "../types/league-night";
 import { League } from "../../leagues/types";
 import { PillTabs } from "../../../components/pill-tabs.component";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Match } from "../types";
 import { MatchesList } from "../../matches/components";
-import { SelectPartnershipComponent } from "./select-partnership.component";
+import {
+  SelectPartnershipComponent,
+  SelectPartnershipEffects,
+} from "./select-partnership.component";
 import { TabScreen } from "../../../components/tab-screen.component";
+import { useAuthState } from "../../auth/state";
+import { leagueNightsService } from "../../../di";
 
 export interface ActiveLeagueNightComponentProps {
   league: League;
   leagueNight?: LeagueNightInstance | null;
-  matches: Match[];
 }
 
 enum ActiveTabs {
@@ -24,14 +33,56 @@ enum ActiveTabs {
 
 export const ActiveLeagueNightComponent: React.FC<
   ActiveLeagueNightComponentProps
-> = ({ league, leagueNight, matches }) => {
+> = ({ league, leagueNight }) => {
   const { theme } = useTheme();
   const [selectedTab, setSelectedTab] = useState<ActiveTabs>(
     ActiveTabs.Partnership
   );
+  const { user } = useAuthState();
 
-  console.log("leagueNight", leagueNight);
-  console.log("matches", matches);
+  const [confirmedPartnership, setConfirmedPartnership] =
+    useState<ConfirmedPartnership | null>(null);
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [checkedInPlayers, setCheckedInPlayers] = useState<CheckedInPlayer[]>(
+    []
+  );
+  const [checkedInPlayer, setCheckedInPlayer] =
+    useState<CheckedInPlayer | null>(null);
+
+  const fetchConfirmedPartnership = async () => {
+    if (!leagueNight || !user) return;
+    const response = await leagueNightsService.getConfirmedPartnership(
+      league.id,
+      leagueNight.id,
+      user.id
+    );
+    setConfirmedPartnership(response);
+  };
+
+  const fetchMatches = async () => {
+    if (!leagueNight || !user) return;
+    const response = await leagueNightsService.getMatches(
+      league.id,
+      leagueNight.id,
+      user.id
+    );
+    setMatches(response);
+  };
+
+  const fetchCheckedInPlayers = async () => {
+    if (!leagueNight || !user) return;
+    const response = await leagueNightsService.getCheckedInPlayers(
+      league.id,
+      leagueNight.id
+    );
+    setCheckedInPlayers(response);
+  };
+
+  useEffect(() => {
+    fetchConfirmedPartnership();
+    fetchMatches();
+    fetchCheckedInPlayers();
+  }, [leagueNight, user]);
 
   const quote = [
     "It's time for rest and relaxation!",
@@ -64,8 +115,18 @@ export const ActiveLeagueNightComponent: React.FC<
   const renderPartnership = () => {
     if (!leagueNight) return null;
     return (
-      <Container column gap={gap.md} paddingHorizontal={padding} style={{ paddingTop: padding }} grow w100>
-        <SelectPartnershipComponent league={league} night={leagueNight} />
+      <Container
+        column
+        gap={gap.md}
+        paddingHorizontal={padding}
+        style={{ paddingTop: padding }}
+        grow
+        w100
+      >
+        <SelectPartnershipComponent
+          league={league}
+          night={leagueNight}
+        />
       </Container>
     );
   };
