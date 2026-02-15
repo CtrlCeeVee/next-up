@@ -10,7 +10,12 @@ interface ThemedTextProps {
   color?: string;
   muted?: boolean;
   center?: boolean;
-  growHorizontal?: boolean;
+  w100?: boolean;
+  grow?: boolean;
+  wrap?: boolean;
+  startVertical?: boolean;
+  centerVertical?: boolean;
+  endVertical?: boolean;
 }
 
 export const ThemedText: React.FC<ThemedTextProps> = ({
@@ -20,7 +25,12 @@ export const ThemedText: React.FC<ThemedTextProps> = ({
   color,
   muted,
   center,
-  growHorizontal,
+  w100,
+  grow = false,
+  wrap,
+  startVertical = false,
+  centerVertical = false,
+  endVertical = false,
 }) => {
   const { theme } = useTheme();
 
@@ -31,7 +41,12 @@ export const ThemedText: React.FC<ThemedTextProps> = ({
         {
           color: color || (muted ? theme.colors.muted : theme.colors.text),
           textAlign: center ? "center" : "left",
-          ...(growHorizontal ? { width: "100%" } : {}),
+          ...(grow ? { flex: 1, flexShrink: 1, minWidth: 0 } : {}),
+          ...(w100 ? { width: "100%" } : {}),
+          ...(wrap ? { flexWrap: "wrap" } : {}),
+          ...(startVertical ? { textAlignVertical: "top" } : {}),
+          ...(centerVertical ? { textAlignVertical: "center" } : {}),
+          ...(endVertical ? { textAlignVertical: "bottom" } : {}),
         },
         style,
       ]}

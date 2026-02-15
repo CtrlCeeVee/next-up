@@ -114,4 +114,5 @@ export const IconMap: Record<IconName, string> = {
   // inbox
   inbox: "mail-unread",
   outbox: "send",
+  fire: "flame",
 };

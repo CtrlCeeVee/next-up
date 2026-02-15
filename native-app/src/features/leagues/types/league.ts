@@ -16,6 +16,7 @@ export interface League extends BaseModel {
   skillLevel?: string; // Deprecated - keeping for backward compatibility
   members?: LeagueMember[];
   image?: string;
+  logo?: string;
 }
 
 export interface TopPlayer {

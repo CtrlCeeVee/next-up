@@ -2,7 +2,7 @@ import { ScrollView, StyleSheet, TouchableOpacity, View } from "react-native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
 
-import { Container, ThemedText } from "../../../components";
+import { Card, Container, ThemedText } from "../../../components";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
 import { TextStyle } from "../../../core/styles/text";
@@ -34,17 +34,22 @@ interface DateInfo {
 export const LeagueNightsComponent = ({
   leagueNights,
   isUserMember,
-  leagueId,
 }: {
   leagueNights: LeagueNightInstance[];
   isUserMember: boolean;
-  leagueId: string;
 }) => {
   const { theme } = useTheme();
   const navigation = useNavigation<LeagueNightNavigationProp>();
 
   const handleNavigateToNight = (nightId: string) => {
-    navigation.navigate(Routes.LeagueNight, { leagueId, nightId });
+    const night = leagueNights.find((n) => n.id === nightId);
+    if (!night) {
+      return;
+    }
+    navigation.navigate(Routes.LeagueNight, {
+      leagueId: night.leagueId,
+      nightId: night.id,
+    });
   };
 
   const getDateInfo = (date: string): DateInfo => {
@@ -79,62 +84,64 @@ export const LeagueNightsComponent = ({
                     {
                       marginRight:
                         index === leagueNights.length - 1 ? 0 : gap.md,
-                      backgroundColor:
-                        night.status === "active"
-                          ? theme.colors.primary + "10"
-                          : theme.colors.background,
-                      borderColor:
-                        night.status === "active"
-                          ? theme.colors.primary
-                          : theme.colors.border,
+                      // backgroundColor:
+                      //   night.status === "active"
+                      //     ? theme.colors.primary + "10"
+                      //     : theme.colors.background,
+                      // borderColor:
+                      //   night.status === "active"
+                      //     ? theme.colors.primary
+                      //     : theme.colors.border,
                     },
                   ]}
                 >
-                  <Container row spaceBetween centerVertical>
-                    <Container row centerVertical gap={gap.md}>
-                      <Container
-                        column
-                        centerHorizontal
-                        paddingVertical={spacing.xs}
-                        paddingHorizontal={spacing.sm}
-                        rounding={rounding}
-                      >
-                        <ThemedText textStyle={TextStyle.BodyMedium}>
-                          {dateInfo.day}
-                        </ThemedText>
-                        <ThemedText textStyle={TextStyle.BodySmall}>
-                          {dateInfo.month.short}
-                        </ThemedText>
-                      </Container>
-                      <Container column gap={gap.xs}>
-                        <ThemedText textStyle={TextStyle.BodyMedium}>
-                          {night.day}
-                        </ThemedText>
-                        <ThemedText textStyle={TextStyle.BodySmall} muted>
-                          At {night.time}
-                        </ThemedText>
-                      </Container>
-                      {DateUtility.isToday(night.date) && (
+                  <Card>
+                    <Container row spaceBetween centerVertical>
+                      <Container row centerVertical gap={gap.md}>
                         <Container
-                          rounding={rounding}
+                          column
+                          centerHorizontal
                           paddingVertical={spacing.xs}
-                          paddingHorizontal={spacing.md}
-                          style={{
-                            backgroundColor: theme.colors.primary,
-                          }}
+                          paddingHorizontal={spacing.sm}
+                          rounding={rounding}
                         >
+                          <ThemedText textStyle={TextStyle.BodyMedium}>
+                            {dateInfo.day}
+                          </ThemedText>
                           <ThemedText textStyle={TextStyle.BodySmall}>
-                            Today
+                            {dateInfo.month.short}
                           </ThemedText>
                         </Container>
-                      )}
+                        <Container column gap={gap.xs}>
+                          <ThemedText textStyle={TextStyle.BodyMedium}>
+                            {night.day}
+                          </ThemedText>
+                          <ThemedText textStyle={TextStyle.BodySmall} muted>
+                            At {night.time}
+                          </ThemedText>
+                        </Container>
+                        {DateUtility.isToday(night.date) && (
+                          <Container
+                            rounding={rounding}
+                            paddingVertical={spacing.xs}
+                            paddingHorizontal={spacing.md}
+                            style={{
+                              backgroundColor: theme.colors.accent,
+                            }}
+                          >
+                            <ThemedText textStyle={TextStyle.BodySmall}>
+                              Tonight
+                            </ThemedText>
+                          </Container>
+                        )}
+                      </Container>
+                      <Icon
+                        name="chevron-right"
+                        size={20}
+                        color={theme.colors.text + "60"}
+                      />
                     </Container>
-                    <Icon
-                      name="chevron-right"
-                      size={20}
-                      color={theme.colors.text + "60"}
-                    />
-                  </Container>
+                  </Card>
                 </TouchableOpacity>
               );
             })}
@@ -142,7 +149,15 @@ export const LeagueNightsComponent = ({
         </Container>
       )}
       {leagueNights.length === 0 && (
-        <Container column w100 centerHorizontal>
+        <Container
+          column
+          w100
+          centerHorizontal
+          paddingHorizontal={padding}
+          paddingVertical={paddingLarge}
+          rounding={rounding}
+          style={{ backgroundColor: theme.colors.muted + "10" }}
+        >
           <Icon
             name="tennis-ball"
             size={defaultIconSize}
@@ -163,9 +178,5 @@ const styles = StyleSheet.create({
   },
   carouselCard: {
     width: 280,
-    borderWidth: 1,
-    borderRadius: rounding,
-    paddingHorizontal: paddingLarge,
-    paddingVertical: padding,
   },
 });

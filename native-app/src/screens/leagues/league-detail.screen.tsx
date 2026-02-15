@@ -56,6 +56,7 @@ import { GetCheckedInPlayerResponse } from "../../features/league-nights/service
 interface LeagueDetailScreenParams {
   leagueId: string;
 }
+import { FavouriteButtonComponent } from "../../components/favourite-button.component";
 
 type LeagueDetailRouteProp = RouteProp<
   LeaguesStackParamList,
@@ -201,6 +202,15 @@ export const LeagueDetailScreen = () => {
   }, [activeLeagueNight?.id, user?.id]);
 
   useEffect(() => {
+    if ((isCheckedIn && activeLeagueNight) || !isUserMember) {
+      setLeagueActionsSheetStage(0);
+      setIsLeagueActionsSheetOpen(true);
+    } else {
+      setIsLeagueActionsSheetOpen(false);
+    }
+  }, [isCheckedIn, activeLeagueNight]);
+
+  useEffect(() => {
     const fetchLeague = async () => {
       const response = await leaguesService.getById(leagueId);
       setLeague(response);
@@ -300,11 +310,6 @@ export const LeagueDetailScreen = () => {
       return 0;
     }
 
-    console.log(
-      "firstLeagueActionsSnapPointHeight",
-      firstLeagueActionsSnapPointHeight
-    );
-
     return firstLeagueActionsSnapPointHeight;
   };
 
@@ -350,7 +355,7 @@ export const LeagueDetailScreen = () => {
             <ThemedText
               textStyle={TextStyle.BodySmall}
               color={"white"}
-              growHorizontal
+              w100
               center
             >
               Check in
@@ -575,32 +580,11 @@ export const LeagueDetailScreen = () => {
                 </ThemedText>
               </Container>
 
-              <TouchableOpacity
+              <FavouriteButtonComponent
                 onPress={() => {
-                  setLeagueActionsSheetStage(0);
-                  setIsLeagueActionsSheetOpen(true);
+                  // toggleFavouriteLeague(leagueId);
                 }}
-                style={styles.heartButtonContainer}
-                accessibilityRole="button"
-                accessibilityLabel="Toggle favorite league"
-              >
-                <Container
-                  column
-                  centerHorizontal
-                  centerVertical
-                  rounding={roundingFull}
-                  padding={paddingSmall}
-                  style={{
-                    backgroundColor: theme.colors.text + "10",
-                  }}
-                >
-                  <Icon
-                    name="heart"
-                    size={16}
-                    color={theme.colors.text + "60"}
-                  />
-                </Container>
-              </TouchableOpacity>
+              />
             </Container>
           </Container>
 
@@ -633,7 +617,6 @@ export const LeagueDetailScreen = () => {
           <LeagueNightsComponent
             leagueNights={leagueNights}
             isUserMember={isUserMember}
-            leagueId={leagueId}
           />
         </Container>
 
@@ -750,12 +733,5 @@ const styles = StyleSheet.create({
   },
   leagueNameText: {
     flexShrink: 1,
-  },
-  heartButtonContainer: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: MIN_TEXTLESS_BUTTON_SIZE,
-    height: MIN_TEXTLESS_BUTTON_SIZE,
   },
 });

@@ -2,7 +2,15 @@ import React, { useState, useEffect } from "react";
 import { View, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Refresh, ScreenContainer, SearchBar } from "../../components";
+import {
+  Container,
+  Refresh,
+  ScreenContainer,
+  SearchBar,
+} from "../../components";
+import { useTheme } from "../../core/theme";
+import { useLeaguesState } from "../../features/leagues/state";
+import { useMembershipState } from "../../features/membership/state";
 import { useAuthState } from "../../features/auth/state";
 import { League } from "../../features/leagues/types";
 import { LeaguesStackParamList } from "../../navigation/types";
@@ -112,7 +120,7 @@ export const BrowseLeaguesScreen = () => {
 
   return (
     <ScreenContainer style={{ padding: padding }}>
-      <View>
+      <Container column>
         <SearchBar
           containerStyle={styles.searchInput}
           placeholder="Search leagues, locations..."
@@ -120,8 +128,9 @@ export const BrowseLeaguesScreen = () => {
           onChangeText={setSearchQuery}
         />
         <LeagueFilters selectedFilter={filter} onFilterChange={setFilter} />
-      </View>
+      </Container>
       <Refresh
+        style={{ width: "100%" }}
         data={filteredLeagues}
         renderItem={renderLeagueCard}
         keyExtractor={(item: League) => item.id.toString()}
