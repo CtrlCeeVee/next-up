@@ -133,7 +133,7 @@ export const LeagueDetailScreen = () => {
       leagueId,
       activeLeagueNight.id
     );
-    setCheckedInPlayersResponse(response.checkedInPlayers);
+    setCheckedInPlayersResponse(response.checkins);
   };
 
   const isLeagueNightToday = () => {
@@ -225,7 +225,7 @@ export const LeagueDetailScreen = () => {
     };
 
     const fetchMemberships = async () => {
-      const response = await membershipService.getAll(user?.id || "");
+      const response = await membershipService.getLeagueMemberships(leagueId);
       const membershipsMap = response.memberships.reduce(
         (acc, membershipResponse) => {
           acc[membershipResponse.membership.leagueId] = true;

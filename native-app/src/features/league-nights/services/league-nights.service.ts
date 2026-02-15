@@ -145,7 +145,6 @@ export class LeagueNightsService extends BaseService {
     const response = await this.get<any>(
       `/api/leagues/${leagueId}/nights/${nightId}/partnership-requests?user_id=${userId}`
     );
-    console.log("partnership requests response", response.data);
     return response.data;
   }
 

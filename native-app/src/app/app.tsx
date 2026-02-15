@@ -71,8 +71,8 @@ export const App = () => {
 
   useEffect(() => {
     websocketsService.connect();
-    websocketsService.subscribe(NativeRealtimeEventName.MATCH, (payload) => {
-      console.log("match update", payload);
+    websocketsService.subscribe(NativeRealtimeEventName.MATCH, (message) => {
+      console.log("match update", message);
     });
     return () => {
       websocketsService.disconnect();

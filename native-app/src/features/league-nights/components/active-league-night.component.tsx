@@ -1,25 +1,17 @@
 import { Container, ThemedText } from "../../../components";
 import { gap, padding, TextStyle } from "../../../core/styles";
-import {
-  ConfirmedPartnership,
-  LeagueNightInstance,
-  PartnershipRequest,
-  CheckedInPlayer,
-} from "../types/league-night";
+import { LeagueNightInstance } from "../types/league-night";
 import { League } from "../../leagues/types";
-import { PillTabs } from "../../../components/pill-tabs.component";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
 import { useEffect, useState } from "react";
 import { Match } from "../types";
 import { MatchesList } from "../../matches/components";
-import {
-  SelectPartnershipComponent,
-  SelectPartnershipEffects,
-} from "./select-partnership.component";
+import { SelectPartnershipComponent } from "./select-partnership.component";
 import { TabScreen } from "../../../components/tab-screen.component";
 import { useAuthState } from "../../auth/state";
 import { leagueNightsService } from "../../../di";
+import { GetCheckedInPlayerResponse } from "../services/responses/get-checkedin-player.response";
 
 export interface ActiveLeagueNightComponentProps {
   league: League;
@@ -40,24 +32,10 @@ export const ActiveLeagueNightComponent: React.FC<
   );
   const { user } = useAuthState();
 
-  const [confirmedPartnership, setConfirmedPartnership] =
-    useState<ConfirmedPartnership | null>(null);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [checkedInPlayers, setCheckedInPlayers] = useState<CheckedInPlayer[]>(
-    []
-  );
-  const [checkedInPlayer, setCheckedInPlayer] =
-    useState<CheckedInPlayer | null>(null);
-
-  const fetchConfirmedPartnership = async () => {
-    if (!leagueNight || !user) return;
-    const response = await leagueNightsService.getConfirmedPartnership(
-      league.id,
-      leagueNight.id,
-      user.id
-    );
-    setConfirmedPartnership(response);
-  };
+  const [checkedInPlayers, setCheckedInPlayers] = useState<
+    GetCheckedInPlayerResponse[]
+  >([]);
 
   const fetchMatches = async () => {
     if (!leagueNight || !user) return;
@@ -75,11 +53,10 @@ export const ActiveLeagueNightComponent: React.FC<
       league.id,
       leagueNight.id
     );
-    setCheckedInPlayers(response);
+    setCheckedInPlayers(response.checkins);
   };
 
   useEffect(() => {
-    fetchConfirmedPartnership();
     fetchMatches();
     fetchCheckedInPlayers();
   }, [leagueNight, user]);
@@ -123,10 +100,7 @@ export const ActiveLeagueNightComponent: React.FC<
         grow
         w100
       >
-        <SelectPartnershipComponent
-          league={league}
-          night={leagueNight}
-        />
+        <SelectPartnershipComponent league={league} night={leagueNight} />
       </Container>
     );
   };
