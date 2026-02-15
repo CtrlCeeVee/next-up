@@ -137,6 +137,7 @@ export const LeagueDetailScreen = () => {
   };
 
   const isLeagueNightToday = () => {
+    if (!leagueNights || leagueNights.length === 0) return false;
     return leagueNights.some((night) => DateUtility.isToday(night.date));
   };
 
@@ -158,6 +159,9 @@ export const LeagueDetailScreen = () => {
 
   const isCheckedIn = useMemo(() => {
     if (!user) return false;
+    if (!checkedInPlayersResponse || checkedInPlayersResponse.length === 0) {
+      return false;
+    }
     const isCheckedIn = checkedInPlayersResponse.some(
       (playerResponse) => playerResponse.checkin.id === user.id
     );
@@ -615,6 +619,8 @@ export const LeagueDetailScreen = () => {
         >
           <ThemedText textStyle={TextStyle.Body}>Upcoming Nights</ThemedText>
           <LeagueNightsComponent
+            leagues={[league]}
+            showLeague={false}
             leagueNights={leagueNights}
             isUserMember={isUserMember}
           />

@@ -120,6 +120,13 @@ export const DashboardScreen = () => {
     },
   ];
 
+  const navigateToLeague = (leagueId: string) => {
+    navigation.navigate(Routes.Leagues, {
+      screen: Routes.LeagueDetail,
+      params: { leagueId },
+    });
+  };
+
   return (
     <ScreenContainer>
       <ScrollView
@@ -181,8 +188,11 @@ export const DashboardScreen = () => {
             <Container column w100 gap={gap.md}>
               <ThemedText textStyle={TextStyle.Body}>Next Up</ThemedText>
               <LeagueNightsComponent
-                leagueNights={[]}
+                leagues={leagues}
+                showLeague={true}
+                leagueNights={nextUpLeagueNightInstances}
                 isUserMember={false}
+                onLeagueNightPress={(night) => navigateToLeague(night.leagueId)}
               />
             </Container>
           )}
