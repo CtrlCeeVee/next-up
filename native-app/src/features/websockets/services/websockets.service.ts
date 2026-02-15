@@ -98,7 +98,7 @@ export class WebsocketsService {
       callback,
     } as InternalSubscription<NativeRealtimeEventName>;
     this.subscriptions.push(subscription);
-    return subscription;
+    return () => this.unsubscribe(subscription);
   }
 
   public unsubscribe(

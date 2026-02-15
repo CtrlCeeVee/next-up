@@ -32,6 +32,7 @@ import {
   NativeRealtimeEventName,
   NativeRealtimeMessageType,
 } from "../../websockets/types/websockets.types";
+import { ProfileData } from "../../profiles/types";
 
 export interface SelectPartnershipEffects {
   onSelectPartner: (playerId: string) => Promise<void>;
@@ -49,10 +50,18 @@ export interface SelectPartnershipComponentProps {
 
 interface PartnerListItem {
   id: string;
+  profile: ProfileData;
   player: BasePlayerDetails;
   variant: PartnershipItemVariant;
   onAction: (playerId: string) => void;
   actionBusy: boolean;
+}
+
+interface ConfirmedPartnershipListItem {
+  id: string;
+  confirmedPartnership: ConfirmedPartnership;
+  profile?: ProfileData;
+  otherPlayer?: ProfileData;
 }
 
 export const SelectPartnershipComponent = ({
@@ -74,16 +83,17 @@ export const SelectPartnershipComponent = ({
     PartnershipRequest[]
   >([]);
   const [confirmedPartnership, setConfirmedPartnership] =
-    useState<ConfirmedPartnership | null>(null);
+    useState<ConfirmedPartnershipListItem | null>(null);
   const [checkedInPlayersResponse, setCheckedInPlayersResponse] = useState<
     GetCheckedInPlayerResponse[]
   >([]);
   const websocketsService = getService<WebsocketsService>(
     InjectableType.WEBSOCKETS
   );
+  const [profileMap, setProfileMap] = useState<Record<string, ProfileData>>({});
 
   useEffect(() => {
-    const upsertPartnershipRequest = (
+    const upsertPartnershipRequest = async (
       partnershipRequest: PartnershipRequest,
       deleted: boolean
     ) => {
@@ -120,10 +130,39 @@ export const SelectPartnershipComponent = ({
       }
     };
 
-    websocketsService.subscribe(
+    return websocketsService.subscribe(
       NativeRealtimeEventName.PARTNERSHIP_REQUEST,
       (message) => {
         upsertPartnershipRequest(
+          message.payload,
+          message.type === NativeRealtimeMessageType.DELETE
+        );
+      }
+    );
+  }, []);
+
+  useEffect(() => {
+    const upsertConfirmedPartnership = (
+      confirmedPartnership: ConfirmedPartnership,
+      deleted: boolean
+    ) => {
+      if (deleted || !confirmedPartnership.isActive) {
+        setConfirmedPartnership(null);
+      } else {
+        console.log(profileMap);
+        setConfirmedPartnership({
+          id: confirmedPartnership.id,
+          confirmedPartnership: confirmedPartnership,
+          profile: profileMap[confirmedPartnership.player1Id],
+          otherPlayer: profileMap[confirmedPartnership.player2Id],
+        });
+      }
+    };
+
+    return websocketsService.subscribe(
+      NativeRealtimeEventName.CONFIRMED_PARTNERSHIP,
+      (message) => {
+        upsertConfirmedPartnership(
           message.payload,
           message.type === NativeRealtimeMessageType.DELETE
         );
@@ -140,16 +179,28 @@ export const SelectPartnershipComponent = ({
     );
     setSentRequests(response.sentRequests);
     setReceivedRequests(response.receivedRequests);
-    setConfirmedPartnership(response.confirmedPartnership);
-  };
-
-  const fetchCheckedInPlayers = async () => {
-    if (!user) return;
-    const response = await leagueNightsService.getCheckedInPlayers(
+    const checkedInPlayers = await leagueNightsService.getCheckedInPlayers(
       league.id,
       night.id
     );
-    setCheckedInPlayersResponse(response.checkins);
+    const profileMap = checkedInPlayers.checkins.reduce(
+      (acc, checkin) => {
+        acc[checkin.profile.id] = checkin.profile;
+        return acc;
+      },
+      {} as Record<string, ProfileData>
+    );
+    const confirmedPartnership = response.confirmedPartnership
+      ? {
+          id: response.confirmedPartnership.id,
+          confirmedPartnership: response.confirmedPartnership,
+          profile: profileMap[response.confirmedPartnership.player1Id],
+          otherPlayer: profileMap[response.confirmedPartnership.player2Id],
+        }
+      : null;
+    setConfirmedPartnership(confirmedPartnership);
+    setProfileMap(profileMap);
+    setCheckedInPlayersResponse(checkedInPlayers.checkins);
   };
 
   const availablePartners = useMemo(() => {
@@ -183,6 +234,7 @@ export const SelectPartnershipComponent = ({
     for (const request of receivedRequests) {
       partners.push({
         id: request.requester.id,
+        profile: profileMap[request.requester.id],
         player: {
           id: request.requester.id,
           firstName: request.requester.firstName,
@@ -198,6 +250,7 @@ export const SelectPartnershipComponent = ({
     for (const player of availablePartners || []) {
       partners.push({
         id: player.profile.id,
+        profile: player.profile,
         player: {
           id: player.profile.id,
           firstName: player.profile.firstName,
@@ -213,6 +266,7 @@ export const SelectPartnershipComponent = ({
     for (const request of sentRequests) {
       partners.push({
         id: request.requested.id,
+        profile: profileMap[request.requested.id],
         player: {
           id: request.requested.id,
           firstName: request.requested.firstName,
@@ -232,6 +286,11 @@ export const SelectPartnershipComponent = ({
     sentRequests,
     receivedRequests,
     partnerSearch,
+    profileMap,
+    acceptingRequest,
+    rejectingRequest,
+    sendingRequest,
+    removingPartnership,
   ]);
 
   const filteredPartners = useMemo(() => {
@@ -252,13 +311,11 @@ export const SelectPartnershipComponent = ({
 
   useEffect(() => {
     fetchPartnershipRequests();
-    fetchCheckedInPlayers();
   }, [user]);
 
   const selectPartner = async (playerId: string) => {
     if (!user) return;
     try {
-      console.log('selectPartner', playerId);
       setSendingRequest(playerId);
       await leagueNightsService.sendPartnershipRequest(
         league.id,
@@ -312,6 +369,7 @@ export const SelectPartnershipComponent = ({
     try {
       setRemovingPartnership(user.id);
       await leagueNightsService.removePartnership(league.id, night.id, user.id);
+      fetchPartnershipRequests();
     } catch (error) {
       console.error(error);
     } finally {
@@ -319,31 +377,19 @@ export const SelectPartnershipComponent = ({
     }
   };
 
-  const renderRequestsSection = (
-    requests: PartnershipRequest[],
-    onAction?: (requestId: string) => void
-  ) => {
-    return (
-      <PlayerList
-        variant={PartnershipItemVariant.RECEIVED_REQUEST}
-        players={requests.map((request) => ({
-          id: request.id,
-          firstName: request.requested.firstName,
-          lastName: request.requested.lastName,
-          skillLevel: request.requested.skillLevel,
-        }))}
-        onAction={onAction}
-      />
-    );
-  };
-
   const renderConfirmedPartnershipSection = () => {
     if (!confirmedPartnership || !user) return null;
 
-    const otherPlayer =
-      confirmedPartnership.player1Id === user.id
-        ? confirmedPartnership.player2
-        : confirmedPartnership.player1;
+    if (!confirmedPartnership.profile || !confirmedPartnership.otherPlayer) {
+      return (
+        <Container column grow w100 gap={gap.md}>
+          <ThemedText textStyle={TextStyle.BodyMedium} muted>
+            You're are partnered but there was an error loading your partner's
+            details. Please refresh the page and try again.
+          </ThemedText>
+        </Container>
+      );
+    }
 
     return (
       <Container column grow w100 gap={gap.md}>
@@ -367,15 +413,20 @@ export const SelectPartnershipComponent = ({
             {/* TODO: Add player icon */}
             <LeagueMemberIconComponent
               iconUrl={undefined}
-              name={otherPlayer.firstName + " " + otherPlayer.lastName}
+              name={
+                confirmedPartnership.otherPlayer.firstName +
+                " " +
+                confirmedPartnership.otherPlayer.lastName
+              }
               size={40}
             />
             <Container column w100 gap={0} centerHorizontal>
               <ThemedText textStyle={TextStyle.BodyMedium}>
-                {otherPlayer.firstName} {otherPlayer.lastName}
+                {confirmedPartnership.otherPlayer.firstName}{" "}
+                {confirmedPartnership.otherPlayer.lastName}
               </ThemedText>
               <ThemedText textStyle={TextStyle.BodyMedium} muted>
-                {otherPlayer.skillLevel}
+                {confirmedPartnership.otherPlayer.skillLevel}
               </ThemedText>
             </Container>
           </Container>
@@ -389,6 +440,7 @@ export const SelectPartnershipComponent = ({
             onPress={() => {
               removePartnership();
             }}
+            loading={removingPartnership === user.id}
           />
         </Container>
       </Container>
@@ -422,17 +474,9 @@ export const SelectPartnershipComponent = ({
             refreshing={refreshing}
             onRefresh={fetchPartnershipRequests}
             ListEmptyComponent={
-              <Container
-                column
-                grow
-                w100
-                centerHorizontal
-                style={{ marginTop: spacing.lg }}
-              >
-                <ThemedText textStyle={TextStyle.Body} muted>
-                  No partners found
-                </ThemedText>
-              </Container>
+              <ThemedText textStyle={TextStyle.Body} muted>
+                No partners found
+              </ThemedText>
             }
           />
         </Container>
