@@ -29,6 +29,7 @@ if (!isExpoGo()) {
     .then(({ onMessage, getMessaging, setBackgroundMessageHandler }) => {
       const messaging = getMessaging();
       onMessage(messaging, async (remoteMessage) => {
+        console.log("remoteMessage", remoteMessage);
         Notifications.scheduleNotificationAsync({
           content: {
             title:
@@ -44,6 +45,7 @@ if (!isExpoGo()) {
         });
       });
       setBackgroundMessageHandler(messaging, async (remoteMessage) => {
+        console.log("background remoteMessage", remoteMessage);
         Notifications.scheduleNotificationAsync({
           content: {
             title:

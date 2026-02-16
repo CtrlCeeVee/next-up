@@ -13,18 +13,22 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { InjectableType } from "../../di/di";
 import { useInjection } from "../../di/di";
 import { PushNotificationsService } from "../../features/push-notifications/services";
+import { useAuthState } from "../../features/auth/state";
 
 const Tab = createBottomTabNavigator<AppTabParamList>();
 
 export const AppNavigator = () => {
   const { theme } = useTheme();
   const { bottom } = useSafeAreaInsets();
-
+  const { user } = useAuthState();
   useEffect(() => {
+    if (!user) return;
+
     const pushNotificationService = useInjection<PushNotificationsService>(
       InjectableType.PUSH_NOTIFICATIONS
     );
-    pushNotificationService.requestPermission();
+
+    pushNotificationService.requestPermission(user.id);
     // async function initFCM() {
     //   await Notifications.requestPermissionsAsync();
     //   const messaging = getMessaging();
@@ -40,7 +44,7 @@ export const AppNavigator = () => {
     // }
 
     // initFCM();
-  }, []);
+  }, [user]);
 
   return (
     <Tab.Navigator

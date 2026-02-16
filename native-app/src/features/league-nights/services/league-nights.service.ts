@@ -3,13 +3,15 @@ import type {
   LeagueNightInstance,
   CheckedInPlayer,
   PartnershipRequest,
-  Partnership,
   PartnershipRequestsResponse,
   ConfirmedPartnership,
   PartnershipRequestResponse,
   Match,
 } from "../types";
-import { GetCheckedInPlayersResponse, GetLeagueNightsResponse } from "./responses";
+import {
+  GetCheckedInPlayersResponse,
+  GetLeagueNightsResponse,
+} from "./responses";
 
 export class LeagueNightsService extends BaseService {
   constructor() {
@@ -102,7 +104,7 @@ export class LeagueNightsService extends BaseService {
     nightId: string,
     requestId: string,
     userId: string
-  ): Promise<Partnership> {
+  ): Promise<ConfirmedPartnership> {
     const response = await this.post<any>(
       `/api/leagues/${leagueId}/nights/${nightId}/partnership-accept`,
       {
@@ -110,7 +112,7 @@ export class LeagueNightsService extends BaseService {
         userId: userId,
       }
     );
-    return response.data.partnership;
+    return response.data;
   }
 
   // Reject a partnership request

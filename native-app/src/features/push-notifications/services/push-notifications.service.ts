@@ -3,6 +3,7 @@ import * as Notifications from "expo-notifications";
 import { isExpoGo } from "../../../app/app";
 import { BaseService } from "../../../core/services";
 import type { NotificationPermissionStatus } from "../types";
+import { Platform } from "react-native";
 
 export class PushNotificationsService extends BaseService {
   constructor() {
@@ -10,7 +11,9 @@ export class PushNotificationsService extends BaseService {
   }
 
   // Request notification permissions
-  async requestPermission(): Promise<NotificationPermissionStatus> {
+  async requestPermission(
+    userId: string
+  ): Promise<NotificationPermissionStatus> {
     const { status: existingStatus } =
       await Notifications.getPermissionsAsync();
     let finalStatus = existingStatus;
@@ -23,11 +26,17 @@ export class PushNotificationsService extends BaseService {
     const canAskAgain =
       finalStatus === Notifications.PermissionStatus.UNDETERMINED;
 
-    try {
-      const token = await this.getFcmToken();
-      console.log("FCM TOKEN:", token);
-    } catch (error) {
-      console.error(error);
+    console.log("finalStatus", finalStatus);
+
+    if (finalStatus === Notifications.PermissionStatus.GRANTED) {
+      try {
+        const token = await this.getFcmToken();
+        if (token) {
+          await this.registerDevice(userId, token);
+        }
+      } catch (error) {
+        console.log(error);
+      }
     }
 
     return {
@@ -54,5 +63,13 @@ export class PushNotificationsService extends BaseService {
       return await getToken(messaging);
     }
     return null;
+  }
+
+  private async registerDevice(userId: string, token: string): Promise<void> {
+    await this.post("/api/push/register", {
+      userId,
+      deviceToken: token,
+      platform: Platform.OS,
+    });
   }
 }

@@ -92,44 +92,44 @@ export const SelectPartnershipComponent = ({
   );
   const [profileMap, setProfileMap] = useState<Record<string, ProfileData>>({});
 
+  const upsertPartnershipRequest = async (
+    partnershipRequest: PartnershipRequest,
+    deleted: boolean
+  ) => {
+    if (!user) return;
+
+    if (deleted) {
+      setSentRequests(
+        sentRequests.filter((request) => request.id !== partnershipRequest.id)
+      );
+      setReceivedRequests(
+        receivedRequests.filter(
+          (request) => request.id !== partnershipRequest.id
+        )
+      );
+      return;
+    }
+
+    if (partnershipRequest.requester.id === user.id) {
+      const newSentRequests = sentRequests.filter(
+        (request) => request.id !== partnershipRequest.id
+      );
+      if (partnershipRequest.status === "pending" && !deleted) {
+        newSentRequests.push(partnershipRequest);
+      }
+      setSentRequests(newSentRequests);
+    } else if (partnershipRequest.requested.id === user.id) {
+      const newReceivedRequests = receivedRequests.filter(
+        (request) => request.id !== partnershipRequest.id
+      );
+      if (partnershipRequest.status === "pending" && !deleted) {
+        newReceivedRequests.push(partnershipRequest);
+      }
+      setReceivedRequests(newReceivedRequests);
+    }
+  };
+
   useEffect(() => {
-    const upsertPartnershipRequest = async (
-      partnershipRequest: PartnershipRequest,
-      deleted: boolean
-    ) => {
-      if (!user) return;
-
-      if (deleted) {
-        setSentRequests(
-          sentRequests.filter((request) => request.id !== partnershipRequest.id)
-        );
-        setReceivedRequests(
-          receivedRequests.filter(
-            (request) => request.id !== partnershipRequest.id
-          )
-        );
-        return;
-      }
-
-      if (partnershipRequest.requester.id === user.id) {
-        const newSentRequests = sentRequests.filter(
-          (request) => request.id !== partnershipRequest.id
-        );
-        if (partnershipRequest.status === "pending" && !deleted) {
-          newSentRequests.push(partnershipRequest);
-        }
-        setSentRequests(newSentRequests);
-      } else if (partnershipRequest.requested.id === user.id) {
-        const newReceivedRequests = receivedRequests.filter(
-          (request) => request.id !== partnershipRequest.id
-        );
-        if (partnershipRequest.status === "pending" && !deleted) {
-          newReceivedRequests.push(partnershipRequest);
-        }
-        setReceivedRequests(newReceivedRequests);
-      }
-    };
-
     return websocketsService.subscribe(
       NativeRealtimeEventName.PARTNERSHIP_REQUEST,
       (message) => {
@@ -141,24 +141,24 @@ export const SelectPartnershipComponent = ({
     );
   }, []);
 
-  useEffect(() => {
-    const upsertConfirmedPartnership = (
-      confirmedPartnership: ConfirmedPartnership,
-      deleted: boolean
-    ) => {
-      if (deleted || !confirmedPartnership.isActive) {
-        setConfirmedPartnership(null);
-      } else {
-        console.log(profileMap);
-        setConfirmedPartnership({
-          id: confirmedPartnership.id,
-          confirmedPartnership: confirmedPartnership,
-          profile: profileMap[confirmedPartnership.player1Id],
-          otherPlayer: profileMap[confirmedPartnership.player2Id],
-        });
-      }
-    };
+  const upsertConfirmedPartnership = (
+    confirmedPartnership: ConfirmedPartnership,
+    deleted: boolean
+  ) => {
+    if (deleted || !confirmedPartnership.isActive) {
+      setConfirmedPartnership(null);
+    } else {
+      console.log(profileMap);
+      setConfirmedPartnership({
+        id: confirmedPartnership.id,
+        confirmedPartnership: confirmedPartnership,
+        profile: profileMap[confirmedPartnership.player1Id],
+        otherPlayer: profileMap[confirmedPartnership.player2Id],
+      });
+    }
+  };
 
+  useEffect(() => {
     return websocketsService.subscribe(
       NativeRealtimeEventName.CONFIRMED_PARTNERSHIP,
       (message) => {
@@ -317,12 +317,14 @@ export const SelectPartnershipComponent = ({
     if (!user) return;
     try {
       setSendingRequest(playerId);
-      await leagueNightsService.sendPartnershipRequest(
-        league.id,
-        night.id,
-        user.id,
-        playerId
-      );
+      const partnershipRequest =
+        await leagueNightsService.sendPartnershipRequest(
+          league.id,
+          night.id,
+          user.id,
+          playerId
+        );
+      upsertPartnershipRequest(partnershipRequest, false);
     } catch (error) {
       console.error(error);
     } finally {
@@ -351,12 +353,13 @@ export const SelectPartnershipComponent = ({
     if (!user) return;
     try {
       setAcceptingRequest(requestId);
-      await leagueNightsService.acceptPartnershipRequest(
+      const partnership = await leagueNightsService.acceptPartnershipRequest(
         league.id,
         night.id,
         requestId,
         user.id
       );
+      upsertConfirmedPartnership(partnership, false);
     } catch (error) {
       console.error(error);
     } finally {
@@ -369,6 +372,7 @@ export const SelectPartnershipComponent = ({
     try {
       setRemovingPartnership(user.id);
       await leagueNightsService.removePartnership(league.id, night.id, user.id);
+      setConfirmedPartnership(null);
       fetchPartnershipRequests();
     } catch (error) {
       console.error(error);
