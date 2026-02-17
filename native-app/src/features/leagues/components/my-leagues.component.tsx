@@ -26,12 +26,16 @@ import { SelectedIcon } from "../../../icons/selected-icon.component";
 import { Icon } from "../../../icons/icon.component";
 import { IconName } from "../../../icons";
 import { BadgeComponent } from "../../../components/badge.component";
-import { LeagueDaysSummary } from "./league-days-summary.component";
+import {
+  LeagueDaysSummary,
+  LeagueDaysComponentSize,
+} from "./league-days-summary.component";
 import { HapticWrapper } from "../../../components/haptic-wrapper.component";
 import { Routes } from "../../../navigation/routes";
 import { useNavigation } from "@react-navigation/native";
 import { AppTabParamList } from "../../../navigation/types";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { usePopover } from "../../../components/popover";
 
 interface Position {
   x: number;
@@ -44,19 +48,20 @@ interface BadgeDetails {
   color: string;
 }
 
-const SELECTED_ICON_Y_TRANSFORM = 10;
+const SELECTED_ICON_Y_TRANSFORM = 0;
 const MINI_ICON_SIZE = 12;
 const MINI_ICON_PADDING = 4;
 const MINI_ICON_TOTAL_SIZE = MINI_ICON_SIZE + MINI_ICON_PADDING * 2;
 const LOGO_SIZE = 52;
 const LOGO_INNER_PADDING = 2;
-const SELECTED_LEAGUE_ROUNDING = roundingMedium;
+const SELECTED_LEAGUE_ROUNDING = rounding;
 
 type NavigationProp = BottomTabNavigationProp<AppTabParamList>;
 
 export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
+  const { showPopover } = usePopover();
 
   const [selectedLeague, setSelectedLeague] = useState<League | null>(null);
 
@@ -331,162 +336,178 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
     );
   };
 
-  return (
-    <Card>
-      <Container column w100 gap={0}>
-        {/* paddingHorizontal is set to rounding to ensure the card is not cut off */}
-        <Container row paddingHorizontal={SELECTED_LEAGUE_ROUNDING} w100>
-          {/* League icons */}
+  const formatTime = (timeString: string) => {
+    const [hours, minutes] = timeString.split(":").slice(0, 2);
+    const hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
+  };
 
-          <ScrollView
-            style={{ width: "100%", overflow: "visible" }}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: gap.lg }}
-          >
-            {selectedLeague && (
-              <Animated.View
+  const showLeagueSummary = (
+    league: League,
+    touchLocation?: { x: number; y: number }
+  ) => {
+    showPopover({
+      initialPosition: touchLocation,
+      content: (
+        <Container column gap={gap.md} w100>
+          <Container row centerVertical gap={gap.sm} w100>
+            <LeagueLogoComponent
+              logo={league.logo}
+              name={league.name}
+              width={48}
+              height={48}
+            />
+            <Container column grow>
+              <ThemedText textStyle={TextStyle.Header}>{league.name}</ThemedText>
+              {league.description && (
+                <ThemedText textStyle={TextStyle.BodySmall} muted>
+                  {league.description}
+                </ThemedText>
+              )}
+            </Container>
+          </Container>
+
+          <Container column gap={gap.sm} w100>
+            <Container row centerVertical gap={gap.sm}>
+              <Icon name="map-pin" size={16} color={theme.colors.text} />
+              <Container column grow>
+                <ThemedText textStyle={TextStyle.BodyMedium}>
+                  {league.location}
+                </ThemedText>
+                <ThemedText textStyle={TextStyle.BodySmall} muted>
+                  {league.address}
+                </ThemedText>
+              </Container>
+            </Container>
+
+            <Container row centerVertical gap={gap.sm}>
+              <Icon name="clock" size={16} color={theme.colors.text} />
+              <ThemedText textStyle={TextStyle.BodyMedium}>
+                {formatTime(league.startTime)}
+              </ThemedText>
+            </Container>
+
+            <Container row centerVertical gap={gap.sm}>
+              <Icon name="calendar" size={16} color={theme.colors.text} />
+              <Container column grow>
+                <LeagueDaysSummary
+                  leagueDays={league.leagueDays}
+                  size={LeagueDaysComponentSize.Medium}
+                />
+              </Container>
+            </Container>
+
+            <Container row centerVertical gap={gap.sm}>
+              <Icon name="users" size={16} color={theme.colors.text} />
+              <ThemedText textStyle={TextStyle.BodyMedium}>
+                {league.totalPlayers} {league.totalPlayers === 1 ? "player" : "players"}
+              </ThemedText>
+            </Container>
+
+            <Container row centerVertical gap={gap.sm}>
+              <Icon
+                name={league.isActive ? "check-circle" : "alert-circle"}
+                size={16}
+                color={league.isActive ? theme.colors.success : theme.colors.error}
+              />
+              <ThemedText
+                textStyle={TextStyle.BodyMedium}
                 style={{
-                  position: "absolute",
-                  marginTop: SELECTED_ICON_Y_TRANSFORM,
-                  marginLeft: 0,
-                  top: indicatorTop,
-                  left: indicatorLeft,
-                  width: indicatorWidth,
-                  height: indicatorHeight,
-                  zIndex: 0,
-                  backgroundColor: selectedBackgroundColor,
-                  borderColor: selectedBackgroundColor,
-                  borderRadius: roundingFull,
+                  color: league.isActive
+                    ? theme.colors.success
+                    : theme.colors.error,
                 }}
               >
-                {/* <Container
-                  style={{
-                    backgroundColor: selectedBackgroundColor,
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                  rounding={roundingFull}
-                > */}
-                <SelectedIcon
+                {league.isActive ? "Active" : "Inactive"}
+              </ThemedText>
+            </Container>
+          </Container>
+        </Container>
+      ),
+    });
+  };
+
+  return (
+    // <Card>
+    <Container column w100 gap={0}>
+      {/* paddingHorizontal is set to rounding to ensure the card is not cut off */}
+      <Container
+        row
+        paddingHorizontal={paddingSmall}
+        paddingVertical={paddingSmall}
+        w100
+      >
+        {/* League icons */}
+
+        <ScrollView
+          style={{ width: "100%", overflow: "visible" }}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: gap.xl }}
+        >
+          {/* {selectedLeague && (
+            <Animated.View
+              style={{
+                position: "absolute",
+                marginTop: SELECTED_ICON_Y_TRANSFORM,
+                marginLeft: 0,
+                top: indicatorTop,
+                left: indicatorLeft,
+                width: indicatorWidth,
+                height: indicatorHeight,
+                zIndex: 0,
+                backgroundColor: selectedBackgroundColor,
+                borderColor: selectedBackgroundColor,
+                borderRadius: roundingFull,
+              }}
+            >
+              <SelectedIcon
                   size={LOGO_SIZE}
                   color={selectedBackgroundColor}
                 />
-                {/* </Container> */}
-              </Animated.View>
-            )}
-            {leagues.map((league) => {
-              const animatedValue = getAnimatedValue(league.id);
-              return (
-                <Animated.View
-                  key={league.id}
-                  style={{
-                    transform: [{ translateY: animatedValue }],
-                    width: LOGO_SIZE,
-                    height: LOGO_SIZE,
-                  }}
-                  onLayout={(event) => handleLayout(league.id, event)}
-                >
-                  <HapticWrapper onPress={() => handleSelectLeague(league)}>
-                    <Container
-                      style={{ width: "100%", height: "100%", zIndex: 1 }}
-                      padding={LOGO_INNER_PADDING}
-                    >
-                      {renderIcons(league)}
-                      <LeagueLogoComponent
-                        // logo={league.logo}
-                        logo="https://static.vecteezy.com/ti/vetor-gratis/p1/36489045-aguia-cabeca-logotipo-modelo-icone-ilustracao-projeto-para-o-negocio-e-corporativo-vetor.jpg"
-                        name={league.name}
-                        width={LOGO_SIZE - LOGO_INNER_PADDING * 2}
-                        height={LOGO_SIZE - LOGO_INNER_PADDING * 2}
-                      />
-                    </Container>
-                  </HapticWrapper>
-                </Animated.View>
-              );
-            })}
-          </ScrollView>
-        </Container>
-
-        {selectedLeague && (
-          <Card
-            style={{
-              borderRadius: SELECTED_LEAGUE_ROUNDING,
-              borderWidth: LOGO_INNER_PADDING,
-              borderColor: selectedBackgroundColor,
-              marginTop: SELECTED_ICON_Y_TRANSFORM,
-              width: "100%",
-              paddingVertical: paddingLarge,
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => navigateToLeague(selectedLeague)}
-              style={{ width: "100%" }}
-            >
-              <Container
-                row
-                // padding={padding}
-                rounding={SELECTED_LEAGUE_ROUNDING}
+            </Animated.View>
+          )} */}
+          {leagues.map((league) => {
+            const animatedValue = getAnimatedValue(league.id);
+            return (
+              <Animated.View
+                key={league.id}
                 style={{
-                  alignItems: "stretch",
-                  // backgroundColor: theme.colors.cardColour,
+                  transform: [{ translateY: animatedValue }],
+                  width: LOGO_SIZE,
+                  height: LOGO_SIZE,
                 }}
-                w100
+                onLayout={(event) => handleLayout(league.id, event)}
               >
-                <Container column style={{ flex: 1, minWidth: 0 }}>
-                  <Container column gap={gap.md} w100>
-                    <Container row spaceBetween w100>
-                      {selectedLeague && renderBadges(selectedLeague)}
-                      <Icon
-                        name="chevron-right"
-                        size={defaultIconSize}
-                        color={theme.colors.text + "50"}
-                      />
-                    </Container>
-                    <Container row startVertical w100 gap={gap.sm}>
-                      <LeagueLogoComponent
-                        // logo={league.logo}
-                        logo="https://static.vecteezy.com/ti/vetor-gratis/p1/36489045-aguia-cabeca-logotipo-modelo-icone-ilustracao-projeto-para-o-negocio-e-corporativo-vetor.jpg"
-                        name={selectedLeague?.name || ""}
-                        style={{ marginTop: gap.xs }}
-                      />
-                      <Container column gap={gap.md} style={{ flexGrow: 1 }}>
-                        <Container column gap={gap.xs} w100>
-                          <ThemedText textStyle={TextStyle.Body}>
-                            {selectedLeague?.name}
-                          </ThemedText>
-                          <ThemedText textStyle={TextStyle.BodySmall} muted>
-                            {selectedLeague?.location}
-                          </ThemedText>
-                        </Container>
-
-                        {/* <ThemedText textStyle={TextStyle.BodySmall}>
-                          {getLeagueDays(selectedLeague)}
-                        </ThemedText> */}
-
-                        <LeagueDaysSummary
-                          leagueDays={selectedLeague?.leagueDays || []}
-                          todayColour={theme.colors.accent}
-                          activeColour={"white"}
-                          inactiveColour={"#ffffff90"}
-                        />
-                      </Container>
-                    </Container>
+                <HapticWrapper
+                  onPress={() => handleSelectLeague(league)}
+                  holdDurationSeconds={0.5}
+                  onHold={(touchLocation) =>
+                    showLeagueSummary(league, touchLocation)
+                  }
+                >
+                  <Container
+                    style={{ width: "100%", height: "100%", zIndex: 1 }}
+                    padding={LOGO_INNER_PADDING}
+                  >
+                    {renderIcons(league)}
+                    <LeagueLogoComponent
+                      // logo={league.logo}
+                      logo="https://static.vecteezy.com/ti/vetor-gratis/p1/36489045-aguia-cabeca-logotipo-modelo-icone-ilustracao-projeto-para-o-negocio-e-corporativo-vetor.jpg"
+                      name={league.name}
+                      width={LOGO_SIZE - LOGO_INNER_PADDING * 2}
+                      height={LOGO_SIZE - LOGO_INNER_PADDING * 2}
+                    />
                   </Container>
-                </Container>
-
-                <Container
-                  column
-                  spaceBetween
-                  endHorizontal
-                  style={{ alignSelf: "stretch", flexShrink: 0 }}
-                ></Container>
-              </Container>
-            </TouchableOpacity>
-          </Card>
-        )}
+                </HapticWrapper>
+              </Animated.View>
+            );
+          })}
+        </ScrollView>
       </Container>
-    </Card>
+    </Container>
+    // </Card>
   );
 };

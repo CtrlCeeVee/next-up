@@ -24,6 +24,7 @@ import {
   spacing,
   gap,
   roundingLarge,
+  roundingFull,
 } from "../../core/styles";
 import { useAuthState } from "../../features/auth/state";
 import { AppTabParamList } from "../../navigation/types";
@@ -188,30 +189,6 @@ export const DashboardScreen = () => {
         <Container column w100 gap={gap.sm}>
           {/* Happening Today Section */}
 
-          <Container column w100 gap={gap.md} style={{ paddingLeft: padding }}>
-            <ThemedText textStyle={TextStyle.Body}>Next Up</ThemedText>
-            {loading ? (
-              <Container w100 style={{ paddingRight: padding }}>
-                <ShimmerComponent
-                  width="100%"
-                  height={80}
-                  rounding={roundingLarge}
-                  renderCardUnderneath={true}
-                />
-              </Container>
-            ) : (
-              <LeagueNightsComponent
-                leagues={leagues}
-                showLeague={true}
-                leagueNights={nextUpLeagueNightInstances}
-                isUserMember={false}
-                onLeagueNightPress={(night) => navigateToLeague(night.leagueId)}
-              />
-            )}
-          </Container>
-
-          {/* Your Leagues Section */}
-
           <Container column w100 gap={gap.sm} style={{ padding: padding }}>
             <Container row spaceBetween w100>
               <View style={styles.sectionHeader}>
@@ -236,18 +213,44 @@ export const DashboardScreen = () => {
             </Container>
 
             {loading ? (
-              <Container w100>
-                <ShimmerComponent
-                  width="100%"
-                  height={200}
-                  rounding={roundingLarge}
-                  renderCardUnderneath={true}
-                />
+              <Container row gap={gap.sm} w100>
+                {[1, 2, 3].map((item) => (
+                  <ShimmerComponent
+                    width={52}
+                    height={52}
+                    rounding={roundingFull}
+                    renderCardUnderneath={true}
+                  />
+                ))}
               </Container>
             ) : (
               <MyLeagues leagues={myLeagues} />
             )}
           </Container>
+
+          <Container column w100 gap={gap.md} style={{ paddingLeft: padding }}>
+            <ThemedText textStyle={TextStyle.Body}>Next Up</ThemedText>
+            {loading ? (
+              <Container w100 style={{ paddingRight: padding }}>
+                <ShimmerComponent
+                  width="100%"
+                  height={80}
+                  rounding={roundingLarge}
+                  renderCardUnderneath={true}
+                />
+              </Container>
+            ) : (
+              <LeagueNightsComponent
+                leagues={leagues}
+                showLeague={true}
+                leagueNights={nextUpLeagueNightInstances}
+                isUserMember={false}
+                onLeagueNightPress={(night) => navigateToLeague(night.leagueId)}
+              />
+            )}
+          </Container>
+
+          {/* Your Leagues Section */}
         </Container>
       </ScrollView>
     </ScreenContainer>

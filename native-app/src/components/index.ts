@@ -30,3 +30,6 @@ export * from "./back-chevron.component";
 
 // Modal components
 export * from "./modal";
+
+// Popover components
+export * from "./popover";
