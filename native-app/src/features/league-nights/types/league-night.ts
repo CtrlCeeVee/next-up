@@ -63,17 +63,17 @@ export interface PartnershipRequestsResponse {
 }
 
 export interface Match {
-  id: number;
-  league_night_instance_id: number;
-  team1_player1_id: string;
-  team1_player2_id: string;
-  team2_player1_id: string;
-  team2_player2_id: string;
-  court_label: string;
-  status: "in_progress" | "completed" | "disputed";
-  team1_score: number | null;
-  team2_score: number | null;
-  created_at: string;
-  completed_at: string | null;
-  pending_score_submitted_by?: string;
+  id: string;
+  leagueNightInstanceId: number;
+  partnership1Id: string;
+  partnership2Id: string;
+  courtNumber: string;
+  team1Score: number | null;
+  team2Score: number | null;
+  status: "active" | "completed" | "disputed";
+  scoreStatus: "none" | "pending" | "confirmed" | "disputed";
+  pendingTeam1Score: number | null;
+  pendingTeam2Score: number | null;
+  pendingSubmittedByPartnershipId: string | null;
+  pendingScoreSubmittedAt: string | null;
 }

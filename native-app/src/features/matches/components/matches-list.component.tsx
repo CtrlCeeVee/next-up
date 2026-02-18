@@ -1,112 +1,128 @@
-import React from "react";
-import { View, ScrollView, StyleSheet, FlatList } from "react-native";
-import { ThemedText, Card, Container } from "../../../components";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { ScrollView, StyleSheet, FlatList } from "react-native";
+
+import { ThemedText, Container } from "../../../components";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
 import { gap, padding, TextStyle } from "../../../core/styles";
-import type { Match } from "../../league-nights/types";
+import { MatchItem, MatchItemProps } from "./match-item.component";
+import {
+  GetMatchResponse,
+  LeagueNightInstance,
+  Match,
+} from "../../league-nights/types";
+import { League } from "../../leagues/types";
 import { useAuthState } from "../../auth/state";
+import { ProfileData } from "../../profiles/types";
+import { getService } from "../../../di/di";
+import { InjectableType } from "../../../di/di";
+import { LeagueNightsService } from "../../league-nights/services/league-nights.service";
+import { WebsocketsService } from "../../websockets/services/websockets.service";
+import {
+  NativeRealtimeEventName,
+  NativeRealtimeMessageType,
+} from "../../websockets/types";
 
 interface MatchesQueueTabProps {
-  matches: Match[];
+  league: League;
+  leagueNight: LeagueNightInstance;
 }
 
-export const MatchesList: React.FC<MatchesQueueTabProps> = ({ matches }) => {
+export const MatchesList: React.FC<MatchesQueueTabProps> = ({
+  league,
+  leagueNight,
+}) => {
   const { theme } = useTheme();
+  const { user } = useAuthState();
 
-  const user = useAuthState((state) => state.user);
+  const [matches, setMatches] = useState<GetMatchResponse[]>([]);
+  const [profiles, setProfiles] = useState<Record<string, ProfileData>>({});
 
-  const renderMatch = ({ item: match }: { item: Match }) => {
-    const isUserMatch =
-      match.team1_player1_id === user?.id ||
-      match.team1_player2_id === user?.id ||
-      match.team2_player1_id === user?.id ||
-      match.team2_player2_id === user?.id;
+  const leagueNightsService = getService<LeagueNightsService>(
+    InjectableType.LEAGUE_NIGHTS
+  );
 
-    return (
-      <Card style={styles.matchCard}>
-        <View style={styles.matchHeader}>
-          <View style={styles.courtBadge}>
-            <Icon name="map-pin" size={16} color={theme.colors.primary} />
-            <ThemedText
-              textStyle={TextStyle.BodySmall}
-              style={styles.courtText}
-            >
-              {match.court_label}
-            </ThemedText>
-          </View>
-          <View
-            style={[
-              styles.statusBadge,
-              {
-                backgroundColor:
-                  match.status === "in_progress"
-                    ? theme.colors.success + "20"
-                    : match.status === "completed"
-                      ? theme.colors.text + "20"
-                      : theme.colors.error + "20",
-              },
-            ]}
-          >
-            <ThemedText
-              textStyle={TextStyle.BodySmall}
-              style={styles.statusText}
-            >
-              {match.status.toUpperCase()}
-            </ThemedText>
-          </View>
-        </View>
+  const websocketsService = getService<WebsocketsService>(
+    InjectableType.WEBSOCKETS
+  );
 
-        {/* Team 1 */}
-        <View style={styles.teamContainer}>
-          <View style={styles.teamInfo}>
-            <ThemedText textStyle={TextStyle.Body}>
-              {match.team1_player1_id} {match.team1_player2_id}
-            </ThemedText>
-            <ThemedText textStyle={TextStyle.Body}>
-              {match.team1_player2_id} {match.team1_player2_id}
-            </ThemedText>
-          </View>
-          {match.team1_score !== undefined && (
-            <ThemedText textStyle={TextStyle.Body} style={styles.score}>
-              {match.team1_score}
-            </ThemedText>
-          )}
-        </View>
+  const onMatchUpdated = useCallback(
+    (match: Match, deleted: boolean = false) => {
+      if (deleted) {
+        setMatches((prev) => prev.filter((m) => m.match.id !== match.id));
+        return;
+      }
+      setMatches((prev) =>
+        prev.map((m) => (m.match.id === match.id ? { ...m, match } : m))
+      );
+    },
+    []
+  );
 
-        <View style={styles.divider} />
-
-        {/* Team 2 */}
-        <View style={styles.teamContainer}>
-          <View style={styles.teamInfo}>
-            <ThemedText textStyle={TextStyle.Body}>
-              {match.team2_player1_id} {match.team2_player1_id}
-            </ThemedText>
-            <ThemedText textStyle={TextStyle.Body}>
-              {match.team2_player2_id} {match.team2_player2_id}
-            </ThemedText>
-          </View>
-          {match.team2_score !== undefined && (
-            <ThemedText textStyle={TextStyle.Body} style={styles.score}>
-              {match.team2_score}
-            </ThemedText>
-          )}
-        </View>
-
-        {match.pending_score_submitted_by === user?.id && (
-          <View style={styles.pendingScoreNotice}>
-            <Icon name="clock" size={16} color={theme.colors.warning} />
-            <ThemedText
-              textStyle={TextStyle.BodySmall}
-              style={styles.pendingScoreText}
-            >
-              Score pending confirmation
-            </ThemedText>
-          </View>
-        )}
-      </Card>
+  useEffect(() => {
+    return websocketsService.subscribe(
+      NativeRealtimeEventName.MATCH,
+      (match) => {
+        console.log("match update", match, "for user", user?.id);
+        onMatchUpdated(
+          match.payload,
+          match.type === NativeRealtimeMessageType.DELETE
+        );
+      }
     );
+  }, [websocketsService, onMatchUpdated]);
+
+  const fetchMatches = async () => {
+    if (!leagueNight || !user) return;
+    const response = await leagueNightsService.getMatches(
+      league.id,
+      leagueNight.id,
+      user.id
+    );
+    setMatches(response.matches);
+    const profilesMap = response.profiles.reduce(
+      (acc, profile) => {
+        acc[profile.id] = profile;
+        return acc;
+      },
+      {} as Record<string, ProfileData>
+    );
+    setProfiles(profilesMap);
   };
+
+  useEffect(() => {
+    fetchMatches();
+  }, [leagueNight, user]);
+
+  const matchesList: MatchItemProps[] = useMemo(() => {
+    if (!leagueNight || !user) return [];
+
+    return matches.map((match) => ({
+      leagueId: league.id,
+      leagueNightId: leagueNight.id,
+      match: match,
+      partnership1: {
+        partnership: match.partnership1,
+        profile1: profiles[match.partnership1.player1Id],
+        profile2: profiles[match.partnership1.player2Id],
+      },
+      partnership2: {
+        partnership: match.partnership2,
+        profile1: profiles[match.partnership2.player1Id],
+        profile2: profiles[match.partnership2.player2Id],
+      },
+    }));
+  }, [matches, league, leagueNight, profiles]);
+
+  // Separate active and completed matches
+  const activeMatches = useMemo(
+    () => matchesList.filter((m) => m.match.match.status === "active"),
+    [matchesList]
+  );
+  const completedMatches = useMemo(
+    () => matchesList.filter((m) => m.match.match.status === "completed"),
+    [matchesList]
+  );
 
   if (matches.length === 0) {
     return (
@@ -119,33 +135,32 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({ matches }) => {
     );
   }
 
-  // Separate active and completed matches
-  const activeMatches = matches.filter((m) => m.status === "in_progress");
-  const completedMatches = matches.filter((m) => m.status === "completed");
-
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.content}>
+      <Container column gap={gap.md} w100 grow>
         {activeMatches.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
+          <Container column gap={gap.md} w100>
+            <Container row gap={gap.sm} w100 centerVertical>
               <Icon name="trophy" size={20} color={theme.colors.primary} />
               <ThemedText textStyle={TextStyle.Subheader}>
                 Active Matches
               </ThemedText>
-            </View>
+            </Container>
             <FlatList
+              style={styles.container}
               data={activeMatches}
-              renderItem={renderMatch}
-              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <MatchItem {...item} onMatchUpdated={onMatchUpdated} />
+              )}
+              keyExtractor={(item) => item.match.match.id}
               scrollEnabled={false}
             />
-          </View>
+          </Container>
         )}
 
         {completedMatches.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
+          <Container column gap={gap.md} w100>
+            <Container row gap={gap.sm} w100 centerVertical>
               <Icon
                 name="check-circle"
                 size={20}
@@ -154,23 +169,25 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({ matches }) => {
               <ThemedText textStyle={TextStyle.Subheader}>
                 Completed Matches
               </ThemedText>
-            </View>
+            </Container>
             <FlatList
+              style={styles.container}
               data={completedMatches}
-              renderItem={renderMatch}
-              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <MatchItem {...item} onMatchUpdated={onMatchUpdated} />
+              )}
+              keyExtractor={(item) => item.match.match.id}
               scrollEnabled={false}
             />
-          </View>
+          </Container>
         )}
-      </View>
+      </Container>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     width: "100%",
   },
   content: {
@@ -209,59 +226,5 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-  },
-  matchCard: {
-    padding: padding,
-    gap: 12,
-    marginBottom: 12,
-  },
-  matchHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  courtBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  courtText: {
-    fontWeight: "600",
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontWeight: "600",
-  },
-  teamContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  teamInfo: {
-    flex: 1,
-    gap: 4,
-  },
-  score: {
-    fontSize: 24,
-    fontWeight: "700",
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "rgba(255,255,255,0.1)",
-  },
-  pendingScoreNotice: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.1)",
-  },
-  pendingScoreText: {
-    opacity: 0.7,
   },
 });

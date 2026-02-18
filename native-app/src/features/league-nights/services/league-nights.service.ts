@@ -7,6 +7,8 @@ import type {
   ConfirmedPartnership,
   PartnershipRequestResponse,
   Match,
+  GetMatchesResponse,
+  GetMatchResponse,
 } from "../types";
 import {
   GetCheckedInPlayersResponse,
@@ -167,7 +169,7 @@ export class LeagueNightsService extends BaseService {
     leagueId: string,
     nightId: string,
     partnershipId: string
-  ): Promise<any | null> {
+  ): Promise<GetMatchResponse | null> {
     const response = await this.get<any>(
       `/api/leagues/${leagueId}/nights/${nightId}/current-match?partnership_id=${partnershipId}`
     );
@@ -178,7 +180,7 @@ export class LeagueNightsService extends BaseService {
     leagueId: string,
     nightId: string,
     userId: string
-  ): Promise<Match[]> {
+  ): Promise<GetMatchesResponse> {
     const response = await this.get<any>(
       `/api/leagues/${leagueId}/nights/${nightId}/matches?user_id=${userId}`
     );
@@ -250,53 +252,76 @@ export class LeagueNightsService extends BaseService {
     );
   }
 
+  // Cancel match score
+  async cancelMatchScore(
+    leagueId: string,
+    nightId: string,
+    matchId: string,
+    userId: string
+  ): Promise<GetMatchResponse> {
+    const response = await this.post<any>(
+      `/api/leagues/${leagueId}/nights/${nightId}/cancel-score`,
+      {
+        matchId: matchId,
+        userId: userId,
+      }
+    );
+    return response.data;
+  }
+
   // Submit match score (creates pending score)
   async submitMatchScore(
     leagueId: string,
     nightId: string,
-    matchId: number,
+    matchId: string,
     team1Score: number,
     team2Score: number,
     userId: string
-  ): Promise<void> {
-    await this.post(`/api/leagues/${leagueId}/nights/${nightId}/submit-score`, {
-      match_id: matchId,
-      team1_score: team1Score,
-      team2_score: team2Score,
-      user_id: userId,
-    });
+  ): Promise<GetMatchResponse> {
+    const response = await this.post<any>(
+      `/api/leagues/${leagueId}/nights/${nightId}/submit-score`,
+      {
+        matchId: matchId,
+        team1Score: team1Score,
+        team2Score: team2Score,
+        userId: userId,
+      }
+    );
+    return response.data;
   }
 
   // Confirm opponent's submitted score
   async confirmMatchScore(
     leagueId: string,
     nightId: string,
-    matchId: number,
+    matchId: string,
     userId: string
-  ): Promise<void> {
-    await this.post(
+  ): Promise<GetMatchResponse> {
+    const response = await this.post<any>(
       `/api/leagues/${leagueId}/nights/${nightId}/confirm-score`,
       {
         match_id: matchId,
         user_id: userId,
       }
     );
+    return response.data;
   }
 
   // Dispute opponent's submitted score
   async disputeMatchScore(
     leagueId: string,
     nightId: string,
-    matchId: number,
+    matchId: string,
     userId: string
-  ): Promise<void> {
-    await this.post(
+  ): Promise<GetMatchResponse> {
+    const response = await this.post(
       `/api/leagues/${leagueId}/nights/${nightId}/dispute-score`,
       {
         match_id: matchId,
         user_id: userId,
       }
     );
+    return response.data;
   }
 
   // Admin: Create temporary account for player without phone

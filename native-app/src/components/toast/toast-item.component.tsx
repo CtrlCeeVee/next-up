@@ -11,7 +11,7 @@ import { Icon, IconName } from "../../icons";
 import { useTheme } from "../../core/theme";
 import { Toast, ToastType } from "../../features/toast/types";
 import { TextStyle } from "../../core/styles";
-import { ThemeCoreColours } from "../../core/theme/theme";
+import { AppThemeCoreColours, ThemeCoreColours } from "../../core/theme/theme";
 import { spacing, gap, roundingLarge } from "../../core/styles/global";
 
 interface ToastItemProps {
@@ -33,7 +33,7 @@ const getToastIcon = (type: ToastType): IconName => {
   }
 };
 
-const getToastColors = (type: ToastType, theme: ThemeCoreColours) => {
+const getToastColors = (type: ToastType, theme: AppThemeCoreColours) => {
   switch (type) {
     case "success":
       return {
@@ -44,7 +44,7 @@ const getToastColors = (type: ToastType, theme: ThemeCoreColours) => {
       };
     case "error":
       return {
-        background: theme.componentBackground,
+        background: theme.colors.danger,
         border: theme.colors.notification,
         icon: theme.colors.notification,
         text: theme.colors.notification,

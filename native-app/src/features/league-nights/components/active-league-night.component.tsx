@@ -4,14 +4,16 @@ import { LeagueNightInstance } from "../types/league-night";
 import { League } from "../../leagues/types";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
-import { useEffect, useState } from "react";
-import { Match } from "../types";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { GetMatchesResponse, GetMatchResponse, Match } from "../types";
 import { MatchesList } from "../../matches/components";
 import { SelectPartnershipComponent } from "./select-partnership.component";
 import { TabScreen } from "../../../components/tab-screen.component";
 import { useAuthState } from "../../auth/state";
 import { leagueNightsService } from "../../../di";
 import { GetCheckedInPlayerResponse } from "../services/responses/get-checkedin-player.response";
+import { ProfileData } from "../../profiles/types";
+import { MatchItemProps } from "../../matches/components/match-item.component";
 
 export interface ActiveLeagueNightComponentProps {
   league: League;
@@ -30,36 +32,6 @@ export const ActiveLeagueNightComponent: React.FC<
   const [selectedTab, setSelectedTab] = useState<ActiveTabs>(
     ActiveTabs.Partnership
   );
-  const { user } = useAuthState();
-
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [checkedInPlayers, setCheckedInPlayers] = useState<
-    GetCheckedInPlayerResponse[]
-  >([]);
-
-  const fetchMatches = async () => {
-    if (!leagueNight || !user) return;
-    const response = await leagueNightsService.getMatches(
-      league.id,
-      leagueNight.id,
-      user.id
-    );
-    setMatches(response);
-  };
-
-  const fetchCheckedInPlayers = async () => {
-    if (!leagueNight || !user) return;
-    const response = await leagueNightsService.getCheckedInPlayers(
-      league.id,
-      leagueNight.id
-    );
-    setCheckedInPlayers(response.checkins);
-  };
-
-  useEffect(() => {
-    fetchMatches();
-    fetchCheckedInPlayers();
-  }, [leagueNight, user]);
 
   const quote = [
     "It's time for rest and relaxation!",
@@ -71,11 +43,9 @@ export const ActiveLeagueNightComponent: React.FC<
     return quote[Math.floor(Math.random() * quote.length)];
   };
 
-  const tabChanged = (tab: ActiveTabs) => {
-    setSelectedTab(tab);
-  };
-
   const renderMatches = () => {
+    if (!leagueNight) return null;
+
     return (
       <Container
         column
@@ -84,13 +54,14 @@ export const ActiveLeagueNightComponent: React.FC<
         w100
         style={{ marginTop: 12 }}
       >
-        <MatchesList matches={matches} />
+        <MatchesList league={league} leagueNight={leagueNight} />
       </Container>
     );
   };
 
   const renderPartnership = () => {
     if (!leagueNight) return null;
+
     return (
       <Container
         column

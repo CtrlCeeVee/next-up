@@ -19,19 +19,20 @@ import { useTheme } from "../../core/theme";
 import { useAuthState } from "../../features/auth/state";
 import { useProfilesState } from "../../features/profiles/state";
 import { useToastState } from "../../features/toast/state";
-import { GlobalStyles, TextStyle, padding, spacing, gap, roundingLarge } from "../../core/styles";
+import {
+  GlobalStyles,
+  TextStyle,
+  padding,
+  spacing,
+  gap,
+  roundingLarge,
+} from "../../core/styles";
+import { PlayerStats, ProfileData } from "../../features/profiles/types";
+import { profilesService } from "../../di";
 
 export const ProfileScreen = () => {
   const { theme, isDark } = useTheme();
   const { user, signOut } = useAuthState();
-  const {
-    profile,
-    stats,
-    loading,
-    fetchProfileByUserId,
-    fetchStats,
-    updateProfile,
-  } = useProfilesState();
   const { showToast } = useToastState();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -40,10 +41,36 @@ export const ProfileScreen = () => {
   const [editSkillLevel, setEditSkillLevel] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [stats, setStats] = useState<PlayerStats | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    const response = await profilesService.getProfileByUserId(user.id);
+    setProfile(response);
+  };
+
+  const fetchStats = async () => {
+    if (!user) return;
+    const response = await profilesService.getPlayerStats(user.id);
+    setStats(response);
+  };
+
+  const updateProfile = async (userId: string, data: Partial<ProfileData>) => {
+    if (!user || !profile) return;
+    const response = await profilesService.updateProfile(user.id, {
+      bio: editBio,
+      location: editLocation,
+      skillLevel: editSkillLevel as any,
+    });
+    setProfile(response);
+  };
+
   useEffect(() => {
     if (user) {
-      fetchProfileByUserId(user.id);
-      fetchStats(user.id);
+      fetchProfile();
+      fetchStats();
     }
   }, [user]);
 

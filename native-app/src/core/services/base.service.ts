@@ -1,4 +1,5 @@
 import { config } from "../../config";
+import { ApiError, ApiErrorResponse } from "../models/api-error.model";
 
 export class BaseService {
   protected baseUrl: string;
@@ -27,7 +28,8 @@ export class BaseService {
       const response = await fetch(url, config);
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const error: ApiErrorResponse = await response.json();
+        throw new ApiError(error.statusCode, error.message, error.details);
       }
 
       const data = await response.json();
