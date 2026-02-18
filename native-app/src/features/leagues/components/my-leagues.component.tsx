@@ -3,6 +3,7 @@ import {
   defaultIconSize,
   gap,
   padding,
+  paddingLarge,
   paddingSmall,
   rounding,
   roundingFull,
@@ -48,7 +49,8 @@ const MINI_ICON_SIZE = 12;
 const MINI_ICON_PADDING = 4;
 const MINI_ICON_TOTAL_SIZE = MINI_ICON_SIZE + MINI_ICON_PADDING * 2;
 const LOGO_SIZE = 52;
-const LOGO_INNER_PADDING = 4;
+const LOGO_INNER_PADDING = 2;
+const SELECTED_LEAGUE_ROUNDING = roundingMedium;
 
 type NavigationProp = BottomTabNavigationProp<AppTabParamList>;
 
@@ -150,8 +152,13 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
       const newLayouts = { ...prev };
       newLayouts[leagueId] = { width, height, left: x, top: y };
 
+      let currentSelectedLeague = selectedLeague;
+      if (leagues.length > 0 && !currentSelectedLeague) {
+        currentSelectedLeague = leagues[0];
+      }
+
       // If this is the currently selected league, update indicator position
-      if (selectedLeague?.id === leagueId) {
+      if (currentSelectedLeague?.id === leagueId) {
         Animated.parallel([
           Animated.spring(indicatorTop, {
             toValue: y,
@@ -192,17 +199,22 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
 
   // Initialize animated values for all leagues on mount
   useEffect(() => {
+    let currentSelectedLeague = selectedLeague;
+    if (leagues.length > 0 && !currentSelectedLeague) {
+      currentSelectedLeague = leagues[0];
+    }
+
     leagues.forEach((league) => {
       const animatedValue = getAnimatedValue(league.id);
       // Set initial value based on current selection
       animatedValue.setValue(
-        selectedLeague?.id === league.id ? SELECTED_ICON_Y_TRANSFORM : 0
+        currentSelectedLeague?.id === league.id ? SELECTED_ICON_Y_TRANSFORM : 0
       );
     });
 
     // Initialize indicator position if a league is already selected
-    if (selectedLeague) {
-      const layout = logoLayouts[selectedLeague.id];
+    if (currentSelectedLeague) {
+      const layout = logoLayouts[currentSelectedLeague.id];
       if (layout) {
         indicatorTop.setValue(layout.top);
         indicatorLeft.setValue(layout.left);
@@ -322,14 +334,15 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
   return (
     <Card>
       <Container column w100 gap={0}>
-        <Container row paddingHorizontal={padding} w100>
+        {/* paddingHorizontal is set to rounding to ensure the card is not cut off */}
+        <Container row paddingHorizontal={SELECTED_LEAGUE_ROUNDING} w100>
           {/* League icons */}
 
           <ScrollView
             style={{ width: "100%", overflow: "visible" }}
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: gap.md }}
+            contentContainerStyle={{ gap: gap.lg }}
           >
             {selectedLeague && (
               <Animated.View
@@ -397,26 +410,27 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
         </Container>
 
         {selectedLeague && (
-          <Container
-            w100
+          <Card
             style={{
-              backgroundColor: selectedBackgroundColor,
+              borderRadius: SELECTED_LEAGUE_ROUNDING,
+              borderWidth: LOGO_INNER_PADDING,
+              borderColor: selectedBackgroundColor,
               marginTop: SELECTED_ICON_Y_TRANSFORM,
+              width: "100%",
+              paddingVertical: paddingLarge,
             }}
-            rounding={roundingMedium}
-            padding={2}
           >
             <TouchableOpacity
               onPress={() => navigateToLeague(selectedLeague)}
-              style={{ width: "100%", height: "100%" }}
+              style={{ width: "100%" }}
             >
               <Container
                 row
-                padding={padding}
-                rounding={roundingMedium}
+                // padding={padding}
+                rounding={SELECTED_LEAGUE_ROUNDING}
                 style={{
                   alignItems: "stretch",
-                  backgroundColor: theme.colors.cardColour,
+                  // backgroundColor: theme.colors.cardColour,
                 }}
                 w100
               >
@@ -427,7 +441,7 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
                       <Icon
                         name="chevron-right"
                         size={defaultIconSize}
-                        color={theme.colors.text}
+                        color={theme.colors.text + "50"}
                       />
                     </Container>
                     <Container row startVertical w100 gap={gap.sm}>
@@ -448,8 +462,8 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
                         </Container>
 
                         {/* <ThemedText textStyle={TextStyle.BodySmall}>
-                    {getLeagueDays(selectedLeague)}
-                  </ThemedText> */}
+                          {getLeagueDays(selectedLeague)}
+                        </ThemedText> */}
 
                         <LeagueDaysSummary
                           leagueDays={selectedLeague?.leagueDays || []}
@@ -470,7 +484,7 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
                 ></Container>
               </Container>
             </TouchableOpacity>
-          </Container>
+          </Card>
         )}
       </Container>
     </Card>

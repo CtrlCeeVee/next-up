@@ -7,6 +7,7 @@ import {
   Refresh,
   ScreenContainer,
   SearchBar,
+  ShimmerComponent,
 } from "../../components";
 import { useTheme } from "../../core/theme";
 import { useLeaguesState } from "../../features/leagues/state";
@@ -15,10 +16,12 @@ import { useAuthState } from "../../features/auth/state";
 import { League } from "../../features/leagues/types";
 import { LeaguesStackParamList } from "../../navigation/types";
 import {
+  gap,
   GlobalStyles,
   padding,
   paddingSmall,
   paddingXLarge,
+  rounding,
 } from "../../core/styles";
 import { Routes } from "../../navigation/routes";
 import {
@@ -38,6 +41,7 @@ export const BrowseLeaguesScreen = () => {
   const { user } = useAuthState();
   const [leagues, setLeagues] = useState<League[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [memberships, setMemberships] = useState<Record<string, boolean>>({});
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -51,9 +55,13 @@ export const BrowseLeaguesScreen = () => {
   const fetchLeagues = async () => {
     if (!user) return;
     try {
-      setLoading(true);
-      const leagues = await leaguesService.getAll();
-      setLeagues(leagues);
+      if (!leagues || leagues.length === 0) {
+        setLoading(true);
+      }
+
+      const newLeagues = await leaguesService.getAll();
+
+      setLeagues(newLeagues);
     } catch (error) {
       console.error("Error fetching leagues:", error);
     } finally {
@@ -107,6 +115,12 @@ export const BrowseLeaguesScreen = () => {
     return true;
   });
 
+  const refresh = async () => {
+    setRefreshing(true);
+    await fetchLeagues();
+    setRefreshing(false);
+  };
+
   const renderLeagueCard = ({ item: league }: { item: League }) => (
     <LeagueCard
       league={league}
@@ -117,6 +131,17 @@ export const BrowseLeaguesScreen = () => {
       }
     />
   );
+
+  const renderShimmers = () =>
+    [...Array(2)].map((_, index) => (
+      <ShimmerComponent
+        key={index}
+        width="100%"
+        height={140}
+        rounding={rounding}
+        renderCardUnderneath={true}
+      />
+    ));
 
   return (
     <ScreenContainer style={{ padding: padding }}>
@@ -129,14 +154,20 @@ export const BrowseLeaguesScreen = () => {
         />
         <LeagueFilters selectedFilter={filter} onFilterChange={setFilter} />
       </Container>
-      <Refresh
-        style={{ width: "100%" }}
-        data={filteredLeagues}
-        renderItem={renderLeagueCard}
-        keyExtractor={(item: League) => item.id.toString()}
-        refreshing={loading}
-        onRefresh={fetchLeagues}
-      />
+      {loading ? (
+        <Container column w100 gap={gap.md}>
+          {renderShimmers()}
+        </Container>
+      ) : (
+        <Refresh
+          style={{ width: "100%" }}
+          data={filteredLeagues}
+          renderItem={renderLeagueCard}
+          keyExtractor={(item: League) => item.id.toString()}
+          refreshing={refreshing}
+          onRefresh={refresh}
+        />
+      )}
     </ScreenContainer>
   );
 };

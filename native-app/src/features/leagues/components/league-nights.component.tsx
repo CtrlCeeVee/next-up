@@ -18,6 +18,8 @@ import { LeagueNightInstance } from "../../league-nights/types";
 import { Routes } from "../../../navigation/routes";
 import { LeaguesStackParamList } from "../../../navigation/types";
 import { DateUtility } from "../../../core/utilities";
+import { League } from "../../leagues/types";
+import { LeagueLogoComponent } from "./league-logo.component";
 
 type LeagueNightNavigationProp = NativeStackNavigationProp<
   LeaguesStackParamList,
@@ -31,26 +33,27 @@ interface DateInfo {
   };
 }
 
+const RandomNoLeagueNightSentence = [
+  "Stay home and watch some pickleball!",
+  "Stay home and enjoy a nice cup of tea!",
+  "Rest up before your next league night!",
+];
+
 export const LeagueNightsComponent = ({
+  leagues,
   leagueNights,
   isUserMember,
+  onLeagueNightPress,
+  showLeague = false,
 }: {
+  leagues: League[];
   leagueNights: LeagueNightInstance[];
   isUserMember: boolean;
+  onLeagueNightPress?: (night: LeagueNightInstance) => void;
+  showLeague?: boolean;
 }) => {
   const { theme } = useTheme();
   const navigation = useNavigation<LeagueNightNavigationProp>();
-
-  const handleNavigateToNight = (nightId: string) => {
-    const night = leagueNights.find((n) => n.id === nightId);
-    if (!night) {
-      return;
-    }
-    navigation.navigate(Routes.LeagueNight, {
-      leagueId: night.leagueId,
-      nightId: night.id,
-    });
-  };
 
   const getDateInfo = (date: string): DateInfo => {
     const dateObj = new Date(date);
@@ -62,111 +65,160 @@ export const LeagueNightsComponent = ({
     };
   };
 
+  const getRandomNoLeagueNightSentence = () => {
+    return RandomNoLeagueNightSentence[
+      Math.floor(Math.random() * RandomNoLeagueNightSentence.length)
+    ];
+  };
+
+  const renderLeagueNightCardContent = (night: LeagueNightInstance) => {
+    const dateInfo = getDateInfo(night.date);
+
+    return (
+      <Card style={{ width: "100%" }}>
+        <Container column w100>
+          <Container row spaceBetween centerVertical w100 wrap>
+            <Container row centerVertical>
+              <Container row centerVertical gap={gap.md}>
+                <Container
+                  column
+                  centerHorizontal
+                  paddingVertical={spacing.xs}
+                  paddingHorizontal={spacing.sm}
+                  rounding={rounding}
+                >
+                  <ThemedText textStyle={TextStyle.BodyMedium}>
+                    {dateInfo.day}
+                  </ThemedText>
+                  <ThemedText textStyle={TextStyle.BodySmall}>
+                    {dateInfo.month.short}
+                  </ThemedText>
+                </Container>
+                <Container column gap={gap.xs}>
+                  <ThemedText textStyle={TextStyle.BodyMedium}>
+                    {night.day}
+                  </ThemedText>
+                  {showLeague && leagues.length > 0 && (
+                    <Container row centerVertical gap={gap.sm}>
+                      <ThemedText textStyle={TextStyle.BodySmall} muted>
+                        {leagues.find((l) => l.id === night.leagueId)?.name ||
+                          ""}
+                      </ThemedText>
+                    </Container>
+                  )}
+                  <ThemedText textStyle={TextStyle.BodySmall} muted>
+                    At {night.time}
+                  </ThemedText>
+                </Container>
+              </Container>
+            </Container>
+            <Container row centerVertical>
+              {DateUtility.isToday(leagueNights[0].date) && (
+                <Container
+                  rounding={rounding}
+                  paddingVertical={spacing.xs}
+                  paddingHorizontal={spacing.md}
+                  style={{
+                    backgroundColor: theme.colors.accent,
+                  }}
+                >
+                  <ThemedText textStyle={TextStyle.BodySmall}>
+                    Tonight
+                  </ThemedText>
+                </Container>
+              )}
+              {onLeagueNightPress && (
+                <Icon
+                  name="chevron-right"
+                  size={20}
+                  color={theme.colors.text + "60"}
+                />
+              )}
+            </Container>
+          </Container>
+        </Container>
+      </Card>
+    );
+  };
+
+  const renderLeagueNightCard = (
+    night: LeagueNightInstance,
+    fillWidth: boolean,
+    index: number
+  ) => {
+    if (onLeagueNightPress) {
+      return (
+        <TouchableOpacity
+          onPress={() => onLeagueNightPress(night)}
+          activeOpacity={0.5}
+          style={{
+            width: fillWidth ? "100%" : 280,
+            marginRight: fillWidth
+              ? 0
+              : index === leagueNights.length - 1
+                ? 0
+                : gap.md,
+          }}
+        >
+          {renderLeagueNightCardContent(night)}
+        </TouchableOpacity>
+      );
+    } else {
+      return (
+        <Container
+          style={{
+            width: fillWidth ? "100%" : 280,
+            marginRight: fillWidth
+              ? 0
+              : index === leagueNights.length - 1
+                ? 0
+                : gap.md,
+          }}
+        >
+          {renderLeagueNightCardContent(night)}
+        </Container>
+      );
+    }
+  };
+
   return (
     <Container column w100 gap={gap.md}>
       {leagueNights.length > 0 && (
         <Container column w100>
-          <ScrollView
-            style={{ width: "100%" }}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carouselContent}
-          >
-            {leagueNights.map((night, index) => {
-              const dateInfo = getDateInfo(night.date);
-              return (
-                <TouchableOpacity
-                  key={night.id}
-                  onPress={() => handleNavigateToNight(night.id)}
-                  activeOpacity={0.85}
-                  style={[
-                    styles.carouselCard,
-                    {
-                      marginRight:
-                        index === leagueNights.length - 1 ? 0 : gap.md,
-                      // backgroundColor:
-                      //   night.status === "active"
-                      //     ? theme.colors.primary + "10"
-                      //     : theme.colors.background,
-                      // borderColor:
-                      //   night.status === "active"
-                      //     ? theme.colors.primary
-                      //     : theme.colors.border,
-                    },
-                  ]}
-                >
-                  <Card>
-                    <Container row spaceBetween centerVertical>
-                      <Container row centerVertical gap={gap.md}>
-                        <Container
-                          column
-                          centerHorizontal
-                          paddingVertical={spacing.xs}
-                          paddingHorizontal={spacing.sm}
-                          rounding={rounding}
-                        >
-                          <ThemedText textStyle={TextStyle.BodyMedium}>
-                            {dateInfo.day}
-                          </ThemedText>
-                          <ThemedText textStyle={TextStyle.BodySmall}>
-                            {dateInfo.month.short}
-                          </ThemedText>
-                        </Container>
-                        <Container column gap={gap.xs}>
-                          <ThemedText textStyle={TextStyle.BodyMedium}>
-                            {night.day}
-                          </ThemedText>
-                          <ThemedText textStyle={TextStyle.BodySmall} muted>
-                            At {night.time}
-                          </ThemedText>
-                        </Container>
-                        {DateUtility.isToday(night.date) && (
-                          <Container
-                            rounding={rounding}
-                            paddingVertical={spacing.xs}
-                            paddingHorizontal={spacing.md}
-                            style={{
-                              backgroundColor: theme.colors.accent,
-                            }}
-                          >
-                            <ThemedText textStyle={TextStyle.BodySmall}>
-                              Tonight
-                            </ThemedText>
-                          </Container>
-                        )}
-                      </Container>
-                      <Icon
-                        name="chevron-right"
-                        size={20}
-                        color={theme.colors.text + "60"}
-                      />
-                    </Container>
-                  </Card>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+          {leagueNights.length === 1 ? (
+            <Container w100 style={{ paddingRight: padding }}>
+              {renderLeagueNightCard(leagueNights[0], true, 0)}
+            </Container>
+          ) : (
+            <ScrollView
+              style={{ width: "100%" }}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.carouselContent}
+            >
+              {leagueNights.map((night, index) =>
+                renderLeagueNightCard(night, false, index)
+              )}
+            </ScrollView>
+          )}
         </Container>
       )}
       {leagueNights.length === 0 && (
-        <Container
-          column
-          w100
-          centerHorizontal
-          paddingHorizontal={padding}
-          paddingVertical={paddingLarge}
-          rounding={rounding}
-          style={{ backgroundColor: theme.colors.muted + "10" }}
-        >
-          <Icon
-            name="tennis-ball"
-            size={defaultIconSize}
-            color={theme.colors.text + "60"}
-          />
-          <ThemedText textStyle={TextStyle.BodyMedium} muted>
-            No upcoming league nights
-          </ThemedText>
-        </Container>
+        <Card>
+          <Container column w100 centerHorizontal>
+            <Icon
+              name="tennis-ball"
+              size={defaultIconSize}
+              color={theme.colors.text + "60"}
+            />
+            <ThemedText textStyle={TextStyle.BodyMedium} muted>
+              No upcoming league nights
+            </ThemedText>
+            <ThemedText textStyle={TextStyle.BodySmall} muted>
+              {getRandomNoLeagueNightSentence()}
+            </ThemedText>
+          </Container>
+        </Card>
       )}
     </Container>
   );
@@ -177,6 +229,6 @@ const styles = StyleSheet.create({
     paddingRight: padding,
   },
   carouselCard: {
-    width: 280,
+    // width: 280,
   },
 });

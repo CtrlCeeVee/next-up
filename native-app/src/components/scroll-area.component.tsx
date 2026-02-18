@@ -4,12 +4,18 @@ import {
   View,
   ViewStyle,
   LayoutChangeEvent,
+  RefreshControl,
 } from "react-native";
 import { gap, padding } from "../core";
 import { GlobalStyles, spacing } from "../core/styles";
 import { HoverActionsComponent } from "./hover-actions.component";
 import { useState } from "react";
 import { Container } from "./container.component";
+
+export interface RefreshableScrollAreaProps {
+  onRefresh: () => void;
+  refreshing: boolean;
+}
 
 /**
  * ScrollArea provides a scrollable container with optional hover actions.
@@ -23,6 +29,7 @@ export const ScrollArea = ({
   innerPadding = padding,
   contentGap = gap.lg,
   bottomInset = 0,
+  refreshAreaProps,
 }: {
   children: React.ReactNode;
   style?: ViewStyle;
@@ -30,6 +37,7 @@ export const ScrollArea = ({
   innerPadding?: number;
   contentGap?: number;
   bottomInset?: number;
+  refreshAreaProps?: RefreshableScrollAreaProps;
 }) => {
   const [hoverActionsHeight, setHoverActionsHeight] = useState(0);
 
@@ -51,6 +59,14 @@ export const ScrollArea = ({
           paddingBottom: hoverActionsHeight + spacing.md + bottomInset,
           ...style,
         }}
+        refreshControl={
+          refreshAreaProps ? (
+            <RefreshControl
+              refreshing={refreshAreaProps?.refreshing || false}
+              onRefresh={refreshAreaProps?.onRefresh || undefined}
+            />
+          ) : undefined
+        }
       >
         <Container column w100 padding={innerPadding} gap={contentGap}>
           {children}

@@ -8,7 +8,13 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { ThemedText, Card, ScreenContainer, Container } from "../../components";
+import {
+  ThemedText,
+  Card,
+  ScreenContainer,
+  Container,
+  ShimmerComponent,
+} from "../../components";
 import { Icon } from "../../icons";
 import { useTheme } from "../../core/theme";
 import {
@@ -120,6 +126,13 @@ export const DashboardScreen = () => {
     },
   ];
 
+  const navigateToLeague = (leagueId: string) => {
+    navigation.navigate(Routes.Leagues, {
+      screen: Routes.LeagueDetail,
+      params: { leagueId },
+    });
+  };
+
   return (
     <ScreenContainer>
       <ScrollView
@@ -128,7 +141,7 @@ export const DashboardScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Greeting */}
-        <View style={styles.greeting}>
+        <Container column w100 gap={gap.md} padding={padding}>
           <ThemedText textStyle={TextStyle.Header} style={styles.greetingText}>
             Hey{" "}
             <ThemedText
@@ -141,55 +154,66 @@ export const DashboardScreen = () => {
           <ThemedText textStyle={TextStyle.Body} style={styles.greetingText}>
             Ready to play?
           </ThemedText>
-        </View>
+
+          <Container row spaceBetween w100 gap={gap.sm}>
+            {quickActions.map((action, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.quickAction}
+                onPress={action.onPress}
+                activeOpacity={0.7}
+              >
+                <View
+                  style={[
+                    styles.quickActionIcon,
+                    { backgroundColor: action.gradient[0] },
+                  ]}
+                >
+                  <Icon name={action.icon} size={28} color="#FFFFFF" />
+                </View>
+                <ThemedText
+                  textStyle={TextStyle.BodySmall}
+                  style={styles.quickActionLabel}
+                >
+                  {action.label}
+                </ThemedText>
+              </TouchableOpacity>
+            ))}
+          </Container>
+        </Container>
 
         {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          {quickActions.map((action, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.quickAction}
-              onPress={action.onPress}
-              activeOpacity={0.7}
-            >
-              <View
-                style={[
-                  styles.quickActionIcon,
-                  { backgroundColor: action.gradient[0] },
-                ]}
-              >
-                <Icon name={action.icon} size={28} color="#FFFFFF" />
-              </View>
-              <ThemedText
-                textStyle={TextStyle.BodySmall}
-                style={styles.quickActionLabel}
-              >
-                {action.label}
-              </ThemedText>
-            </TouchableOpacity>
-          ))}
-        </View>
 
         {/* Content Sections */}
-        <View style={styles.sections}>
+        <Container column w100 gap={gap.sm}>
           {/* Happening Today Section */}
-          {loading ? (
-            <Card style={styles.loadingCard}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-            </Card>
-          ) : (
-            <Container column w100 gap={gap.md}>
-              <ThemedText textStyle={TextStyle.Body}>Next Up</ThemedText>
+
+          <Container column w100 gap={gap.md} style={{ paddingLeft: padding }}>
+            <ThemedText textStyle={TextStyle.Body}>Next Up</ThemedText>
+            {loading ? (
+              <Container w100 style={{ paddingRight: padding }}>
+                <ShimmerComponent
+                  width="100%"
+                  height={80}
+                  rounding={roundingLarge}
+                  renderCardUnderneath={true}
+                />
+              </Container>
+            ) : (
               <LeagueNightsComponent
+                leagues={leagues}
+                showLeague={true}
                 leagueNights={nextUpLeagueNightInstances}
                 isUserMember={false}
+                onLeagueNightPress={(night) => navigateToLeague(night.leagueId)}
               />
-            </Container>
-          )}
+            )}
+          </Container>
 
           {/* Your Leagues Section */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
+
+          <Container column w100 gap={gap.sm} style={{ padding: padding }}>
+            <Container row spaceBetween w100>
               <View style={styles.sectionHeader}>
                 <ThemedText textStyle={TextStyle.Body}>My Leagues</ThemedText>
               </View>
@@ -209,11 +233,22 @@ export const DashboardScreen = () => {
                   </ThemedText>
                 </TouchableOpacity>
               )}
-            </View>
+            </Container>
 
-            <MyLeagues leagues={myLeagues} />
-          </View>
-        </View>
+            {loading ? (
+              <Container w100>
+                <ShimmerComponent
+                  width="100%"
+                  height={200}
+                  rounding={roundingLarge}
+                  renderCardUnderneath={true}
+                />
+              </Container>
+            ) : (
+              <MyLeagues leagues={myLeagues} />
+            )}
+          </Container>
+        </Container>
       </ScrollView>
     </ScreenContainer>
   );
@@ -224,11 +259,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: padding,
-    paddingBottom: spacing.xxxl + spacing.lg,
-  },
-  greeting: {
-    marginBottom: spacing.xl,
+    gap: gap.sm,
   },
   greetingText: {
     flexWrap: "wrap",

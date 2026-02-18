@@ -3,6 +3,7 @@ import { View, StyleSheet, ViewStyle, ColorValue } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "../core/theme";
 import { rounding, padding, shadow } from "../core/styles/global";
+import { opacity } from "react-native-reanimated/lib/typescript/Colors";
 
 interface CardProps {
   children: React.ReactNode;
@@ -26,11 +27,7 @@ export const Card: React.FC<CardProps> = ({
       colors={gradientColors}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      style={[
-        styles.gradient,
-        { borderColor: theme.colors.border },
-        style,
-      ]}
+      style={[styles.gradient, { borderColor: theme.colors.border }, style]}
     >
       {children}
     </LinearGradient>
