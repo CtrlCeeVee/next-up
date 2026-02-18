@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, FlatList } from "react-native";
 
-import { ThemedText, Container } from "../../../components";
+import { ThemedText, Container, Refresh } from "../../../components";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
 import { gap, padding, TextStyle } from "../../../core/styles";
@@ -35,6 +35,7 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
   const { theme } = useTheme();
   const { user } = useAuthState();
 
+  const [loading, setLoading] = useState(false);
   const [matches, setMatches] = useState<GetMatchResponse[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileData>>({});
 
@@ -74,6 +75,7 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
 
   const fetchMatches = async () => {
     if (!leagueNight || !user) return;
+    setLoading(true);
     const response = await leagueNightsService.getMatches(
       league.id,
       leagueNight.id,
@@ -88,6 +90,7 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
       {} as Record<string, ProfileData>
     );
     setProfiles(profilesMap);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -97,32 +100,24 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
   const matchesList: MatchItemProps[] = useMemo(() => {
     if (!leagueNight || !user) return [];
 
-    return matches.map((match) => ({
-      leagueId: league.id,
-      leagueNightId: leagueNight.id,
-      match: match,
-      partnership1: {
-        partnership: match.partnership1,
-        profile1: profiles[match.partnership1.player1Id],
-        profile2: profiles[match.partnership1.player2Id],
-      },
-      partnership2: {
-        partnership: match.partnership2,
-        profile1: profiles[match.partnership2.player1Id],
-        profile2: profiles[match.partnership2.player2Id],
-      },
-    }));
+    return matches
+      .map((match) => ({
+        leagueId: league.id,
+        leagueNightId: leagueNight.id,
+        match: match,
+        partnership1: {
+          partnership: match.partnership1,
+          profile1: profiles[match.partnership1.player1Id],
+          profile2: profiles[match.partnership1.player2Id],
+        },
+        partnership2: {
+          partnership: match.partnership2,
+          profile1: profiles[match.partnership2.player1Id],
+          profile2: profiles[match.partnership2.player2Id],
+        },
+      }))
+      .sort((a, b) => (a.match.match.status === "active" ? -1 : 1));
   }, [matches, league, leagueNight, profiles]);
-
-  // Separate active and completed matches
-  const activeMatches = useMemo(
-    () => matchesList.filter((m) => m.match.match.status === "active"),
-    [matchesList]
-  );
-  const completedMatches = useMemo(
-    () => matchesList.filter((m) => m.match.match.status === "completed"),
-    [matchesList]
-  );
 
   if (matches.length === 0) {
     return (
@@ -136,64 +131,70 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
   }
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Container column gap={gap.md} w100 grow>
-        {activeMatches.length > 0 && (
-          <Container column gap={gap.md} w100>
-            <Container row gap={gap.sm} w100 centerVertical>
-              <Icon name="trophy" size={20} color={theme.colors.primary} />
-              <ThemedText textStyle={TextStyle.Subheader}>
-                Active Matches
-              </ThemedText>
-            </Container>
-            <FlatList
-              style={styles.container}
-              data={activeMatches}
-              renderItem={({ item }) => (
-                <MatchItem {...item} onMatchUpdated={onMatchUpdated} />
-              )}
-              keyExtractor={(item) => item.match.match.id}
-              scrollEnabled={false}
-            />
-          </Container>
+    <Container>
+      <Refresh
+        data={matchesList}
+        renderItem={({ item }) => (
+          <MatchItem {...item} onMatchUpdated={onMatchUpdated} />
         )}
+        keyExtractor={(item) => item.match.match.id}
+        refreshing={loading}
+        onRefresh={fetchMatches}
+      />
+    </Container>
+    // <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    //   <Container column gap={gap.md} w100 grow>
+    //     {activeMatches.length > 0 && (
+    //       <Container column gap={gap.md} w100>
+    //         <Container row gap={gap.sm} w100 centerVertical>
+    //           <Icon name="trophy" size={20} color={theme.colors.primary} />
+    //           <ThemedText textStyle={TextStyle.Subheader}>
+    //             Active Matches
+    //           </ThemedText>
+    //         </Container>
+    //         <FlatList
+    //           style={styles.container}
+    //           data={activeMatches}
+    //           renderItem={({ item }) => (
+    //             <MatchItem {...item} onMatchUpdated={onMatchUpdated} />
+    //           )}
+    //           keyExtractor={(item) => item.match.match.id}
+    //           scrollEnabled={false}
+    //         />
+    //       </Container>
+    //     )}
 
-        {completedMatches.length > 0 && (
-          <Container column gap={gap.md} w100>
-            <Container row gap={gap.sm} w100 centerVertical>
-              <Icon
-                name="check-circle"
-                size={20}
-                color={theme.colors.success}
-              />
-              <ThemedText textStyle={TextStyle.Subheader}>
-                Completed Matches
-              </ThemedText>
-            </Container>
-            <FlatList
-              style={styles.container}
-              data={completedMatches}
-              renderItem={({ item }) => (
-                <MatchItem {...item} onMatchUpdated={onMatchUpdated} />
-              )}
-              keyExtractor={(item) => item.match.match.id}
-              scrollEnabled={false}
-            />
-          </Container>
-        )}
-      </Container>
-    </ScrollView>
+    //     {completedMatches.length > 0 && (
+    //       <Container column gap={gap.md} w100>
+    //         <Container row gap={gap.sm} w100 centerVertical>
+    //           <Icon
+    //             name="check-circle"
+    //             size={20}
+    //             color={theme.colors.success}
+    //           />
+    //           <ThemedText textStyle={TextStyle.Subheader}>
+    //             Completed Matches
+    //           </ThemedText>
+    //         </Container>
+    //         <FlatList
+    //           style={styles.container}
+    //           data={completedMatches}
+    //           renderItem={({ item }) => (
+    //             <MatchItem {...item} onMatchUpdated={onMatchUpdated} />
+    //           )}
+    //           keyExtractor={(item) => item.match.match.id}
+    //           scrollEnabled={false}
+    //         />
+    //       </Container>
+    //     )}
+    //   </Container>
+    // </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-  },
-  content: {
-    width: "100%",
-    padding: padding,
-    gap: 24,
   },
   loadingContainer: {
     flex: 1,

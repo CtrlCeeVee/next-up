@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import {
   Button,
   Card,
@@ -17,8 +17,7 @@ import { Icon } from "../../../icons";
 import { BadgeComponent } from "../../../components/badge.component";
 import { useTheme } from "../../../core/theme";
 import { useAuthState } from "../../auth/state";
-import { padding } from "../../../core/styles/global";
-import { gap } from "../../../core/styles/global";
+import { gap, padding } from "../../../core/styles/global";
 import { useMemo, useState } from "react";
 import { leagueNightsService } from "../../../di";
 import { useToastState } from "../../toast/state";
@@ -169,12 +168,27 @@ export const MatchItem: React.FC<MatchItemProps> = ({
     return (
       <Container
         column
-        style={{ alignItems: align === "left" ? "flex-start" : "flex-end" }}
+        w100
+        grow
+        style={{
+          ...styles.teamContainer,
+          alignItems: align === "left" ? "flex-start" : "flex-end",
+        }}
       >
-        <ThemedText textStyle={TextStyle.Body}>
-          {partnership.profile1.firstName} {partnership.profile2.lastName}
+        <ThemedText
+          textStyle={TextStyle.BodySmall}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={styles.playerName}
+        >
+          {partnership.profile1.firstName} {partnership.profile1.lastName}
         </ThemedText>
-        <ThemedText textStyle={TextStyle.Body}>
+        <ThemedText
+          textStyle={TextStyle.BodySmall}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+          style={styles.playerName}
+        >
           {partnership.profile2.firstName} {partnership.profile2.lastName}
         </ThemedText>
       </Container>
@@ -183,95 +197,107 @@ export const MatchItem: React.FC<MatchItemProps> = ({
 
   return (
     <Card style={styles.matchCard}>
-      <View style={styles.matchHeader}>
-        <View style={styles.courtBadge}>
+      {/* Header */}
+      <Container row w100 centerVertical spaceBetween>
+        <Container row centerVertical gap={gap.xs} style={styles.courtBadge}>
           <Icon name="map-pin" size={16} color={theme.colors.primary} />
           <ThemedText textStyle={TextStyle.BodySmall} style={styles.courtText}>
             {match.courtLabel}
           </ThemedText>
-        </View>
+        </Container>
         <BadgeComponent
-          icon="clock"
+          icon={match.match.status === "active" ? "clock" : "check-circle"}
           text={match.match.status === "active" ? "Active" : "Completed"}
           color={
             match.match.status === "active"
-              ? theme.colors.success
-              : theme.colors.text
+              ? theme.colors.accent
+              : theme.colors.success
           }
-        ></BadgeComponent>
-      </View>
+        />
+      </Container>
 
-      {/* Team 1 */}
-      <Container row gap={gap.sm} w100 centerVertical spaceBetween>
+      {/* Teams + Score */}
+      <Container row w100 centerVertical gap={0}>
         {renderPartnership(partnership1, "left")}
-        <ThemedText textStyle={TextStyle.BodySmall}>VS</ThemedText>
+
+        <View style={styles.scoreCenter}>
+          {match.match.scoreStatus === "none" ||
+          match.match.scoreStatus === "disputed" ? (
+            <Container row gap={gap.sm} centerVertical>
+              <Input
+                keyboardType="number-pad"
+                selectTextOnFocus={true}
+                onChangeText={handleTeam1ScoreChange}
+                style={styles.scoreInput}
+                containerStyle={styles.scoreInputContainer}
+                defaultValue={team1Score}
+              />
+              <ThemedText textStyle={TextStyle.Body} style={styles.scoreDash}>
+                -
+              </ThemedText>
+              <Input
+                keyboardType="number-pad"
+                selectTextOnFocus={true}
+                onChangeText={handleTeam2ScoreChange}
+                style={styles.scoreInput}
+                containerStyle={styles.scoreInputContainer}
+                defaultValue={team2Score}
+              />
+            </Container>
+          ) : (
+            <Container column centerHorizontal gap={gap.xs}>
+              <ThemedText textStyle={TextStyle.Caption} muted>
+                Score
+              </ThemedText>
+              <ThemedText textStyle={TextStyle.Subheader}>
+                {match.match.scoreStatus === "confirmed"
+                  ? `${match.match.team1Score} - ${match.match.team2Score}`
+                  : `${match.match.pendingTeam1Score} - ${match.match.pendingTeam2Score}`}
+              </ThemedText>
+            </Container>
+          )}
+        </View>
+
         {renderPartnership(partnership2, "right")}
       </Container>
 
-      <Container row grow w100 spaceBetween centerVertical>
-        {match.match.scoreStatus === "none" ||
-        match.match.scoreStatus === "disputed" ? (
-          <Container row gap={gap.sm} centerVertical>
-            <Input
-              keyboardType="number-pad"
-              selectTextOnFocus={true}
-              onChangeText={handleTeam1ScoreChange}
-            >
-              {team1Score}
-            </Input>
-            <ThemedText textStyle={TextStyle.Body}>-</ThemedText>
-            <Input
-              keyboardType="number-pad"
-              selectTextOnFocus={true}
-              onChangeText={handleTeam2ScoreChange}
-            >
-              {team2Score}
-            </Input>
-          </Container>
+      {/* Actions */}
+      {(match.match.scoreStatus === "none" ||
+        match.match.scoreStatus === "disputed") && (
+        <Button
+          title="Submit Score"
+          onPress={handleSubmitScore}
+          loading={actioningMatchScore}
+          style={styles.fullWidthButton}
+        />
+      )}
+
+      {match.match.scoreStatus === "pending" &&
+        (userSetScore ? (
+          <Button
+            title="Cancel Score"
+            onPress={handleCancelScore}
+            loading={actioningMatchScore}
+            variant="outline"
+            style={styles.fullWidthButton}
+          />
         ) : (
-          <Container row centerVertical>
-            <ThemedText textStyle={TextStyle.Body} muted>
-              Score:
-            </ThemedText>
-            <ThemedText textStyle={TextStyle.Body}>
-              {match.match.pendingTeam1Score} - {match.match.pendingTeam2Score}
-            </ThemedText>
-          </Container>
-        )}
-        {match.match.scoreStatus === "pending" && (
-          <Container row gap={gap.sm} centerVertical>
-            {userSetScore ? (
-              <Button
-                title="Cancel Score"
-                onPress={handleCancelScore}
-                loading={actioningMatchScore}
-              />
-            ) : (
-              <Container column>
-                <Button
-                  title="Dispute Score"
-                  onPress={handleDisputeScore}
-                  loading={actioningMatchScore}
-                />
-                <Button
-                  title="Confirm Score"
-                  onPress={handleConfirmScore}
-                  loading={actioningMatchScore}
-                />
-              </Container>
-            )}
-          </Container>
-        )}
-        {match.match.scoreStatus === "none" && (
-          <Container row gap={gap.sm} centerVertical>
+          <Container row gap={gap.sm} w100>
             <Button
-              title="Submit Score"
-              onPress={handleSubmitScore}
+              title="Dispute"
+              onPress={handleDisputeScore}
               loading={actioningMatchScore}
+              variant="outline"
+              style={styles.splitButton}
+            />
+            <Button
+              title="Confirm Score"
+              onPress={handleConfirmScore}
+              loading={actioningMatchScore}
+              style={styles.splitButton}
             />
           </Container>
-        )}
-      </Container>
+        ))}
 
       {match.match.pendingSubmittedByPartnershipId === user?.id && (
         <View style={styles.pendingScoreNotice}>
@@ -290,7 +316,6 @@ export const MatchItem: React.FC<MatchItemProps> = ({
 
 const styles = StyleSheet.create({
   matchCard: {
-    padding: padding,
     gap: 12,
     marginBottom: 12,
   },
@@ -307,31 +332,41 @@ const styles = StyleSheet.create({
   courtText: {
     fontWeight: "600",
   },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+  teamContainer: {
+    flex: 1,
+    flexShrink: 1,
+    gap: 2,
+    minWidth: 0,
   },
-  statusText: {
+  playerName: {
+    flexShrink: 1,
+  },
+  scoreCenter: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: gap.sm,
+  },
+  scoreInput: {
+    width: 45,
+    textAlign: "center",
+    fontSize: 18,
+    fontWeight: "600",
+    borderWidth: 0,
+    borderBottomWidth: 3,
+    borderRadius: 0,
+  },
+  scoreInputContainer: {
+    marginBottom: 0,
+    padding: 0,
+  },
+  scoreDash: {
     fontWeight: "600",
   },
-  teamContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  fullWidthButton: {
+    width: "100%",
   },
-  teamInfo: {
+  splitButton: {
     flex: 1,
-    gap: 4,
-  },
-  score: {
-    fontSize: 24,
-    fontWeight: "700",
-  },
-  divider: {
-    width: 1,
-    height: "100%",
-    backgroundColor: "rgba(255,255,255,0.1)",
   },
   pendingScoreNotice: {
     flexDirection: "row",

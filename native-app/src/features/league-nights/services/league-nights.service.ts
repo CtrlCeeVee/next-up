@@ -300,8 +300,8 @@ export class LeagueNightsService extends BaseService {
     const response = await this.post<any>(
       `/api/leagues/${leagueId}/nights/${nightId}/confirm-score`,
       {
-        match_id: matchId,
-        user_id: userId,
+        matchId: matchId,
+        userId: userId,
       }
     );
     return response.data;
@@ -317,8 +317,8 @@ export class LeagueNightsService extends BaseService {
     const response = await this.post(
       `/api/leagues/${leagueId}/nights/${nightId}/dispute-score`,
       {
-        match_id: matchId,
-        user_id: userId,
+        matchId: matchId,
+        userId: userId,
       }
     );
     return response.data;

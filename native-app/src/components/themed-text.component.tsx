@@ -16,6 +16,8 @@ interface ThemedTextProps {
   startVertical?: boolean;
   centerVertical?: boolean;
   endVertical?: boolean;
+  numberOfLines?: number;
+  ellipsizeMode?: "head" | "middle" | "tail" | "clip";
 }
 
 export const ThemedText: React.FC<ThemedTextProps> = ({
@@ -31,11 +33,15 @@ export const ThemedText: React.FC<ThemedTextProps> = ({
   startVertical = false,
   centerVertical = false,
   endVertical = false,
+  numberOfLines,
+  ellipsizeMode,
 }) => {
   const { theme } = useTheme();
 
   return (
     <Text
+      numberOfLines={numberOfLines}
+      ellipsizeMode={ellipsizeMode}
       style={[
         GlobalTextStyles[textStyle],
         {
