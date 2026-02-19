@@ -59,6 +59,17 @@ export const MatchItem: React.FC<MatchItemProps> = ({
     match.match.team2Score?.toString() ?? "00"
   );
 
+  const isUserMatch = useMemo(() => {
+    if (!user) return false;
+
+    return (
+      match.partnership1.player1Id === user.id ||
+      match.partnership1.player2Id === user.id ||
+      match.partnership2.player1Id === user.id ||
+      match.partnership2.player2Id === user.id
+    );
+  }, [match, user]);
+
   const userSetScore = useMemo(() => {
     if (!user) return false;
     return (
@@ -161,6 +172,65 @@ export const MatchItem: React.FC<MatchItemProps> = ({
     });
   };
 
+  const renderButtons = () => {
+    if (!isUserMatch) {
+      return null;
+    }
+
+    return (
+      <Container>
+        {(match.match.scoreStatus === "none" ||
+          match.match.scoreStatus === "disputed") && (
+          <Button
+            title="Submit Score"
+            onPress={handleSubmitScore}
+            loading={actioningMatchScore}
+            style={styles.fullWidthButton}
+          />
+        )}
+
+        {match.match.scoreStatus === "pending" &&
+          (userSetScore ? (
+            <Button
+              title="Cancel Score"
+              onPress={handleCancelScore}
+              loading={actioningMatchScore}
+              variant="outline"
+              style={styles.fullWidthButton}
+            />
+          ) : (
+            <Container row gap={gap.sm} w100>
+              <Button
+                title="Dispute"
+                onPress={handleDisputeScore}
+                loading={actioningMatchScore}
+                variant="outline"
+                style={styles.splitButton}
+              />
+              <Button
+                title="Confirm Score"
+                onPress={handleConfirmScore}
+                loading={actioningMatchScore}
+                style={styles.splitButton}
+              />
+            </Container>
+          ))}
+
+        {match.match.pendingSubmittedByPartnershipId === user?.id && (
+          <View style={styles.pendingScoreNotice}>
+            <Icon name="clock" size={16} color={theme.colors.warning} />
+            <ThemedText
+              textStyle={TextStyle.BodySmall}
+              style={styles.pendingScoreText}
+            >
+              Score pending confirmation
+            </ThemedText>
+          </View>
+        )}
+      </Container>
+    );
+  };
+
   const renderPartnership = (
     partnership: PartnershipProps,
     align: "left" | "right"
@@ -221,8 +291,9 @@ export const MatchItem: React.FC<MatchItemProps> = ({
         {renderPartnership(partnership1, "left")}
 
         <View style={styles.scoreCenter}>
-          {match.match.scoreStatus === "none" ||
-          match.match.scoreStatus === "disputed" ? (
+          {isUserMatch &&
+          (match.match.scoreStatus === "none" ||
+            match.match.scoreStatus === "disputed") ? (
             <Container row gap={gap.sm} centerVertical>
               <Input
                 keyboardType="number-pad"
@@ -251,8 +322,8 @@ export const MatchItem: React.FC<MatchItemProps> = ({
               </ThemedText>
               <ThemedText textStyle={TextStyle.Subheader}>
                 {match.match.scoreStatus === "confirmed"
-                  ? `${match.match.team1Score} - ${match.match.team2Score}`
-                  : `${match.match.pendingTeam1Score} - ${match.match.pendingTeam2Score}`}
+                  ? `${match.match.team1Score || "0"} - ${match.match.team2Score || "0"}`
+                  : `${match.match.pendingTeam1Score || "0"} - ${match.match.pendingTeam2Score || "0"}`}
               </ThemedText>
             </Container>
           )}
@@ -261,55 +332,7 @@ export const MatchItem: React.FC<MatchItemProps> = ({
         {renderPartnership(partnership2, "right")}
       </Container>
 
-      {/* Actions */}
-      {(match.match.scoreStatus === "none" ||
-        match.match.scoreStatus === "disputed") && (
-        <Button
-          title="Submit Score"
-          onPress={handleSubmitScore}
-          loading={actioningMatchScore}
-          style={styles.fullWidthButton}
-        />
-      )}
-
-      {match.match.scoreStatus === "pending" &&
-        (userSetScore ? (
-          <Button
-            title="Cancel Score"
-            onPress={handleCancelScore}
-            loading={actioningMatchScore}
-            variant="outline"
-            style={styles.fullWidthButton}
-          />
-        ) : (
-          <Container row gap={gap.sm} w100>
-            <Button
-              title="Dispute"
-              onPress={handleDisputeScore}
-              loading={actioningMatchScore}
-              variant="outline"
-              style={styles.splitButton}
-            />
-            <Button
-              title="Confirm Score"
-              onPress={handleConfirmScore}
-              loading={actioningMatchScore}
-              style={styles.splitButton}
-            />
-          </Container>
-        ))}
-
-      {match.match.pendingSubmittedByPartnershipId === user?.id && (
-        <View style={styles.pendingScoreNotice}>
-          <Icon name="clock" size={16} color={theme.colors.warning} />
-          <ThemedText
-            textStyle={TextStyle.BodySmall}
-            style={styles.pendingScoreText}
-          >
-            Score pending confirmation
-          </ThemedText>
-        </View>
-      )}
+      {renderButtons()}
     </Card>
   );
 };

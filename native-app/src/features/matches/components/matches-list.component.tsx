@@ -1,10 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, FlatList } from "react-native";
 
-import { ThemedText, Container, Refresh } from "../../../components";
+import {
+  ThemedText,
+  Container,
+  Refresh,
+  Button,
+  Dropdown,
+} from "../../../components";
 import { Icon } from "../../../icons";
 import { useTheme } from "../../../core/theme";
-import { gap, padding, TextStyle } from "../../../core/styles";
+import { gap, padding, paddingSmall, TextStyle } from "../../../core/styles";
 import { MatchItem, MatchItemProps } from "./match-item.component";
 import {
   GetMatchResponse,
@@ -22,10 +28,16 @@ import {
   NativeRealtimeEventName,
   NativeRealtimeMessageType,
 } from "../../websockets/types";
+import { PillTabs } from "../../../components/pill-tabs.component";
 
 interface MatchesQueueTabProps {
   league: League;
   leagueNight: LeagueNightInstance;
+}
+
+enum ShowMatches {
+  MY_MATCHES = "my_matches",
+  ALL_MATCHES = "all_matches",
 }
 
 export const MatchesList: React.FC<MatchesQueueTabProps> = ({
@@ -38,6 +50,10 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
   const [loading, setLoading] = useState(false);
   const [matches, setMatches] = useState<GetMatchResponse[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileData>>({});
+
+  const [showMatches, setShowMatches] = useState<ShowMatches>(
+    ShowMatches.MY_MATCHES
+  );
 
   const leagueNightsService = getService<LeagueNightsService>(
     InjectableType.LEAGUE_NIGHTS
@@ -79,7 +95,7 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
     const response = await leagueNightsService.getMatches(
       league.id,
       leagueNight.id,
-      user.id
+      showMatches === ShowMatches.MY_MATCHES ? user.id : undefined
     );
     setMatches(response.matches);
     const profilesMap = response.profiles.reduce(
@@ -95,7 +111,7 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
 
   useEffect(() => {
     fetchMatches();
-  }, [leagueNight, user]);
+  }, [leagueNight, user, showMatches]);
 
   const matchesList: MatchItemProps[] = useMemo(() => {
     if (!leagueNight || !user) return [];
@@ -119,19 +135,21 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
       .sort((a, b) => (a.match.match.status === "active" ? -1 : 1));
   }, [matches, league, leagueNight, profiles]);
 
-  if (matches.length === 0) {
-    return (
-      <Container column gap={gap.md} centerHorizontal centerVertical w100 grow>
-        <Icon name="trophy" size={48} color={theme.colors.muted} />
-        <ThemedText textStyle={TextStyle.Subheader} style={styles.emptyTitle}>
-          No Matches
-        </ThemedText>
-      </Container>
-    );
-  }
-
   return (
-    <Container>
+    <Container column w100 grow padding={paddingSmall} gap={gap.md}>
+      <Container row w100 endHorizontal>
+        <Dropdown
+          containerStyle={{ width: "100%" }}
+          placeholder="Show matches..."
+          value={showMatches}
+          onChange={(value) => {
+            setShowMatches(value as ShowMatches);
+          }}
+        >
+          <Dropdown.Item label="My matches" value={ShowMatches.MY_MATCHES} />
+          <Dropdown.Item label="All matches" value={ShowMatches.ALL_MATCHES} />
+        </Dropdown>
+      </Container>
       <Refresh
         data={matchesList}
         renderItem={({ item }) => (
@@ -140,6 +158,25 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
         keyExtractor={(item) => item.match.match.id}
         refreshing={loading}
         onRefresh={fetchMatches}
+        style={{ flex: 1, width: "100%" }}
+        ListEmptyComponent={
+          <Container
+            column
+            w100
+            grow
+            gap={gap.md}
+            centerHorizontal
+            centerVertical
+          >
+            <Icon name="trophy" size={48} color={theme.colors.muted} />
+            <ThemedText
+              textStyle={TextStyle.Subheader}
+              style={styles.emptyTitle}
+            >
+              No Matches
+            </ThemedText>
+          </Container>
+        }
       />
     </Container>
     // <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>

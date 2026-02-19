@@ -47,13 +47,7 @@ export const ActiveLeagueNightComponent: React.FC<
     if (!leagueNight) return null;
 
     return (
-      <Container
-        column
-        gap={gap.md}
-        padding={padding}
-        w100
-        style={{ marginTop: 12 }}
-      >
+      <Container column grow gap={gap.md} w100>
         <MatchesList league={league} leagueNight={leagueNight} />
       </Container>
     );

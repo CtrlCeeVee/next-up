@@ -179,10 +179,10 @@ export class LeagueNightsService extends BaseService {
   async getMatches(
     leagueId: string,
     nightId: string,
-    userId: string
+    userId?: string
   ): Promise<GetMatchesResponse> {
     const response = await this.get<any>(
-      `/api/leagues/${leagueId}/nights/${nightId}/matches?user_id=${userId}`
+      `/api/leagues/${leagueId}/nights/${nightId}/matches${userId ? `?userId=${userId}` : ""}`
     );
     return response.data;
   }
