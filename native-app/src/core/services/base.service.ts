@@ -58,7 +58,10 @@ export class BaseService {
     });
   }
 
-  protected async delete<T = any>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: "DELETE" });
+  protected async delete<T = any>(endpoint: string, body?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: "DELETE",
+      body: JSON.stringify(body),
+    });
   }
 }

@@ -149,6 +149,7 @@ export const LeagueNightsComponent = ({
     if (onLeagueNightPress) {
       return (
         <TouchableOpacity
+          key={index}
           onPress={() => onLeagueNightPress(night)}
           activeOpacity={0.5}
           style={{
@@ -158,6 +159,7 @@ export const LeagueNightsComponent = ({
               : index === leagueNights.length - 1
                 ? 0
                 : gap.md,
+            marginLeft: index === 0 ? padding : 0,
           }}
         >
           {renderLeagueNightCardContent(night)}
@@ -166,6 +168,7 @@ export const LeagueNightsComponent = ({
     } else {
       return (
         <Container
+          key={index}
           style={{
             width: fillWidth ? "100%" : 280,
             marginRight: fillWidth
@@ -173,6 +176,7 @@ export const LeagueNightsComponent = ({
               : index === leagueNights.length - 1
                 ? 0
                 : gap.md,
+            marginLeft: index === 0 ? padding : 0,
           }}
         >
           {renderLeagueNightCardContent(night)}
@@ -186,7 +190,7 @@ export const LeagueNightsComponent = ({
       {leagueNights.length > 0 && (
         <Container column w100>
           {leagueNights.length === 1 ? (
-            <Container w100 style={{ paddingRight: padding }}>
+            <Container w100 style={{ padding: padding }}>
               {renderLeagueNightCard(leagueNights[0], true, 0)}
             </Container>
           ) : (

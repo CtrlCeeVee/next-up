@@ -7,3 +7,5 @@ export * from "./league-nights.component";
 export * from "./league-settings.component";
 export * from "./league-logo.component";
 export * from "./my-leagues.component";
+export * from "./week-summary.component";
+export * from "./stats-summary.component";
