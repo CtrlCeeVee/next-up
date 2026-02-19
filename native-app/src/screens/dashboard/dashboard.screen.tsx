@@ -35,27 +35,35 @@ import { LeagueNightInstance } from "../../features/league-nights/types";
 import { getService, InjectableType } from "../../di";
 import { LeaguesService } from "../../features/leagues/services";
 import { LeagueNightsService } from "../../features/league-nights/services";
+import { DateUtility } from "../../core/utilities";
 import {
   LeagueNightsComponent,
   MyLeagues,
+  WeekSummary,
+  StatsSummary,
 } from "../../features/leagues/components";
+import { useLeaguesState } from "../../features/leagues/state";
 
 type NavigationProp = NativeStackNavigationProp<AppTabParamList>;
-
-interface LeagueWithNight extends Omit<League, "startTime" | "totalPlayers"> {
-  hasNightToday?: boolean;
-  nightId?: string;
-  startTime?: string;
-  totalPlayers?: number;
-}
 
 export const DashboardScreen = () => {
   const navigation = useNavigation<NavigationProp>();
   const { theme, isDark } = useTheme();
   const { user } = useAuthState();
   const [leagues, setLeagues] = useState<League[]>([]);
+
+  const favouriteLeagueIds = useLeaguesState(
+    (state) => state.favouriteLeagueIds
+  );
+  const fetchFavouriteLeagueIds = useLeaguesState(
+    (state) => state.fetchFavouriteLeagueIds
+  );
+
   const [myLeagues, setMyLeagues] = useState<League[]>([]);
   const [nextUpLeagueNightInstances, setNextUpLeagueNightInstances] = useState<
+    LeagueNightInstance[]
+  >([]);
+  const [weekLeagueNightInstances, setWeekLeagueNightInstances] = useState<
     LeagueNightInstance[]
   >([]);
   const [loading, setLoading] = useState(true);
@@ -77,11 +85,30 @@ export const DashboardScreen = () => {
         // Fetch all leagues
         const leagues = await leaguesService.getAll();
         setLeagues(leagues);
+
+        // Fetch my leagues
         const myLeagues = await leaguesService.getMyLeagues(user.id);
         setMyLeagues(myLeagues);
+
+        // Fetch favourite league ids
+        await fetchFavouriteLeagueIds(user.id);
+
         const nextUpLeagueNightInstances =
           await leagueNightsService.getNextUpLeagueNightInstances(3, user.id);
         setNextUpLeagueNightInstances(nextUpLeagueNightInstances);
+
+        // Fetch week league night instances
+        const weekStart = DateUtility.getCurrentWeekStart();
+        const weekEnd = DateUtility.getCurrentWeekEnd();
+        const weekStartStr = DateUtility.formatDateString(weekStart);
+        const weekEndStr = DateUtility.formatDateString(weekEnd);
+        const weekInstances =
+          await leagueNightsService.getWeekLeagueNightInstances(
+            user.id,
+            weekStartStr,
+            weekEndStr
+          );
+        setWeekLeagueNightInstances(weekInstances);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -141,116 +168,160 @@ export const DashboardScreen = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Greeting */}
-        <Container column w100 gap={gap.md} padding={padding}>
-          <ThemedText textStyle={TextStyle.Header} style={styles.greetingText}>
-            Hey{" "}
-            <ThemedText
-              textStyle={TextStyle.Header}
-              style={[styles.greetingName, { color: theme.colors.primary }]}
-            >
-              {firstName}
-            </ThemedText>
-          </ThemedText>
-          <ThemedText textStyle={TextStyle.Body} style={styles.greetingText}>
-            Ready to play?
-          </ThemedText>
-
-          <Container row spaceBetween w100 gap={gap.sm}>
-            {quickActions.map((action, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.quickAction}
-                onPress={action.onPress}
-                activeOpacity={0.7}
+        <Container w100 column style={{ paddingBottom: 100 }}>
+          {/* Greeting */}
+          <Container column w100 gap={gap.xl} padding={padding}>
+            <Container column w100 gap={0}>
+              <ThemedText
+                textStyle={TextStyle.Header}
+                style={styles.greetingText}
               >
-                <View
-                  style={[
-                    styles.quickActionIcon,
-                    { backgroundColor: action.gradient[0] },
-                  ]}
-                >
-                  <Icon name={action.icon} size={28} color="#FFFFFF" />
-                </View>
+                Hey{" "}
                 <ThemedText
-                  textStyle={TextStyle.BodySmall}
-                  style={styles.quickActionLabel}
+                  textStyle={TextStyle.Header}
+                  style={[styles.greetingName, { color: theme.colors.primary }]}
                 >
-                  {action.label}
+                  {firstName}
                 </ThemedText>
-              </TouchableOpacity>
-            ))}
-          </Container>
-        </Container>
+              </ThemedText>
+              <ThemedText
+                textStyle={TextStyle.Body}
+                style={styles.greetingText}
+              >
+                Ready to play?
+              </ThemedText>
+            </Container>
 
-        {/* Quick Actions */}
-
-        {/* Content Sections */}
-        <Container column w100 gap={gap.sm}>
-          {/* Happening Today Section */}
-
-          <Container column w100 gap={gap.sm} style={{ padding: padding }}>
-            <Container row spaceBetween w100>
-              <View style={styles.sectionHeader}>
-                <ThemedText textStyle={TextStyle.Body}>My Leagues</ThemedText>
-              </View>
-              {myLeagues.length > 0 && (
+            <Container row spaceBetween w100 gap={gap.sm}>
+              {quickActions.map((action, index) => (
                 <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate(Routes.Leagues, {
-                      screen: Routes.BrowseLeagues,
-                    })
-                  }
+                  key={index}
+                  style={styles.quickAction}
+                  onPress={action.onPress}
+                  activeOpacity={0.7}
                 >
-                  <ThemedText
-                    textStyle={TextStyle.BodySmall}
-                    style={[styles.seeAllText, { color: theme.colors.primary }]}
-                  >
-                    See all →
-                  </ThemedText>
+                  <Container column centerHorizontal gap={gap.sm}>
+                    <View
+                      style={[
+                        styles.quickActionIcon,
+                        { backgroundColor: action.gradient[0] },
+                      ]}
+                    >
+                      <Icon name={action.icon} size={28} color="#FFFFFF" />
+                    </View>
+                    <ThemedText
+                      textStyle={TextStyle.BodySmall}
+                      style={styles.quickActionLabel}
+                    >
+                      {action.label}
+                    </ThemedText>
+                  </Container>
                 </TouchableOpacity>
+              ))}
+            </Container>
+          </Container>
+
+          {/* Quick Actions */}
+
+          {/* Content Sections */}
+          <Container
+            column
+            w100
+            gap={gap.xl}
+            style={{
+              flex: 1,
+            }}
+          >
+            {/* Happening Today Section */}
+
+            <Container column w100 gap={gap.sm} style={{ padding: padding }}>
+              <Container row spaceBetween w100>
+                <View style={styles.sectionHeader}>
+                  <ThemedText textStyle={TextStyle.Body}>My Leagues</ThemedText>
+                </View>
+                {myLeagues.length > 0 && (
+                  <TouchableOpacity
+                    onPress={() =>
+                      navigation.navigate(Routes.Leagues, {
+                        screen: Routes.BrowseLeagues,
+                      })
+                    }
+                  >
+                    <Container row centerVertical gap={gap.xs}>
+                      <ThemedText
+                        textStyle={TextStyle.Body}
+                        style={[
+                          styles.seeAllText,
+                          { color: theme.colors.primary },
+                        ]}
+                      >
+                        All
+                      </ThemedText>
+                      <Icon
+                        name="chevron-right"
+                        size={16}
+                        color={theme.colors.primary}
+                      />
+                    </Container>
+                  </TouchableOpacity>
+                )}
+              </Container>
+
+              {loading ? (
+                <Container row gap={gap.sm} w100>
+                  {[1, 2, 3].map((item, index) => (
+                    <ShimmerComponent
+                      key={index}
+                      width={52}
+                      height={52}
+                      rounding={roundingFull}
+                      renderCardUnderneath={true}
+                    />
+                  ))}
+                </Container>
+              ) : (
+                <MyLeagues
+                  leagues={myLeagues}
+                  favouriteLeagueIds={favouriteLeagueIds}
+                />
               )}
             </Container>
 
-            {loading ? (
-              <Container row gap={gap.sm} w100>
-                {[1, 2, 3].map((item) => (
+            <Container column w100 gap={gap.md}>
+              <ThemedText
+                textStyle={TextStyle.Body}
+                style={{ paddingLeft: padding }}
+              >
+                Next Up
+              </ThemedText>
+              {loading ? (
+                <Container w100 padding={padding}>
                   <ShimmerComponent
-                    width={52}
-                    height={52}
-                    rounding={roundingFull}
+                    width="100%"
+                    height={80}
+                    rounding={roundingLarge}
                     renderCardUnderneath={true}
                   />
-                ))}
-              </Container>
-            ) : (
-              <MyLeagues leagues={myLeagues} />
-            )}
-          </Container>
-
-          <Container column w100 gap={gap.md} style={{ paddingLeft: padding }}>
-            <ThemedText textStyle={TextStyle.Body}>Next Up</ThemedText>
-            {loading ? (
-              <Container w100 style={{ paddingRight: padding }}>
-                <ShimmerComponent
-                  width="100%"
-                  height={80}
-                  rounding={roundingLarge}
-                  renderCardUnderneath={true}
+                </Container>
+              ) : (
+                <LeagueNightsComponent
+                  leagues={leagues}
+                  showLeague={true}
+                  leagueNights={nextUpLeagueNightInstances}
+                  isUserMember={false}
+                  onLeagueNightPress={(night) =>
+                    navigateToLeague(night.leagueId)
+                  }
                 />
-              </Container>
-            ) : (
-              <LeagueNightsComponent
-                leagues={leagues}
-                showLeague={true}
-                leagueNights={nextUpLeagueNightInstances}
-                isUserMember={false}
-                onLeagueNightPress={(night) => navigateToLeague(night.leagueId)}
-              />
-            )}
-          </Container>
+              )}
+            </Container>
 
-          {/* Your Leagues Section */}
+            {/* Stats summary */}
+            <Container column w100 gap={gap.md} paddingHorizontal={padding}>
+              <ThemedText textStyle={TextStyle.Body}>Statistics</ThemedText>
+              <StatsSummary leagues={leagues} />
+            </Container>
+          </Container>
         </Container>
       </ScrollView>
     </ScreenContainer>
@@ -281,9 +352,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   quickActionIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",

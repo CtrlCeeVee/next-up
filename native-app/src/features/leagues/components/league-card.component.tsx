@@ -21,6 +21,7 @@ import { LeagueDaysSummary } from "./league-days-summary.component";
 import { FavouriteButtonComponent } from "../../../components/favourite-button.component";
 import { LinearGradient } from "expo-linear-gradient";
 import { LeagueMembersComponent } from "./league-members.component";
+import { LeagueLogoComponent } from "./league-logo.component";
 
 interface LeagueCardProps {
   league: League;
@@ -133,19 +134,12 @@ export const LeagueCard: React.FC<LeagueCardProps> = ({
                 {renderBadges()}
               </Container>
               <Container row w100 gap={gap.sm}>
-                <LazyImage
-                  source={{
-                    uri:
-                      league.logo ||
-                      "https://static.vecteezy.com/ti/vetor-gratis/p1/36489045-aguia-cabeca-logotipo-modelo-icone-ilustracao-projeto-para-o-negocio-e-corporativo-vetor.jpg",
-                  }}
-                  style={{
-                    borderWidth: 2,
-                    borderColor: theme.colors.border,
-                  }}
-                  rounding={roundingFull}
+                <LeagueLogoComponent
+                  logo={league.logoUrl}
+                  name={league.name}
                   width={40}
                   height={40}
+                  rounding={roundingFull}
                 />
                 <Container column style={{ flexGrow: 1 }}>
                   <ThemedText textStyle={TextStyle.BodyMedium}>

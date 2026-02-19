@@ -539,7 +539,7 @@ export const LeagueDetailScreen = () => {
         padding={padding}
       >
         <LeagueLogoComponent
-          logo={league?.logo || ""}
+          logo={league?.logoUrl || ""}
           name={league?.name || ""}
           style={{ width: 36, height: 36 }}
         />
@@ -731,7 +731,7 @@ export const LeagueDetailScreen = () => {
                 {!isLoadingLeagueInfo && league ? (
                   <>
                     <LeagueLogoComponent
-                      logo={league?.logo || ""}
+                      logo={league?.logoUrl || ""}
                       name={league?.name || ""}
                       style={{ width: 36, height: 36 }}
                     />
@@ -761,11 +761,7 @@ export const LeagueDetailScreen = () => {
               </Container>
 
               {!isLoadingLeagueInfo && (
-                <FavouriteButtonComponent
-                  onPress={() => {
-                    // toggleFavouriteLeague(leagueId);
-                  }}
-                />
+                <FavouriteButtonComponent league={league || undefined} />
               )}
             </Container>
           </Container>
@@ -823,11 +819,15 @@ export const LeagueDetailScreen = () => {
             w100
             gap={gap.sm}
             style={{
-              paddingLeft: padding,
               ...(leagueNights.length === 0 && { paddingRight: padding }),
             }}
           >
-            <ThemedText textStyle={TextStyle.Body}>Upcoming Nights</ThemedText>
+            <ThemedText
+              textStyle={TextStyle.Body}
+              style={{ paddingLeft: padding }}
+            >
+              Upcoming Nights
+            </ThemedText>
             <LeagueNightsComponent
               leagues={[league]}
               showLeague={false}

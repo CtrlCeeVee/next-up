@@ -58,7 +58,13 @@ const SELECTED_LEAGUE_ROUNDING = rounding;
 
 type NavigationProp = BottomTabNavigationProp<AppTabParamList>;
 
-export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
+export const MyLeagues = ({
+  leagues,
+  favouriteLeagueIds,
+}: {
+  leagues: League[];
+  favouriteLeagueIds: string[];
+}) => {
   const { theme } = useTheme();
   const navigation = useNavigation<NavigationProp>();
   const { showPopover } = usePopover();
@@ -96,52 +102,7 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
   };
 
   const handleSelectLeague = (league: League) => {
-    setSelectedLeague(league);
-
-    // Animate all leagues
-    leagues.forEach((l) => {
-      const animatedValue = getAnimatedValue(l.id);
-      const isSelected = l.id === league.id;
-      const targetValue = isSelected ? SELECTED_ICON_Y_TRANSFORM : 0;
-
-      Animated.spring(animatedValue, {
-        toValue: targetValue,
-        useNativeDriver: true,
-        tension: 100,
-        friction: 8,
-      }).start();
-    });
-
-    // Animate indicator position
-    const layout = logoLayouts[league.id];
-    if (layout) {
-      Animated.parallel([
-        Animated.spring(indicatorTop, {
-          toValue: layout.top,
-          useNativeDriver: false, // position animations can't use native driver
-          tension: 100,
-          friction: 8,
-        }),
-        Animated.spring(indicatorLeft, {
-          toValue: layout.left,
-          useNativeDriver: false,
-          tension: 100,
-          friction: 8,
-        }),
-        Animated.spring(indicatorWidth, {
-          toValue: layout.width,
-          useNativeDriver: false,
-          tension: 100,
-          friction: 8,
-        }),
-        Animated.spring(indicatorHeight, {
-          toValue: layout.height,
-          useNativeDriver: false,
-          tension: 100,
-          friction: 8,
-        }),
-      ]).start();
-    }
+    navigateToLeague(league);
   };
 
   const navigateToLeague = (league: League) => {
@@ -196,12 +157,6 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
     });
   };
 
-  useEffect(() => {
-    if (leagues.length > 0 && !selectedLeague) {
-      handleSelectLeague(leagues[0]);
-    }
-  }, [leagues]);
-
   // Initialize animated values for all leagues on mount
   useEffect(() => {
     let currentSelectedLeague = selectedLeague;
@@ -229,7 +184,10 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
     }
   }, []);
 
-  const isFavourited = true;
+  const isFavourited = (leagueId: string) => {
+    return favouriteLeagueIds.includes(leagueId);
+  };
+
   const isTonight = true;
 
   const calculatePositionOnCircumference = (index: number): Position => {
@@ -257,7 +215,7 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
 
   const getBadges = (league: League) => {
     const icons: BadgeDetails[] = [];
-    if (isFavourited) {
+    if (isFavourited(league.id)) {
       icons.push({
         name: "heart" as IconName,
         description: "Favourited",
@@ -344,88 +302,40 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
     return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  const showLeagueSummary = (
-    league: League,
-    touchLocation?: { x: number; y: number }
-  ) => {
-    showPopover({
-      initialPosition: touchLocation,
-      content: (
-        <Container column gap={gap.md} w100>
-          <Container row centerVertical gap={gap.sm} w100>
-            <LeagueLogoComponent
-              logo={league.logo}
-              name={league.name}
-              width={48}
-              height={48}
-            />
-            <Container column grow>
-              <ThemedText textStyle={TextStyle.Header}>{league.name}</ThemedText>
-              {league.description && (
-                <ThemedText textStyle={TextStyle.BodySmall} muted>
-                  {league.description}
-                </ThemedText>
-              )}
-            </Container>
-          </Container>
+  const summarizeLeagueName = (name: string) => {
+    return name
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase())
+      .join("");
+  };
 
-          <Container column gap={gap.sm} w100>
-            <Container row centerVertical gap={gap.sm}>
-              <Icon name="map-pin" size={16} color={theme.colors.text} />
-              <Container column grow>
-                <ThemedText textStyle={TextStyle.BodyMedium}>
-                  {league.location}
-                </ThemedText>
-                <ThemedText textStyle={TextStyle.BodySmall} muted>
-                  {league.address}
-                </ThemedText>
-              </Container>
-            </Container>
-
-            <Container row centerVertical gap={gap.sm}>
-              <Icon name="clock" size={16} color={theme.colors.text} />
-              <ThemedText textStyle={TextStyle.BodyMedium}>
-                {formatTime(league.startTime)}
-              </ThemedText>
-            </Container>
-
-            <Container row centerVertical gap={gap.sm}>
-              <Icon name="calendar" size={16} color={theme.colors.text} />
-              <Container column grow>
-                <LeagueDaysSummary
-                  leagueDays={league.leagueDays}
-                  size={LeagueDaysComponentSize.Medium}
-                />
-              </Container>
-            </Container>
-
-            <Container row centerVertical gap={gap.sm}>
-              <Icon name="users" size={16} color={theme.colors.text} />
-              <ThemedText textStyle={TextStyle.BodyMedium}>
-                {league.totalPlayers} {league.totalPlayers === 1 ? "player" : "players"}
-              </ThemedText>
-            </Container>
-
-            <Container row centerVertical gap={gap.sm}>
-              <Icon
-                name={league.isActive ? "check-circle" : "alert-circle"}
-                size={16}
-                color={league.isActive ? theme.colors.success : theme.colors.error}
-              />
-              <ThemedText
-                textStyle={TextStyle.BodyMedium}
-                style={{
-                  color: league.isActive
-                    ? theme.colors.success
-                    : theme.colors.error,
-                }}
-              >
-                {league.isActive ? "Active" : "Inactive"}
-              </ThemedText>
-            </Container>
-          </Container>
+  const renderJoinMoreLeagues = () => {
+    return (
+      <TouchableOpacity onPress={navigateToBrowseLeagues}>
+        <Container
+          row
+          centerHorizontal
+          centerVertical
+          gap={gap.sm}
+          style={{
+            width: LOGO_SIZE,
+            height: LOGO_SIZE,
+            backgroundColor: theme.colors.primary + "40",
+            borderRadius: roundingFull,
+            borderWidth: 1,
+            borderColor: theme.colors.primary,
+            borderStyle: "dashed",
+          }}
+        >
+          <Icon name="plus" size={36} color={theme.colors.primary} />
         </Container>
-      ),
+      </TouchableOpacity>
+    );
+  };
+
+  const navigateToBrowseLeagues = () => {
+    navigation.navigate(Routes.Leagues, {
+      screen: Routes.BrowseLeagues,
     });
   };
 
@@ -481,30 +391,31 @@ export const MyLeagues = ({ leagues }: { leagues: League[] }) => {
                 }}
                 onLayout={(event) => handleLayout(league.id, event)}
               >
-                <HapticWrapper
-                  onPress={() => handleSelectLeague(league)}
-                  holdDurationSeconds={0.5}
-                  onHold={(touchLocation) =>
-                    showLeagueSummary(league, touchLocation)
-                  }
-                >
-                  <Container
-                    style={{ width: "100%", height: "100%", zIndex: 1 }}
-                    padding={LOGO_INNER_PADDING}
-                  >
-                    {renderIcons(league)}
-                    <LeagueLogoComponent
-                      // logo={league.logo}
-                      logo="https://static.vecteezy.com/ti/vetor-gratis/p1/36489045-aguia-cabeca-logotipo-modelo-icone-ilustracao-projeto-para-o-negocio-e-corporativo-vetor.jpg"
-                      name={league.name}
-                      width={LOGO_SIZE - LOGO_INNER_PADDING * 2}
-                      height={LOGO_SIZE - LOGO_INNER_PADDING * 2}
-                    />
+                <HapticWrapper onPress={() => handleSelectLeague(league)}>
+                  <Container column gap={gap.sm} centerHorizontal>
+                    <Container
+                      style={{ width: "100%", zIndex: 1 }}
+                      padding={LOGO_INNER_PADDING}
+                    >
+                      {renderIcons(league)}
+                      <LeagueLogoComponent
+                        logo={league.logoUrl}
+                        name={league.name}
+                        width={LOGO_SIZE - LOGO_INNER_PADDING * 2}
+                        height={LOGO_SIZE - LOGO_INNER_PADDING * 2}
+                      />
+                    </Container>
+
+                    <ThemedText textStyle={TextStyle.BodySmall} center>
+                      {summarizeLeagueName(league.name)}
+                    </ThemedText>
                   </Container>
                 </HapticWrapper>
               </Animated.View>
             );
           })}
+
+          {renderJoinMoreLeagues()}
         </ScrollView>
       </Container>
     </Container>

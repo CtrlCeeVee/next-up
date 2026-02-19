@@ -6,8 +6,6 @@ export interface League extends BaseModel {
   name: string;
   description: string;
   location: string;
-  latitude?: number;
-  longitude?: number;
   address: string;
   leagueDays: DayOfWeek[];
   startTime: string;
@@ -15,8 +13,12 @@ export interface League extends BaseModel {
   isActive: boolean;
   skillLevel?: string; // Deprecated - keeping for backward compatibility
   members?: LeagueMember[];
-  image?: string;
-  logo?: string;
+
+  // need to add
+  bannerUrl?: string;
+  logoUrl?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface TopPlayer {
