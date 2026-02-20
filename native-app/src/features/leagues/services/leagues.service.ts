@@ -1,5 +1,6 @@
 import { BaseService } from "../../../core/services";
 import type { League, TopPlayer, LeagueStats } from "../types";
+import { LeagueIsFavouriteResponse } from "./responses";
 
 export class LeaguesService extends BaseService {
   constructor() {
@@ -9,6 +10,41 @@ export class LeaguesService extends BaseService {
   // Get all leagues
   async getAll(): Promise<League[]> {
     const response = await this.get<any>("/api/leagues");
+    return response.success ? response.data : response;
+  }
+
+  // Favourite a league
+  async favouriteLeague(leagueId: string, userId: string): Promise<League> {
+    const response = await this.put<any>(
+      `/api/leagues/${leagueId}/favourite?userId=${userId}`
+    );
+    return response.success ? response.data : response;
+  }
+
+  // Unavourite a league
+  async unfavouriteLeague(leagueId: string, userId: string): Promise<League> {
+    const response = await this.delete<any>(
+      `/api/leagues/${leagueId}/favourite?userId=${userId}`
+    );
+    return response.success ? response.data : response;
+  }
+
+  // get favourite leagues
+  async getFavouriteLeagueIds(userId: string): Promise<string[]> {
+    const response = await this.get<any>(
+      `/api/leagues/favourites?userId=${userId}`
+    );
+    return response.success ? response.data : response;
+  }
+
+  // get is favourite
+  async getIsFavourite(
+    leagueId: string,
+    userId: string
+  ): Promise<LeagueIsFavouriteResponse> {
+    const response = await this.get<any>(
+      `/api/leagues/${leagueId}/is-favourite?userId=${userId}`
+    );
     return response.success ? response.data : response;
   }
 

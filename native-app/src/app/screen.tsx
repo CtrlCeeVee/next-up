@@ -8,6 +8,7 @@ import { NavigationProvider } from "../navigation";
 import { SplashScreen } from "../screens/splash/splash.screen";
 import { ToastContainer } from "../components/toast";
 import { ModalManager } from "../components/modal";
+import { PopoverManager } from "../components/popover";
 
 export const Screen = () => {
   const { theme, isDark } = useTheme();
@@ -42,6 +43,7 @@ export const Screen = () => {
         <SafeAreaView style={styles.safeArea} edges={["left", "right"]}>
           <ToastContainer />
           <ModalManager />
+          <PopoverManager />
           <StatusBar
             barStyle={isDark ? "light-content" : "dark-content"}
             backgroundColor="transparent"

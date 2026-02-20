@@ -3,6 +3,7 @@ import * as Notifications from "expo-notifications";
 import React, { useEffect } from "react";
 import { ThemeProvider } from "../core/theme";
 import { ModalProvider } from "../components/modal";
+import { PopoverProvider } from "../components/popover";
 import { Screen } from "./screen";
 import { useToastState } from "../features/toast/state/toast.state";
 import Constants from "expo-constants";
@@ -82,7 +83,9 @@ export const App = () => {
   return (
     <ThemeProvider>
       <ModalProvider>
-        <Screen />
+        <PopoverProvider>
+          <Screen />
+        </PopoverProvider>
       </ModalProvider>
     </ThemeProvider>
   );

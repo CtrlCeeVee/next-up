@@ -38,6 +38,18 @@ export class LeagueNightsService extends BaseService {
     return response.data;
   }
 
+  // Get league night instances for a week (date range)
+  async getWeekLeagueNightInstances(
+    userId: string,
+    startDate: string,
+    endDate: string
+  ): Promise<LeagueNightInstance[]> {
+    const response = await this.get<any>(
+      `/api/nights?userId=${userId}&startDate=${startDate}&endDate=${endDate}`
+    );
+    return response.data || [];
+  }
+
   // Get league night details
   async getLeagueNight(
     leagueId: string,
