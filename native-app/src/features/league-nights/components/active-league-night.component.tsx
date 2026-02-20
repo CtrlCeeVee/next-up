@@ -29,9 +29,6 @@ export const ActiveLeagueNightComponent: React.FC<
   ActiveLeagueNightComponentProps
 > = ({ league, leagueNight }) => {
   const { theme } = useTheme();
-  const [selectedTab, setSelectedTab] = useState<ActiveTabs>(
-    ActiveTabs.Partnership
-  );
 
   const quote = [
     "It's time for rest and relaxation!",

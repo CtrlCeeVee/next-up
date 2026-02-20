@@ -82,24 +82,6 @@ export const AppNavigator = () => {
           ),
           headerShown: false,
         }}
-        listeners={({ navigation }) => ({
-          tabPress: (e) => {
-            const state = navigation.getState();
-            const leaguesRoute = state.routes.find(
-              (r) => r.name === Routes.Leagues
-            );
-
-            if (
-              leaguesRoute?.state?.index !== undefined &&
-              leaguesRoute.state.index > 0
-            ) {
-              e.preventDefault();
-              navigation.navigate(Routes.Leagues, {
-                screen: Routes.BrowseLeagues,
-              });
-            }
-          },
-        })}
       />
       <Tab.Screen
         name={Routes.Stats}

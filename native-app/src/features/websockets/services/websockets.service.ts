@@ -4,9 +4,9 @@ import {
   InternalSubscription,
   NativeMessage,
   NativeRealtimeEventName,
-  NativeRealtimeEventPayload,
   NativeRealtimeMessage,
 } from "../types";
+import { RetryUtil } from "../../../core/utilities";
 
 export class WebsocketsService {
   private socket: WebSocket | null = null;
@@ -43,16 +43,15 @@ export class WebsocketsService {
     this.socketStatus = ConnectionStatus.CONNECTING;
 
     this.socket.onopen = () => {
-      this.socketStatus = ConnectionStatus.CONNECTED;
+      this.updateSocketStatus(ConnectionStatus.CONNECTED);
     };
 
     this.socket.onerror = () => {
-      this.socketStatus = ConnectionStatus.ERROR;
+      this.updateSocketStatus(ConnectionStatus.ERROR);
     };
 
     this.socket.onclose = () => {
-      this.socket = null;
-      this.socketStatus = ConnectionStatus.DISCONNECTED;
+      this.updateSocketStatus(ConnectionStatus.DISCONNECTED);
     };
 
     console.log("socket opened");
@@ -68,6 +67,27 @@ export class WebsocketsService {
         // Ignore malformed messages
       }
     };
+  }
+
+  private async updateSocketStatus(status: ConnectionStatus) {
+    this.socketStatus = status;
+    if (this.socketStatus === ConnectionStatus.CONNECTED) return;
+
+    // attempt backoff
+    await RetryUtil.retry(
+      async () => {
+        console.log("sending socket status", status);
+        this.socket?.send(
+          JSON.stringify({
+            event: "socketStatus",
+            type: "update",
+            payload: { status },
+          })
+        );
+      },
+      3,
+      3000
+    );
   }
 
   private broadcastMessage<T extends NativeRealtimeEventName>(

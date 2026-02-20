@@ -41,7 +41,12 @@ import {
 import { useAuthState } from "../../features/auth/state";
 import { LeaguesStackParamList } from "../../navigation/types";
 import { Routes } from "../../navigation/routes";
-import { getService, InjectableType, leagueNightsService } from "../../di";
+import {
+  getService,
+  InjectableType,
+  leagueNightsService,
+  websocketsService,
+} from "../../di";
 import {
   CheckedInPlayer,
   LeagueNightInstance,
@@ -62,6 +67,11 @@ import { SelectPartnershipEffects } from "../../features/league-nights/component
 import { GetCheckedInPlayerResponse } from "../../features/league-nights/services/responses";
 import { FavouriteButtonComponent } from "../../components/favourite-button.component";
 import { Membership } from "../../features/membership/types";
+import { WebsocketsService } from "../../features/websockets/services/websockets.service";
+import {
+  NativeRealtimeEventName,
+  NativeRealtimeMessageType,
+} from "../../features/websockets/types";
 
 const SHIMMER_COLOUR = "#dddddd20";
 
@@ -100,6 +110,9 @@ const hyphenateLeagueName = (leagueName: string): string => {
 
 export const LeagueDetailScreen = () => {
   const route = useRoute<LeagueDetailRouteProp>();
+  const websocketsService = getService<WebsocketsService>(
+    InjectableType.WEBSOCKETS
+  );
 
   const { showCustom, showConfirm, hideModal } = useModal();
   const { theme } = useTheme();
@@ -110,8 +123,6 @@ export const LeagueDetailScreen = () => {
     {}
   );
   const [leagueNights, setLeagueNights] = useState<LeagueNightInstance[]>([]);
-  const [activeLeagueNight, setActiveLeagueNight] =
-    useState<LeagueNightInstance | null>(null);
 
   const [leagueActionsSheetStage, setLeagueActionsSheetStage] = useState(0);
   const { height: windowHeight } = useWindowDimensions();
@@ -147,8 +158,17 @@ export const LeagueDetailScreen = () => {
     }, 100);
   };
 
+  const nextLeagueNight = useMemo(() => {
+    if (!leagueNights || leagueNights.length === 0) return null;
+    return (
+      leagueNights
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        .find((night) => night.status !== "completed") || null
+    );
+  }, [leagueNights]);
+
   const fetchCheckedInPlayers = async () => {
-    if (!activeLeagueNight || !leagueId) return;
+    if (!nextLeagueNight || !leagueId) return;
     if (loadingCheckedInPlayers) return;
 
     if (!checkedInPlayersResponse || checkedInPlayersResponse.length === 0) {
@@ -157,7 +177,7 @@ export const LeagueDetailScreen = () => {
 
     const response = await leagueNightsService.getCheckedInPlayers(
       leagueId,
-      activeLeagueNight.id
+      nextLeagueNight.id
     );
     setCheckedInPlayersResponse(response.checkins);
     setLoadingCheckedInPlayers(false);
@@ -168,8 +188,26 @@ export const LeagueDetailScreen = () => {
   }, [leagueLoading, league]);
 
   useEffect(() => {
+    return websocketsService.subscribe(
+      NativeRealtimeEventName.LEAGUE_NIGHT_INSTANCE,
+      (status) => {
+        const newLeagueNights = leagueNights.filter(
+          (night) => night.id !== status.payload.id
+        );
+        if (
+          status.payload.status !== "completed" &&
+          status.type !== NativeRealtimeMessageType.DELETE
+        ) {
+          newLeagueNights.push(status.payload);
+        }
+        setLeagueNights(newLeagueNights);
+      }
+    );
+  }, [leagueNights, websocketsService]);
+
+  useEffect(() => {
     fetchCheckedInPlayers();
-  }, [activeLeagueNight, leagueId]);
+  }, [nextLeagueNight, leagueId]);
 
   const isLeagueNightToday = () => {
     if (!leagueNights || leagueNights.length === 0) return false;
@@ -180,7 +218,9 @@ export const LeagueDetailScreen = () => {
     return memberships[leagueId] ? true : false;
   }, [memberships, leagueId]);
 
-  const showActiveNight = !!activeLeagueNight && isUserMember;
+  const showNextNight = useMemo(() => {
+    return !!nextLeagueNight && isUserMember;
+  }, [nextLeagueNight, isUserMember]);
 
   const showJoinLeague = useMemo(() => {
     return !isUserMember;
@@ -201,7 +241,7 @@ export const LeagueDetailScreen = () => {
     isCheckedIn || hasPendingCheckInVisualState;
 
   const sheetBackgroundColor = useMemo(() => {
-    if (showActiveNight) {
+    if (showNextNight) {
       if (!shouldUseCheckedInVisualState) return theme.colors.accentDark;
     }
 
@@ -211,7 +251,7 @@ export const LeagueDetailScreen = () => {
 
     return theme.colors.sheetBackground;
   }, [
-    showActiveNight,
+    showNextNight,
     shouldUseCheckedInVisualState,
     showJoinLeague,
     theme.colors.accentDark,
@@ -232,7 +272,7 @@ export const LeagueDetailScreen = () => {
 
   useEffect(() => {
     setHasPendingCheckInVisualState(false);
-  }, [activeLeagueNight?.id, user?.id]);
+  }, [nextLeagueNight?.id, user?.id]);
 
   const fetchLeague = async () => {
     const response = await leaguesService.getById(leagueId);
@@ -242,9 +282,6 @@ export const LeagueDetailScreen = () => {
   const fetchLeagueNights = async () => {
     const response = await leagueNightsService.getAllLeagueNights(leagueId);
     setLeagueNights(response.nights);
-    setActiveLeagueNight(
-      response.nights.find((night) => night.status === "active") || null
-    );
   };
 
   const fetchMemberships = async () => {
@@ -280,18 +317,18 @@ export const LeagueDetailScreen = () => {
     const shouldShow =
       !leagueLoading &&
       !loadingCheckedInPlayers &&
-      (showActiveNight || !isUserMember);
+      (showNextNight || !isUserMember);
 
     changeBottomSheetVisibility(shouldShow);
-  }, [leagueLoading, loadingCheckedInPlayers, showActiveNight, isUserMember]);
+  }, [leagueLoading, loadingCheckedInPlayers, showNextNight, isUserMember]);
 
   const checkIn = async () => {
-    if (!activeLeagueNight || !user || checkingIn) return;
+    if (!nextLeagueNight || !user || checkingIn) return;
     setCheckingIn(true);
     try {
       await leagueNightsService.checkInPlayer(
         leagueId,
-        activeLeagueNight.id,
+        nextLeagueNight.id,
         user.id
       );
       setLeagueActionsSheetStage(1);
@@ -364,16 +401,45 @@ export const LeagueDetailScreen = () => {
     LEAGUE_ACTIONS_SNAP_POINTS[1],
   ];
 
+  const getDateString = (date: Date, time: string) => {
+    if (DateUtility.isToday(date)) {
+      const [hours, minutes] = time.split(":");
+      const isNight = Number.parseInt(hours) > 18;
+      const hoursAndMinutes = `${hours}:${minutes}`;
+      if (isNight) {
+        return `Tonight, ${hoursAndMinutes}`;
+      }
+      return `Today, ${hoursAndMinutes}`;
+    }
+    return new Date(date).toLocaleDateString("en-US", {
+      dateStyle: "full",
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   const renderLiveNow = () => {
+    if (!nextLeagueNight) {
+      return null;
+    }
+
     return (
       <Container row spaceBetween centerVertical w100>
         <Container column gap={0}>
           <Container row centerVertical gap={gap.sm}>
             <Icon name="moon" size={16} color={"#ffffff"} />
-            <ThemedText textStyle={TextStyle.Body}>Live Now</ThemedText>
+            <ThemedText textStyle={TextStyle.Body}>
+              {nextLeagueNight.status === "active" ? "Live Now" : "Next Up"}
+            </ThemedText>
           </Container>
           <ThemedText textStyle={TextStyle.BodySmall} color="#cbcbcb">
-            League Night started at 13:00
+            League Night -{" "}
+            {getDateString(
+              new Date(nextLeagueNight.date),
+              nextLeagueNight.time
+            )}
           </ThemedText>
         </Container>
         {!isCheckedIn && !checkingIn && (
@@ -444,7 +510,7 @@ export const LeagueDetailScreen = () => {
   };
 
   const renderSheetContentHeader = () => {
-    if (showActiveNight) {
+    if (showNextNight) {
       return (
         <TouchableOpacity
           onPress={() => {
@@ -467,7 +533,7 @@ export const LeagueDetailScreen = () => {
     return (
       <ActiveLeagueNightComponent
         league={league}
-        leagueNight={activeLeagueNight ?? null}
+        leagueNight={nextLeagueNight ?? null}
       />
     );
   };
@@ -651,7 +717,7 @@ export const LeagueDetailScreen = () => {
                   zIndex: 1,
                 }}
               >
-                {activeLeagueNight && !isLeagueNightToday() && (
+                {nextLeagueNight && !isLeagueNightToday() && (
                   <Container
                     row
                     centerVertical
@@ -671,7 +737,7 @@ export const LeagueDetailScreen = () => {
                     </ThemedText>
                   </Container>
                 )}
-                {!activeLeagueNight && isLeagueNightToday() && (
+                {!nextLeagueNight && isLeagueNightToday() && (
                   <Container
                     row
                     centerVertical
@@ -901,7 +967,7 @@ export const LeagueDetailScreen = () => {
         <AppBottomSheet
           isOpen={true}
           showHandle={
-            !!showActiveNight && shouldUseCheckedInVisualState && isCheckedIn
+            !!showNextNight && shouldUseCheckedInVisualState && isCheckedIn
           }
           onClose={() => {}}
           enableDynamicSizing={false}

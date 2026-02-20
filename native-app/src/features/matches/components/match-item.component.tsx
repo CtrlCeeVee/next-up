@@ -268,29 +268,45 @@ export const MatchItem: React.FC<MatchItemProps> = ({
   return (
     <Card style={styles.matchCard}>
       {/* Header */}
-      <Container row w100 centerVertical spaceBetween>
-        <Container row centerVertical gap={gap.xs} style={styles.courtBadge}>
+      <Container row w100 centerVertical gap={0} spaceBetween>
+        <Container
+          row
+          centerVertical
+          gap={gap.xs}
+          style={styles.courtBadge}
+          startHorizontal
+        >
           <Icon name="map-pin" size={16} color={theme.colors.primary} />
           <ThemedText textStyle={TextStyle.BodySmall} style={styles.courtText}>
             {match.courtLabel}
           </ThemedText>
         </Container>
-        <BadgeComponent
-          icon={match.match.status === "active" ? "clock" : "check-circle"}
-          text={match.match.status === "active" ? "Active" : "Completed"}
-          color={
-            match.match.status === "active"
-              ? theme.colors.accent
-              : theme.colors.success
-          }
-        />
+        <Container row>
+          <ThemedText
+            textStyle={TextStyle.BodySmall}
+            style={{ textAlign: "right" }}
+          >
+            {match.match.status === "active" ? "Active" : "Completed"}
+          </ThemedText>
+        </Container>
+        <Container column endHorizontal>
+          <BadgeComponent
+            icon={match.match.status === "active" ? "clock" : "check-circle"}
+            text={match.match.status === "active" ? "Active" : "Completed"}
+            color={
+              match.match.status === "active"
+                ? theme.colors.accent
+                : theme.colors.success
+            }
+          />
+        </Container>
       </Container>
 
       {/* Teams + Score */}
-      <Container row w100 centerVertical gap={0}>
+      <Container row w100 centerVertical gap={0} spaceBetween>
         {renderPartnership(partnership1, "left")}
 
-        <View style={styles.scoreCenter}>
+        <Container column centerHorizontal>
           {isUserMatch &&
           (match.match.scoreStatus === "none" ||
             match.match.scoreStatus === "disputed") ? (
@@ -327,7 +343,7 @@ export const MatchItem: React.FC<MatchItemProps> = ({
               </ThemedText>
             </Container>
           )}
-        </View>
+        </Container>
 
         {renderPartnership(partnership2, "right")}
       </Container>

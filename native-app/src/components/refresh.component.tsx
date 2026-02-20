@@ -1,5 +1,11 @@
-import React from "react";
-import { FlatList, RefreshControl, StyleSheet, ViewStyle } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ColorValue,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  ViewStyle,
+} from "react-native";
 import { useTheme } from "../core/theme";
 
 interface RefreshProps<T> {
@@ -33,6 +39,15 @@ export const Refresh = <T,>({
 }: RefreshProps<T>) => {
   const { theme } = useTheme();
 
+  // Workaround for RN new-arch bug (facebook/react-native#53987): tintColor is
+  // ignored on first render because updateProps fires before the initial layout.
+  // Deferring the color assignment forces a second prop update after layout.
+  const [tintColor, setTintColor] = useState<ColorValue | undefined>(undefined);
+  useEffect(() => {
+    const id = setTimeout(() => setTintColor(theme.colors.primary), 100);
+    return () => clearTimeout(id);
+  }, [theme.colors.primary]);
+
   return (
     <FlatList
       data={data}
@@ -44,8 +59,8 @@ export const Refresh = <T,>({
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          tintColor={theme.colors.primary}
-          colors={[theme.colors.primary]}
+          tintColor={tintColor}
+          colors={tintColor ? [tintColor] : undefined}
         />
       }
       showsVerticalScrollIndicator={false}

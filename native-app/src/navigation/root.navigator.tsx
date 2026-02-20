@@ -16,9 +16,7 @@ export const RootNavigator = () => {
   useEffect(() => {
     // Check for existing session on app start
     checkSession().finally(() => {
-      setTimeout(() => {
-        setIsReady(true);
-      }, 5000);
+      setIsReady(true);
     });
   }, [checkSession]);
 

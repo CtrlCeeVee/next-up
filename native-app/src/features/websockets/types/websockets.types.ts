@@ -1,5 +1,6 @@
 import {
   ConfirmedPartnership,
+  LeagueNightInstance,
   Match,
   PartnershipRequest,
 } from "../../league-nights/types";
@@ -15,12 +16,14 @@ export enum NativeRealtimeEventName {
   MATCH = "match",
   PARTNERSHIP_REQUEST = "partnershipRequest",
   CONFIRMED_PARTNERSHIP = "confirmedPartnership",
+  LEAGUE_NIGHT_INSTANCE = "leagueNightInstance",
 }
 
 type NativeRealtimeEventPayloadMap = {
   [NativeRealtimeEventName.MATCH]: Match;
   [NativeRealtimeEventName.PARTNERSHIP_REQUEST]: PartnershipRequest;
   [NativeRealtimeEventName.CONFIRMED_PARTNERSHIP]: ConfirmedPartnership;
+  [NativeRealtimeEventName.LEAGUE_NIGHT_INSTANCE]: LeagueNightInstance;
 };
 
 export type NativeRealtimeEventPayload<T extends NativeRealtimeEventName> =
@@ -48,11 +51,16 @@ export interface RealtimeSubscriptionConfig<T extends NativeRealtimeEventName> {
    * Event type to listen for. Use "*" to receive all events.
    */
   event: T | "*";
-   callback: (message: NativeMessage<T>) => void;
+  callback: (message: NativeMessage<T>) => void;
 }
 
 export type InternalSubscription<T extends NativeRealtimeEventName> = {
   id: number;
   event: RealtimeSubscriptionConfig<T>["event"];
   callback: (message: NativeMessage<T>) => void;
+};
+
+export type Subscription<T> = {
+  id: number;
+  callback: (message: T) => void;
 };

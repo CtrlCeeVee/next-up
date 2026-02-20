@@ -179,53 +179,6 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
         }
       />
     </Container>
-    // <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-    //   <Container column gap={gap.md} w100 grow>
-    //     {activeMatches.length > 0 && (
-    //       <Container column gap={gap.md} w100>
-    //         <Container row gap={gap.sm} w100 centerVertical>
-    //           <Icon name="trophy" size={20} color={theme.colors.primary} />
-    //           <ThemedText textStyle={TextStyle.Subheader}>
-    //             Active Matches
-    //           </ThemedText>
-    //         </Container>
-    //         <FlatList
-    //           style={styles.container}
-    //           data={activeMatches}
-    //           renderItem={({ item }) => (
-    //             <MatchItem {...item} onMatchUpdated={onMatchUpdated} />
-    //           )}
-    //           keyExtractor={(item) => item.match.match.id}
-    //           scrollEnabled={false}
-    //         />
-    //       </Container>
-    //     )}
-
-    //     {completedMatches.length > 0 && (
-    //       <Container column gap={gap.md} w100>
-    //         <Container row gap={gap.sm} w100 centerVertical>
-    //           <Icon
-    //             name="check-circle"
-    //             size={20}
-    //             color={theme.colors.success}
-    //           />
-    //           <ThemedText textStyle={TextStyle.Subheader}>
-    //             Completed Matches
-    //           </ThemedText>
-    //         </Container>
-    //         <FlatList
-    //           style={styles.container}
-    //           data={completedMatches}
-    //           renderItem={({ item }) => (
-    //             <MatchItem {...item} onMatchUpdated={onMatchUpdated} />
-    //           )}
-    //           keyExtractor={(item) => item.match.match.id}
-    //           scrollEnabled={false}
-    //         />
-    //       </Container>
-    //     )}
-    //   </Container>
-    // </ScrollView>
   );
 };
 
