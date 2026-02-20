@@ -4,7 +4,7 @@
 // Service Worker for Next-Up PWA
 // Handles: offline caching, push notifications, notification actions
 
-const CACHE_NAME = 'next-up-v4'; // Bumped version to force update
+const CACHE_NAME = 'next-up-v5'; // Bumped version to force update
 const urlsToCache = [
   '/manifest.json',
   '/icon-192.png',

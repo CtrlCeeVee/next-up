@@ -54,6 +54,9 @@ const AboutPage = () => {
             Next-Up exists to transform how pickleball leagues operate across South Africa, 
             making every game night smoother, more competitive, and more enjoyable for everyone involved.
           </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
+            A product by Nextup Sport (PTY) LTD
+          </p>
         </div>
 
         {/* Mission Cards */}

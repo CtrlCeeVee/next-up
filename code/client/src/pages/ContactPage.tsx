@@ -73,6 +73,9 @@ const ContactPage = () => {
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
             Have questions about Next-Up? Need help with your league? We'd love to hear from you!
           </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            Nextup Sport (PTY) LTD — Johannesburg, South Africa
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
