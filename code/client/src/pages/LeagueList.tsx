@@ -601,6 +601,9 @@ function LeagueList() {
               <button onClick={() => navigate('/privacy')} className="hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200">Privacy</button>
               <button onClick={() => navigate('/terms')} className="hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200">Terms</button>
             </div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
+              © {new Date().getFullYear()} Nextup Sport (PTY) LTD. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>
