@@ -10,6 +10,8 @@ import {
   ConfirmedPartnership,
   GetMatchResponse,
   Match,
+  MatchScoreStatus,
+  MatchStatus,
 } from "../../league-nights/types";
 import { ProfileData } from "../../profiles/types";
 import { TextStyle } from "../../../core/styles";
@@ -18,7 +20,7 @@ import { BadgeComponent } from "../../../components/badge.component";
 import { useTheme } from "../../../core/theme";
 import { useAuthState } from "../../auth/state";
 import { gap, padding } from "../../../core/styles/global";
-import { useMemo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { leagueNightsService } from "../../../di";
 import { useToastState } from "../../toast/state";
 import { ApiError } from "../../../core/models";
@@ -35,23 +37,33 @@ export interface MatchItemProps {
   match: GetMatchResponse;
   partnership1: PartnershipProps;
   partnership2: PartnershipProps;
+  showAdminButtons: boolean;
   onMatchUpdated?: (match: Match) => void;
 }
 
-export const MatchItem: React.FC<MatchItemProps> = ({
+enum MatchAction {
+  SUBMIT = "submit",
+  CANCEL = "cancel",
+  DISPUTE = "dispute",
+  CONFIRM = "confirm",
+  OVERRIDE = "override",
+}
+
+export const MatchItem: React.FC<MatchItemProps> = memo(({
   leagueId,
   leagueNightId,
   match,
   partnership1,
   partnership2,
   onMatchUpdated,
+  showAdminButtons,
 }) => {
   const { theme } = useTheme();
   const showToast = useToastState((state) => state.showToast);
   const user = useAuthState((state) => state.user);
 
-  const [actioningMatchScore, setActioningMatchScore] =
-    useState<boolean>(false);
+  const [actioningMatchAction, setActioningMatchAction] =
+    useState<MatchAction | null>(null);
   const [team1Score, setTeam1Score] = useState<string>(
     match.match.team1Score?.toString() ?? "00"
   );
@@ -82,6 +94,53 @@ export const MatchItem: React.FC<MatchItemProps> = ({
     );
   }, [match, user]);
 
+  const matchResult = useMemo(() => {
+    if (match.match.status === MatchStatus.CANCELLED) {
+      return "CANCELLED";
+    }
+
+    if (
+      match.match.status === MatchStatus.ACTIVE ||
+      match.match.scoreStatus !== MatchScoreStatus.CONFIRMED
+    ) {
+      return null;
+    }
+
+    if (match.match.team1Score === null || match.match.team2Score === null) {
+      return null;
+    }
+
+    if (!isUserMatch || !user) {
+      return null;
+    }
+
+    const userTeam =
+      match.partnership1.player1Id === user.id ||
+      match.partnership1.player2Id === user.id
+        ? "1"
+        : "2";
+
+    const userScore =
+      userTeam === "1" ? match.match.team1Score : match.match.team2Score;
+    const opponentScore =
+      userTeam === "1" ? match.match.team2Score : match.match.team1Score;
+
+    if (userScore === opponentScore) {
+      return "DRAW";
+    }
+
+    if (userScore > opponentScore) {
+      return "WIN";
+    }
+
+    return "LOSS";
+  }, [
+    match.match.status,
+    match.match.scoreStatus,
+    match.match.team1Score,
+    match.match.team2Score,
+  ]);
+
   const handleTeam1ScoreChange = (text: string) => {
     setTeam1Score(text);
   };
@@ -90,20 +149,23 @@ export const MatchItem: React.FC<MatchItemProps> = ({
     setTeam2Score(text);
   };
 
-  const handleMatchActionCall = async (apiCall: () => Promise<void>) => {
+  const handleMatchActionCall = async (
+    action: MatchAction,
+    apiCall: () => Promise<void>
+  ) => {
     try {
-      setActioningMatchScore(true);
+      setActioningMatchAction(action);
       await apiCall();
     } catch (error) {
       if (error instanceof ApiError) {
         showToast({
-          title: "Error submitting score",
+          title: `Error ${action} score`,
           message: error.message,
           type: "error",
         });
       }
     } finally {
-      setActioningMatchScore(false);
+      setActioningMatchAction(null);
     }
   };
 
@@ -117,7 +179,7 @@ export const MatchItem: React.FC<MatchItemProps> = ({
       return;
     }
 
-    await handleMatchActionCall(async () => {
+    await handleMatchActionCall(MatchAction.SUBMIT, async () => {
       const response = await leagueNightsService.submitMatchScore(
         leagueId,
         leagueNightId,
@@ -133,7 +195,7 @@ export const MatchItem: React.FC<MatchItemProps> = ({
   const handleCancelScore = async () => {
     if (!user) return;
 
-    await handleMatchActionCall(async () => {
+    await handleMatchActionCall(MatchAction.CANCEL, async () => {
       const response = await leagueNightsService.cancelMatchScore(
         leagueId,
         leagueNightId,
@@ -147,7 +209,7 @@ export const MatchItem: React.FC<MatchItemProps> = ({
   const handleDisputeScore = async () => {
     if (!user) return;
 
-    await handleMatchActionCall(async () => {
+    await handleMatchActionCall(MatchAction.DISPUTE, async () => {
       const response = await leagueNightsService.disputeMatchScore(
         leagueId,
         leagueNightId,
@@ -161,7 +223,7 @@ export const MatchItem: React.FC<MatchItemProps> = ({
   const handleConfirmScore = async () => {
     if (!user) return;
 
-    await handleMatchActionCall(async () => {
+    await handleMatchActionCall(MatchAction.CONFIRM, async () => {
       const response = await leagueNightsService.confirmMatchScore(
         leagueId,
         leagueNightId,
@@ -172,61 +234,154 @@ export const MatchItem: React.FC<MatchItemProps> = ({
     });
   };
 
-  const renderButtons = () => {
-    if (!isUserMatch) {
+  const handleOverrideScore = async () => {
+    if (!user) return;
+
+    await handleMatchActionCall(MatchAction.OVERRIDE, async () => {
+      const response = await leagueNightsService.overrideMatchScore(
+        leagueId,
+        leagueNightId,
+        match.match.id,
+        user.id,
+        parseInt(team1Score),
+        parseInt(team2Score)
+      );
+      onMatchUpdated?.(response.match);
+    });
+  };
+
+  const handleCancelMatch = async () => {
+    if (!user) return;
+
+    await handleMatchActionCall(MatchAction.CANCEL, async () => {
+      const response = await leagueNightsService.cancelMatch(
+        leagueId,
+        leagueNightId,
+        match.match.id,
+        user.id
+      );
+      onMatchUpdated?.(response.match);
+    });
+  };
+
+  const renderAdminButtons = () => {
+    return (
+      <Container>
+        {match.match.status === "active" && (
+          <Container row gap={gap.sm} w100>
+            <Button
+              title="Override Score"
+              onPress={handleOverrideScore}
+              style={styles.splitButton}
+              variant="outline"
+              loading={actioningMatchAction === MatchAction.OVERRIDE}
+              disabled={actioningMatchAction !== null}
+            />
+            <Button
+              title="Cancel Match"
+              onPress={handleCancelMatch}
+              style={styles.splitButton}
+              variant="outline"
+              loading={actioningMatchAction === MatchAction.CANCEL}
+              disabled={actioningMatchAction !== null}
+            />
+          </Container>
+        )}
+      </Container>
+    );
+  };
+
+  const renderSubmitScoreButton = () => {
+    if (
+      match.match.scoreStatus === "pending" ||
+      match.match.scoreStatus === "confirmed"
+    ) {
+      return null;
+    }
+
+    if (match.match.status !== "active") {
       return null;
     }
 
     return (
-      <Container>
-        {(match.match.scoreStatus === "none" ||
-          match.match.scoreStatus === "disputed") && (
-          <Button
-            title="Submit Score"
-            onPress={handleSubmitScore}
-            loading={actioningMatchScore}
-            style={styles.fullWidthButton}
-          />
-        )}
+      <Button
+        title="Submit Score"
+        onPress={handleSubmitScore}
+        loading={actioningMatchAction === MatchAction.SUBMIT}
+        style={styles.fullWidthButton}
+        disabled={actioningMatchAction !== null}
+      />
+    );
+  };
 
-        {match.match.scoreStatus === "pending" &&
-          (userSetScore ? (
-            <Button
-              title="Cancel Score"
-              onPress={handleCancelScore}
-              loading={actioningMatchScore}
-              variant="outline"
-              style={styles.fullWidthButton}
-            />
-          ) : (
-            <Container row gap={gap.sm} w100>
-              <Button
-                title="Dispute"
-                onPress={handleDisputeScore}
-                loading={actioningMatchScore}
-                variant="outline"
-                style={styles.splitButton}
-              />
-              <Button
-                title="Confirm Score"
-                onPress={handleConfirmScore}
-                loading={actioningMatchScore}
-                style={styles.splitButton}
-              />
-            </Container>
-          ))}
+  const renderScoreActions = () => {
+    if (match.match.scoreStatus !== "pending") {
+      return null;
+    }
 
-        {match.match.pendingSubmittedByPartnershipId === user?.id && (
-          <View style={styles.pendingScoreNotice}>
-            <Icon name="clock" size={16} color={theme.colors.warning} />
-            <ThemedText
-              textStyle={TextStyle.BodySmall}
-              style={styles.pendingScoreText}
-            >
-              Score pending confirmation
-            </ThemedText>
-          </View>
-        )}
+    if (userSetScore) {
+      return (
+        <Button
+          title="Cancel Score"
+          onPress={handleCancelScore}
+          loading={actioningMatchAction === MatchAction.CANCEL}
+          variant="outline"
+          style={styles.fullWidthButton}
+          disabled={actioningMatchAction !== null}
+        />
+      );
+    }
+
+    return (
+      <Container row gap={gap.sm} w100>
+        <Button
+          title="Dispute"
+          onPress={handleDisputeScore}
+          loading={actioningMatchAction === MatchAction.DISPUTE}
+          variant="outline"
+          style={styles.splitButton}
+          disabled={actioningMatchAction !== null}
+        />
+        <Button
+          title="Confirm Score"
+          onPress={handleConfirmScore}
+          loading={actioningMatchAction === MatchAction.CONFIRM}
+          style={styles.splitButton}
+          disabled={actioningMatchAction !== null}
+        />
+      </Container>
+    );
+  };
+
+  const renderPendingScoreNotice = () => {
+    if (match.match.pendingSubmittedByPartnershipId !== user?.id) {
+      return null;
+    }
+
+    return (
+      <View style={styles.pendingScoreNotice}>
+        <Icon name="clock" size={16} color={theme.colors.warning} />
+        <ThemedText
+          textStyle={TextStyle.BodySmall}
+          style={styles.pendingScoreText}
+        >
+          Score pending confirmation
+        </ThemedText>
+      </View>
+    );
+  };
+
+  const renderButtons = () => {
+    if (!isUserMatch) {
+      return renderAdminButtons();
+    }
+
+    return (
+      <Container column w100 gap={gap.sm}>
+        {renderSubmitScoreButton()}
+        {renderScoreActions()}
+        {renderPendingScoreNotice()}
+        {showAdminButtons && renderAdminButtons()}
       </Container>
     );
   };
@@ -268,12 +423,12 @@ export const MatchItem: React.FC<MatchItemProps> = ({
   return (
     <Card style={styles.matchCard}>
       {/* Header */}
-      <Container row w100 centerVertical gap={0} spaceBetween>
+      <Container row w100 centerVertical gap={0}>
         <Container
           row
           centerVertical
           gap={gap.xs}
-          style={styles.courtBadge}
+          style={{ ...styles.courtBadge, width: "33.333333%" }}
           startHorizontal
         >
           <Icon name="map-pin" size={16} color={theme.colors.primary} />
@@ -281,15 +436,24 @@ export const MatchItem: React.FC<MatchItemProps> = ({
             {match.courtLabel}
           </ThemedText>
         </Container>
-        <Container row>
+        <Container row centerHorizontal style={{ width: "33.333333%" }}>
           <ThemedText
-            textStyle={TextStyle.BodySmall}
-            style={{ textAlign: "right" }}
+            textStyle={TextStyle.BodyMedium}
+            style={{ textAlign: "center" }}
+            color={
+              matchResult === "WIN"
+                ? theme.colors.success
+                : matchResult === "LOSS"
+                  ? theme.colors.error
+                  : matchResult === "DRAW"
+                    ? theme.colors.warning
+                    : theme.colors.muted
+            }
           >
-            {match.match.status === "active" ? "Active" : "Completed"}
+            {matchResult}
           </ThemedText>
         </Container>
-        <Container column endHorizontal>
+        <Container row endHorizontal style={{ width: "33.333333%" }}>
           <BadgeComponent
             icon={match.match.status === "active" ? "clock" : "check-circle"}
             text={match.match.status === "active" ? "Active" : "Completed"}
@@ -309,7 +473,8 @@ export const MatchItem: React.FC<MatchItemProps> = ({
         <Container column centerHorizontal>
           {isUserMatch &&
           (match.match.scoreStatus === "none" ||
-            match.match.scoreStatus === "disputed") ? (
+            match.match.scoreStatus === "disputed") &&
+          match.match.status === "active" ? (
             <Container row gap={gap.sm} centerVertical>
               <Input
                 keyboardType="number-pad"
@@ -349,9 +514,18 @@ export const MatchItem: React.FC<MatchItemProps> = ({
       </Container>
 
       {renderButtons()}
+
+      <Container row w100 endHorizontal>
+        <ThemedText textStyle={TextStyle.BodySmall} muted>
+          {new Date(match.match.createdAt).toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </ThemedText>
+      </Container>
     </Card>
   );
-};
+}) as React.FC<MatchItemProps>;
 
 const styles = StyleSheet.create({
   matchCard: {

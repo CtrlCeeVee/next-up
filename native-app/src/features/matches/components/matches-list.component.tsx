@@ -28,11 +28,11 @@ import {
   NativeRealtimeEventName,
   NativeRealtimeMessageType,
 } from "../../websockets/types";
-import { PillTabs } from "../../../components/pill-tabs.component";
 
 interface MatchesQueueTabProps {
   league: League;
   leagueNight: LeagueNightInstance;
+  showAdminButtons: boolean;
 }
 
 enum ShowMatches {
@@ -43,6 +43,7 @@ enum ShowMatches {
 export const MatchesList: React.FC<MatchesQueueTabProps> = ({
   league,
   leagueNight,
+  showAdminButtons,
 }) => {
   const { theme } = useTheme();
   const { user } = useAuthState();
@@ -64,16 +65,28 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
   );
 
   const onMatchUpdated = useCallback(
-    (match: Match, deleted: boolean = false) => {
-      if (deleted) {
+    async (
+      match: Match,
+      type: NativeRealtimeMessageType = NativeRealtimeMessageType.UPDATE
+    ) => {
+      if (type === NativeRealtimeMessageType.DELETE) {
         setMatches((prev) => prev.filter((m) => m.match.id !== match.id));
+        return;
+      }
+      if (type === NativeRealtimeMessageType.INSERT) {
+        const response = await leagueNightsService.getMatch(
+          league.id,
+          leagueNight.id,
+          match.id
+        );
+        setMatches((prev) => [...prev, response]);
         return;
       }
       setMatches((prev) =>
         prev.map((m) => (m.match.id === match.id ? { ...m, match } : m))
       );
     },
-    []
+    [league.id, leagueNight.id]
   );
 
   useEffect(() => {
@@ -81,10 +94,7 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
       NativeRealtimeEventName.MATCH,
       (match) => {
         console.log("match update", match, "for user", user?.id);
-        onMatchUpdated(
-          match.payload,
-          match.type === NativeRealtimeMessageType.DELETE
-        );
+        onMatchUpdated(match.payload, match.type);
       }
     );
   }, [websocketsService, onMatchUpdated]);
@@ -113,6 +123,18 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
     fetchMatches();
   }, [leagueNight, user, showMatches]);
 
+  const renderMatchItem = useCallback(
+    ({ item }: { item: MatchItemProps }) => (
+      <MatchItem {...item} onMatchUpdated={onMatchUpdated} />
+    ),
+    [onMatchUpdated]
+  );
+
+  const keyExtractor = useCallback(
+    (item: MatchItemProps) => item.match.match.id,
+    []
+  );
+
   const matchesList: MatchItemProps[] = useMemo(() => {
     if (!leagueNight || !user) return [];
 
@@ -131,8 +153,11 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
           profile1: profiles[match.partnership2.player1Id],
           profile2: profiles[match.partnership2.player2Id],
         },
+        showAdminButtons,
       }))
-      .sort((a, b) => (a.match.match.status === "active" ? -1 : 1));
+      .sort((a, b) =>
+        a.match.match.createdAt > b.match.match.createdAt ? -1 : 1
+      );
   }, [matches, league, leagueNight, profiles]);
 
   return (
@@ -152,10 +177,8 @@ export const MatchesList: React.FC<MatchesQueueTabProps> = ({
       </Container>
       <Refresh
         data={matchesList}
-        renderItem={({ item }) => (
-          <MatchItem {...item} onMatchUpdated={onMatchUpdated} />
-        )}
-        keyExtractor={(item) => item.match.match.id}
+        renderItem={renderMatchItem}
+        keyExtractor={keyExtractor}
         refreshing={loading}
         onRefresh={fetchMatches}
         style={{ flex: 1, width: "100%" }}

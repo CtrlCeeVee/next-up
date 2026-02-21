@@ -17,6 +17,7 @@ export class RetryUtil {
   ): Promise<T> {
     let retryCount = 0;
     while (retryCount < retries) {
+      console.log("retrying", retryCount);
       try {
         return await fn();
       } catch (error) {

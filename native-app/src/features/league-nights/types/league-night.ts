@@ -62,6 +62,22 @@ export interface PartnershipRequestsResponse {
   confirmedPartnership: ConfirmedPartnership | null;
 }
 
+export enum MatchStatus {
+  ACTIVE = "active",
+  COMPLETED = "completed",
+  DISPUTED = "disputed",
+  CANCELLED = "cancelled",
+}
+
+export enum MatchScoreStatus {
+  NONE = "none",
+  PENDING = "pending",
+  CONFIRMED = "confirmed",
+  DISPUTED = "disputed",
+}
+
+export const MATCH_COMPLETED_STATUSES = [MatchStatus.COMPLETED, MatchStatus.CANCELLED];
+
 export interface Match {
   id: string;
   leagueNightInstanceId: number;
@@ -70,10 +86,11 @@ export interface Match {
   courtNumber: string;
   team1Score: number | null;
   team2Score: number | null;
-  status: "active" | "completed" | "disputed";
-  scoreStatus: "none" | "pending" | "confirmed" | "disputed";
+  status: MatchStatus;
+  scoreStatus: MatchScoreStatus;
   pendingTeam1Score: number | null;
   pendingTeam2Score: number | null;
   pendingSubmittedByPartnershipId: string | null;
   pendingScoreSubmittedAt: string | null;
+  createdAt: string;
 }

@@ -9,6 +9,7 @@ import type {
   Match,
   GetMatchesResponse,
   GetMatchResponse,
+  MatchScoreResponse,
 } from "../types";
 import {
   GetCheckedInPlayersResponse,
@@ -188,6 +189,18 @@ export class LeagueNightsService extends BaseService {
     return response.data;
   }
 
+  // Get a match
+  async getMatch(
+    leagueId: string,
+    nightId: string,
+    matchId: string
+  ): Promise<GetMatchResponse> {
+    const response = await this.get<any>(
+      `/api/leagues/${leagueId}/nights/${nightId}/matches/${matchId}`
+    );
+    return response.data;
+  }
+
   async getMatches(
     leagueId: string,
     nightId: string,
@@ -264,18 +277,54 @@ export class LeagueNightsService extends BaseService {
     );
   }
 
+  // Override match score
+  async overrideMatchScore(
+    leagueId: string,
+    nightId: string,
+    matchId: string,
+    userId: string,
+    team1Score: number,
+    team2Score: number
+  ): Promise<MatchScoreResponse> {
+    const response = await this.post<any>(
+      `/api/leagues/${leagueId}/nights/${nightId}/matches/${matchId}/override-score`,
+      {
+        userId,
+        team1Score,
+        team2Score,
+      }
+    );
+    return response.data;
+  }
+
+  // Cancel match
+  async cancelMatch(
+    leagueId: string,
+    nightId: string,
+    matchId: string,
+    userId: string
+  ): Promise<MatchScoreResponse> {
+    const response = await this.post<any>(
+      `/api/leagues/${leagueId}/nights/${nightId}/matches/${matchId}/cancel`,
+      {
+        userId,
+      }
+    );
+    return response.data;
+  }
+
   // Cancel match score
   async cancelMatchScore(
     leagueId: string,
     nightId: string,
     matchId: string,
     userId: string
-  ): Promise<GetMatchResponse> {
+  ): Promise<MatchScoreResponse> {
     const response = await this.post<any>(
       `/api/leagues/${leagueId}/nights/${nightId}/cancel-score`,
       {
-        matchId: matchId,
-        userId: userId,
+        matchId,
+        userId,
       }
     );
     return response.data;
@@ -289,7 +338,7 @@ export class LeagueNightsService extends BaseService {
     team1Score: number,
     team2Score: number,
     userId: string
-  ): Promise<GetMatchResponse> {
+  ): Promise<MatchScoreResponse> {
     const response = await this.post<any>(
       `/api/leagues/${leagueId}/nights/${nightId}/submit-score`,
       {
@@ -308,7 +357,7 @@ export class LeagueNightsService extends BaseService {
     nightId: string,
     matchId: string,
     userId: string
-  ): Promise<GetMatchResponse> {
+  ): Promise<MatchScoreResponse> {
     const response = await this.post<any>(
       `/api/leagues/${leagueId}/nights/${nightId}/confirm-score`,
       {
@@ -325,7 +374,7 @@ export class LeagueNightsService extends BaseService {
     nightId: string,
     matchId: string,
     userId: string
-  ): Promise<GetMatchResponse> {
+  ): Promise<MatchScoreResponse> {
     const response = await this.post(
       `/api/leagues/${leagueId}/nights/${nightId}/dispute-score`,
       {

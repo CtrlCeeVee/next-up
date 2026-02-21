@@ -1,16 +1,14 @@
 import { config } from "../../../config";
 import {
-  ConnectionStatus,
   InternalSubscription,
   NativeMessage,
   NativeRealtimeEventName,
   NativeRealtimeMessage,
 } from "../types";
-import { RetryUtil } from "../../../core/utilities";
+import { ReconnectingWebSocket } from "../types/websocket";
 
 export class WebsocketsService {
-  private socket: WebSocket | null = null;
-  private socketStatus: ConnectionStatus = ConnectionStatus.DISCONNECTED;
+  private socket: ReconnectingWebSocket | null = null;
   private subscriptions: InternalSubscription<NativeRealtimeEventName>[] = [];
   private nextSubscriptionId = 1;
   constructor() {}
@@ -39,55 +37,18 @@ export class WebsocketsService {
   }
 
   private createSocket() {
-    this.socket = new WebSocket(this.getWebSocketUrl());
-    this.socketStatus = ConnectionStatus.CONNECTING;
-
-    this.socket.onopen = () => {
-      this.updateSocketStatus(ConnectionStatus.CONNECTED);
+    this.socket = new ReconnectingWebSocket({
+      url: this.getWebSocketUrl(),
+      baseDelayMs: 1000,
+      maxDelayMs: 30000,
+      maxRetries: 25,
+    });
+    this.socket.onMessage = (message) => {
+      const parsed = JSON.parse(
+        message
+      ) as NativeRealtimeMessage<NativeRealtimeEventName>;
+      this.broadcastMessage(parsed);
     };
-
-    this.socket.onerror = () => {
-      this.updateSocketStatus(ConnectionStatus.ERROR);
-    };
-
-    this.socket.onclose = () => {
-      this.updateSocketStatus(ConnectionStatus.DISCONNECTED);
-    };
-
-    console.log("socket opened");
-
-    this.socket.onmessage = (event) => {
-      try {
-        const parsed = JSON.parse(
-          event.data
-        ) as NativeRealtimeMessage<NativeRealtimeEventName>;
-        if (!parsed) return;
-        this.broadcastMessage(parsed);
-      } catch {
-        // Ignore malformed messages
-      }
-    };
-  }
-
-  private async updateSocketStatus(status: ConnectionStatus) {
-    this.socketStatus = status;
-    if (this.socketStatus === ConnectionStatus.CONNECTED) return;
-
-    // attempt backoff
-    await RetryUtil.retry(
-      async () => {
-        console.log("sending socket status", status);
-        this.socket?.send(
-          JSON.stringify({
-            event: "socketStatus",
-            type: "update",
-            payload: { status },
-          })
-        );
-      },
-      3,
-      3000
-    );
   }
 
   private broadcastMessage<T extends NativeRealtimeEventName>(
@@ -104,8 +65,6 @@ export class WebsocketsService {
   public disconnect() {
     this.socket?.close();
     this.socket = null;
-    this.socketStatus = ConnectionStatus.DISCONNECTED;
-    console.log("socket closed");
   }
 
   public subscribe<T extends NativeRealtimeEventName>(

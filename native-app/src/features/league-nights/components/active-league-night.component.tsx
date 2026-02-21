@@ -18,6 +18,7 @@ import { MatchItemProps } from "../../matches/components/match-item.component";
 export interface ActiveLeagueNightComponentProps {
   league: League;
   leagueNight?: LeagueNightInstance | null;
+  showAdminButtons: boolean;
 }
 
 enum ActiveTabs {
@@ -27,7 +28,7 @@ enum ActiveTabs {
 
 export const ActiveLeagueNightComponent: React.FC<
   ActiveLeagueNightComponentProps
-> = ({ league, leagueNight }) => {
+> = ({ league, leagueNight, showAdminButtons }) => {
   const { theme } = useTheme();
 
   const quote = [
@@ -45,7 +46,11 @@ export const ActiveLeagueNightComponent: React.FC<
 
     return (
       <Container column grow gap={gap.md} w100>
-        <MatchesList league={league} leagueNight={leagueNight} />
+        <MatchesList
+          league={league}
+          leagueNight={leagueNight}
+          showAdminButtons={showAdminButtons}
+        />
       </Container>
     );
   };

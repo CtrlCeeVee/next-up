@@ -331,6 +331,7 @@ export const LeagueDetailScreen = () => {
         nextLeagueNight.id,
         user.id
       );
+      fetchCheckedInPlayers();
       setLeagueActionsSheetStage(1);
     } catch (error) {
       console.error("Error checking in player:", error);
@@ -534,6 +535,9 @@ export const LeagueDetailScreen = () => {
       <ActiveLeagueNightComponent
         league={league}
         leagueNight={nextLeagueNight ?? null}
+        showAdminButtons={
+          isUserMember && memberships[leagueId]?.role === "admin"
+        }
       />
     );
   };
