@@ -15,7 +15,7 @@ const LEAGUES = [
     address: "271 Pendoring Rd, Northcliff, Randburg, 2115",
     leagueDays: ["Monday", "Wednesday"],
     startTime: "18:30",
-    totalPlayers: 100,
+    totalPlayers: 221,
     isActive: true
   },  {
     id: 3,
@@ -25,16 +25,16 @@ const LEAGUES = [
     address: "131 Holkam Rd, Paulshof, Sandton, 2056",
     leagueDays: ["Saturday"],
     startTime: "15:00",
-    totalPlayers: 0,
+    totalPlayers: 24,
     isActive: true
   },  // Add more leagues here as needed
 ];
 
 // Stats - update these manually based on your actual numbers
 const STATS = {
-  activePlayers: 50,  // Total unique players across all leagues
+  activePlayers: 200,  // Total unique players across all leagues
   totalLeagues: 2,     // Number of active leagues
-  matchesPlayed: 100   // Total matches played to date
+  matchesPlayed: 600   // Total matches played to date
 };
 
 // Skeleton component for loading league cards (kept for potential future use)
