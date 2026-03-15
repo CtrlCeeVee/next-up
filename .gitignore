@@ -24,6 +24,7 @@ Thumbs.db # Windows specific
 .env.*.local
 *.pem
 *.key
+.mcp.json
 
 # Log files
 *.log
