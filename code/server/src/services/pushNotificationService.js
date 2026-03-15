@@ -7,12 +7,17 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
-// Configure web-push with VAPID keys
-webpush.setVapidDetails(
-  process.env.VAPID_SUBJECT,
-  process.env.VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-);
+// Configure web-push with VAPID keys (optional - push notifications disabled if not set)
+const vapidConfigured = process.env.VAPID_SUBJECT && process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY;
+if (vapidConfigured) {
+  webpush.setVapidDetails(
+    process.env.VAPID_SUBJECT,
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+} else {
+  console.error('VAPID keys not configured - push notifications disabled');
+}
 
 /**
  * Push Notification Service
@@ -27,6 +32,9 @@ class PushNotificationService {
    * @returns {Promise<object>} Result with success/failure counts
    */
   async sendToUser(userId, payload) {
+    if (!vapidConfigured) {
+      return { success: 0, failed: 0, message: 'Push notifications not configured' };
+    }
     try {
       // Get all active push subscriptions for this user
       const { data: subscriptions, error } = await supabase
