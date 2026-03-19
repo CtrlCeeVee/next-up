@@ -109,16 +109,8 @@ function LeaguePage() {
 
         // Recent games mock data removed - focusing on league statistics and schedule
 
-        // Map day names to night IDs - hardcoded for this league
-        // Monday = night-0, Wednesday = night-1
-        const dayToNightId = (dayName: string): string => {
-          if (dayName === 'Monday') return 'night-0';
-          if (dayName === 'Wednesday') return 'night-1';
-          return 'night-0'; // fallback
-        };
-
-        const mockLeagueNights: LeagueNight[] = league.leagueDays.map((day) => ({
-          id: dayToNightId(day),
+        const mockLeagueNights: LeagueNight[] = league.leagueDays.map((day, index) => ({
+          id: `night-${index}`,
           day,
           time: league.startTime,
           nextDate: getNextDateForDay(day),
