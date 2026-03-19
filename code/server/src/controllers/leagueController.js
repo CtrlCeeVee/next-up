@@ -23,7 +23,8 @@ const getAllLeagues = async (req, res) => {
           user_id
         )
       `)
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .order('day_of_week', { referencedTable: 'league_days' });
 
     if (leaguesError) {
       throw leaguesError;
@@ -78,6 +79,7 @@ const getLeagueById = async (req, res) => {
       `)
       .eq('id', id)
       .eq('is_active', true)
+      .order('day_of_week', { referencedTable: 'league_days' })
       .single();
 
     if (error || !league) {
