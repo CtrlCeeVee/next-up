@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useLeague, useTopPlayers, useLeagueStats } from '../hooks/useLeagues'
+import { useLeaderboard, type LeaderboardCategory } from '../hooks/useLeaderboard'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../contexts/ThemeContext'
 import { useMembership, useLeagueMembers } from '../hooks/useMembership'
@@ -20,7 +21,10 @@ import {
   Play,
   UserCheck,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Activity,
+  Flame,
+  Lock
 } from 'lucide-react'
 import BottomNav from '../components/BottomNav'
 
@@ -64,6 +68,14 @@ function LeaguePage() {
   );
   const { members } = useLeagueMembers(parseInt(leagueId || '0'));
   const { topPlayers, loading: topPlayersLoading, error: topPlayersError } = useTopPlayers(leagueId, user?.email || '');
+
+  // Leaderboard state
+  const [leaderboardCategory, setLeaderboardCategory] = useState<LeaderboardCategory>('overall');
+  const { leaderboard, loading: leaderboardLoading } = useLeaderboard(
+    leagueId ? parseInt(leagueId) : null,
+    leaderboardCategory,
+    user?.id
+  );
 
   // ===================================
   // STATE - Will be populated from API calls
@@ -620,98 +632,170 @@ function LeaguePage() {
           </div>
         </section>
 
-        {/* Top Players Leaderboard */}
+        {/* Leaderboards */}
         <section className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 border border-white/20 dark:border-slate-700/50 shadow-2xl">
-          <div className="flex items-center justify-between mb-8">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
-              <div className="p-3 bg-gradient-to-br from-yellow-100 to-amber-100 dark:from-yellow-900/50 dark:to-amber-900/50 rounded-2xl">
-                <Crown className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+              <div className="p-3 bg-gradient-to-br from-emerald-100 to-green-100 dark:from-emerald-900/50 dark:to-green-900/50 rounded-2xl">
+                <Trophy className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Top Players</h3>
-                <p className="text-gray-600 dark:text-gray-300">League champions leading the pack</p>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Leaderboards</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300">See where you rank</p>
               </div>
             </div>
-            <button className="text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium flex items-center space-x-1">
-              <span>View All</span>
+            <button
+              onClick={() => navigate(`/leaderboard?league=${leagueId}&category=${leaderboardCategory}`)}
+              className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium flex items-center gap-1"
+            >
+              <span>View Full</span>
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
-          {topPlayersLoading ? (
-            <div className="text-center py-12">
-              <div className="relative">
-                <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-200 dark:border-green-700 mx-auto mb-4"></div>
-                <div className="absolute inset-0 animate-spin rounded-full h-12 w-12 border-4 border-transparent border-t-green-600 dark:border-t-green-400 mx-auto"></div>
-              </div>
-              <p className="text-gray-600 dark:text-gray-300">Loading top players...</p>
-            </div>
-          ) : topPlayersError ? (
-            <div className="text-center py-12">
-              <Trophy className="h-16 w-16 text-red-300 dark:text-red-600 mx-auto mb-4" />
-              <p className="text-red-500 dark:text-red-400 text-lg">Failed to load top players</p>
-              <p className="text-sm text-gray-400 dark:text-gray-500">{topPlayersError}</p>
-            </div>
-          ) : topPlayers.length > 0 ? (
-            <div className="space-y-4">
-              {/* Top 3 Podium */}
-              <div className="flex justify-center items-end mb-4 sm:mb-6 md:mb-8 overflow-x-auto">
-                <div className="flex items-end space-x-1 sm:space-x-3 md:space-x-6 min-w-fit">
-                {/* 2nd Place */}
-                {topPlayers[1] && (
-                  <div className="flex flex-col items-center">
-                    <div className="w-10 sm:w-14 md:w-16 h-10 sm:h-14 md:h-16 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 rounded-full flex items-center justify-center mb-1 sm:mb-2 md:mb-3 shadow-lg">
-                      <Medal className="h-5 sm:h-7 md:h-8 w-5 sm:w-7 md:w-8 text-gray-600 dark:text-gray-300" />
-                    </div>
-                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 px-2 sm:px-3 md:px-4 py-2 sm:py-4 md:py-6 rounded-lg sm:rounded-xl md:rounded-2xl min-h-[80px] sm:min-h-[110px] md:min-h-[120px] flex flex-col justify-center shadow-lg border w-20 sm:w-28 md:w-36 text-center">
-                      <div className="font-bold text-gray-900 dark:text-white text-xs truncate px-1">{topPlayers[1].name}</div>
-                      <div className="text-base sm:text-xl md:text-2xl font-bold text-gray-700 dark:text-gray-300">{topPlayers[1].avgScore}</div>
-                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{topPlayers[1].gamesPlayed} games</div>
-                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{topPlayers[1].winRate}% win</div>
-                    </div>
-                  </div>
-                )}
+          {/* Category Tabs */}
+          <div className="flex gap-2 mb-2 overflow-x-auto scrollbar-hide pb-1">
+            {([
+              { key: 'overall' as LeaderboardCategory, label: 'Overall', icon: Trophy, desc: 'Balanced ranking based on wins, scoring, and games played' },
+              { key: 'games' as LeaderboardCategory, label: 'Games', icon: Activity, desc: 'Most games played.rewarding dedication and consistency' },
+              { key: 'avg_score' as LeaderboardCategory, label: 'Avg Score', icon: TrendingUp, desc: 'Highest average score per game (min 5 games)' },
+              { key: 'win_streak' as LeaderboardCategory, label: 'Streak', icon: Flame, desc: 'Longest consecutive wins.who went on the best run?' },
+              { key: 'attendance' as LeaderboardCategory, label: 'Attendance', icon: Calendar, desc: 'Most consecutive weeks attended.the regulars' },
+            ]).map(cat => {
+              const Icon = cat.icon;
+              const isActive = leaderboardCategory === cat.key;
+              return (
+                <button
+                  key={cat.key}
+                  onClick={() => setLeaderboardCategory(cat.key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all duration-200 flex-shrink-0 ${
+                    isActive
+                      ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-md shadow-emerald-500/20'
+                      : 'bg-slate-100/80 dark:bg-slate-700/50 text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  <Icon className="w-3 h-3" />
+                  {cat.label}
+                </button>
+              );
+            })}
+          </div>
 
-                {/* 1st Place */}
-                {topPlayers[0] && (
-                  <div className="flex flex-col items-center">
-                    <div className="w-12 sm:w-16 md:w-20 h-12 sm:h-16 md:h-20 bg-gradient-to-br from-yellow-300 to-amber-400 rounded-full flex items-center justify-center mb-1 sm:mb-2 md:mb-3 shadow-xl">
-                      <Crown className="h-6 sm:h-8 md:h-10 w-6 sm:w-8 md:w-10 text-yellow-700" />
-                    </div>
-                    <div className="bg-gradient-to-br from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border-2 border-yellow-300 dark:border-yellow-600 px-2 sm:px-3 md:px-6 py-3 sm:py-5 md:py-8 rounded-lg sm:rounded-xl md:rounded-2xl min-h-[95px] sm:min-h-[130px] md:min-h-[140px] flex flex-col justify-center shadow-xl w-20 sm:w-28 md:w-36 text-center">
-                      <div className="font-bold text-gray-900 dark:text-white text-[10px] sm:text-xs md:text-base truncate px-1">{topPlayers[0].name}</div>
-                      {topPlayers[0].isCurrentUser && (
-                        <div className="text-[10px] sm:text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-1 sm:px-2 py-0.5 rounded-full mb-0.5">You!</div>
-                      )}
-                      <div className="text-lg sm:text-2xl md:text-3xl font-bold text-yellow-600 dark:text-yellow-400">{topPlayers[0].avgScore}</div>
-                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{topPlayers[0].gamesPlayed} games</div>
-                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{topPlayers[0].winRate}% win</div>
-                    </div>
-                  </div>
-                )}
+          {/* Category description */}
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 px-1">
+            {([
+              { key: 'overall', desc: 'Balanced ranking based on wins, scoring, and games played' },
+              { key: 'games', desc: 'Most games played.rewarding dedication and consistency' },
+              { key: 'avg_score', desc: 'Highest average score per game (min 5 games)' },
+              { key: 'win_streak', desc: 'Longest consecutive wins.who went on the best run?' },
+              { key: 'attendance', desc: 'Most consecutive weeks attended.the regulars' },
+            ]).find(c => c.key === leaderboardCategory)?.desc}
+          </p>
 
-                {/* 3rd Place */}
-                {topPlayers[2] && (
-                  <div className="flex flex-col items-center">
-                    <div className="w-10 sm:w-14 md:w-16 h-10 sm:h-14 md:h-16 bg-gradient-to-br from-orange-200 to-red-300 dark:from-orange-800 dark:to-red-700 rounded-full flex items-center justify-center mb-1 sm:mb-2 md:mb-3 shadow-lg">
-                      <Medal className="h-5 sm:h-7 md:h-8 w-5 sm:w-7 md:w-8 text-orange-700 dark:text-orange-300" />
-                    </div>
-                    <div className="bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/30 dark:to-red-900/30 px-2 sm:px-3 md:px-4 py-2 sm:py-4 md:py-6 rounded-lg sm:rounded-xl md:rounded-2xl min-h-[80px] sm:min-h-[110px] md:min-h-[120px] flex flex-col justify-center shadow-lg border border-orange-200 dark:border-orange-700 w-20 sm:w-28 md:w-36 text-center">
-                      <div className="font-bold text-gray-900 dark:text-white text-xs truncate px-1">{topPlayers[2].name}</div>
-                      <div className="text-base sm:text-xl md:text-2xl font-bold text-orange-600 dark:text-orange-400">{topPlayers[2].avgScore}</div>
-                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{topPlayers[2].gamesPlayed} games</div>
-                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">{topPlayers[2].winRate}% win</div>
-                    </div>
+          {/* Unlock message */}
+          {leaderboard?.currentUser && leaderboard.currentUser.gamesNeeded > 0 && (
+            <div className="mb-4 bg-emerald-50/80 dark:bg-emerald-900/20 rounded-xl border border-emerald-200/50 dark:border-emerald-700/50 p-3 flex items-center gap-2.5">
+              <Lock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+              <p className="text-xs text-emerald-700 dark:text-emerald-300">
+                Play <span className="font-bold">{leaderboard.currentUser.gamesNeeded} more game{leaderboard.currentUser.gamesNeeded !== 1 ? 's' : ''}</span> to unlock your ranking
+              </p>
+            </div>
+          )}
+
+          {/* Loading */}
+          {leaderboardLoading && (
+            <div className="space-y-2">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 animate-pulse">
+                  <div className="w-7 h-7 bg-slate-200 dark:bg-slate-700 rounded-full" />
+                  <div className="flex-1">
+                    <div className="h-3.5 bg-slate-200 dark:bg-slate-700 rounded w-28 mb-1.5" />
+                    <div className="h-2.5 bg-slate-200 dark:bg-slate-700 rounded w-16" />
                   </div>
-                )}
+                  <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-12" />
                 </div>
-              </div>
+              ))}
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <Trophy className="h-16 w-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400 text-lg">No player statistics available yet</p>
-              <p className="text-sm text-gray-400 dark:text-gray-500">Start playing games to see the leaderboard!</p>
+          )}
+
+          {/* Empty */}
+          {!leaderboardLoading && (!leaderboard?.players || leaderboard.players.length === 0) && (
+            <div className="text-center py-8">
+              <Trophy className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+              <p className="text-gray-500 dark:text-gray-400">No players qualify yet</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                {leaderboard?.minGames ? `Min ${leaderboard.minGames} games required` : 'Play some games to populate this leaderboard'}
+              </p>
+            </div>
+          )}
+
+          {/* Leaderboard List */}
+          {!leaderboardLoading && leaderboard?.players && leaderboard.players.length > 0 && (
+            <div>
+              {/* Show top 5 */}
+              {leaderboard.players.slice(0, 5).map((player, i) => {
+                const isCurrentUser = player.userId === user?.id;
+                const isTop3 = player.rank <= 3;
+                const rankColors = player.rank === 1
+                  ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 border-yellow-300 dark:border-yellow-700'
+                  : player.rank === 2
+                    ? 'bg-slate-100 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-600'
+                    : player.rank === 3
+                      ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700'
+                      : 'bg-transparent text-slate-500 dark:text-slate-400 border-transparent';
+
+                return (
+                  <div
+                    key={player.userId}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-colors ${
+                      isCurrentUser
+                        ? 'bg-emerald-50/80 dark:bg-emerald-900/20 border border-emerald-200/50 dark:border-emerald-700/50'
+                        : 'hover:bg-slate-50/50 dark:hover:bg-slate-700/30'
+                    }`}
+                  >
+                    {/* Rank */}
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${isTop3 ? `border ${rankColors}` : rankColors}`}>
+                      {player.rank}
+                    </div>
+
+                    {/* Name */}
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium truncate ${isCurrentUser ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-900 dark:text-white'}`}>
+                        {player.name}
+                        {isCurrentUser && <span className="text-[10px] font-normal ml-1 text-emerald-500">(You)</span>}
+                      </p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                        {player.gamesPlayed} games &middot; {player.winRate}% wins
+                      </p>
+                    </div>
+
+                    {/* Value */}
+                    <div className="text-right flex-shrink-0">
+                      <span className={`text-sm font-bold ${isTop3 ? 'bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent' : 'text-gray-700 dark:text-gray-300'}`}>
+                        {player.displayValue}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Current user card */}
+              {leaderboard.currentUser?.rank && (
+                <div className="mt-2 bg-emerald-50/80 dark:bg-emerald-900/20 rounded-xl border border-emerald-200/50 dark:border-emerald-700/50 p-3">
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium mb-1.5 uppercase tracking-wide">Your Ranking</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-800/50 flex items-center justify-center text-xs font-bold text-emerald-700 dark:text-emerald-300 flex-shrink-0">
+                      {leaderboard.currentUser.rank}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300 truncate">{leaderboard.currentUser.name}</p>
+                      <p className="text-[10px] text-emerald-600/70 dark:text-emerald-400/70">{leaderboard.currentUser.gamesPlayed} games &middot; {leaderboard.currentUser.winRate}% wins</p>
+                    </div>
+                    <span className="text-sm font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">{leaderboard.currentUser.displayValue}</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>

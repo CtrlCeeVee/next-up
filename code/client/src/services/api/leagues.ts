@@ -32,5 +32,13 @@ export const leaguesAPI = {
   getPlayerStats: async (userId: string) => {
     const response = await apiRequest(`/api/leagues/player-stats?user_id=${userId}`);
     return response.success ? response.data : response;
+  },
+
+  // Get leaderboard for a league by category
+  getLeaderboard: async (leagueId: number, category: string, userId?: string) => {
+    const params = new URLSearchParams({ category });
+    if (userId) params.append('user_id', userId);
+    const response = await apiRequest(`/api/leagues/${leagueId}/leaderboard?${params}`);
+    return response.success ? response.data : response;
   }
 };

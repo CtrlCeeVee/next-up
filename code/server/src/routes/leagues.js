@@ -3,10 +3,11 @@
 
 const express = require('express');
 const router = express.Router();
-const { 
-  getAllLeagues, 
-  getLeagueById, 
+const {
+  getAllLeagues,
+  getLeagueById,
   getLeagueTopPlayers,
+  getLeagueLeaderboard,
   checkMembership,
   joinLeague,
   getLeagueMembers,
@@ -25,6 +26,9 @@ router.get('/:id', getLeagueById);
 
 // GET /api/leagues/:id/top-players - Get top players for a league
 router.get('/:id/top-players', getLeagueTopPlayers);
+
+// GET /api/leagues/:id/leaderboard - Get leaderboard by category
+router.get('/:id/leaderboard', getLeagueLeaderboard);
 
 // GET /api/leagues/:id/membership - Check if user is a member
 router.get('/:id/membership', checkMembership);
