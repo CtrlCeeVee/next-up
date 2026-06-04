@@ -530,10 +530,381 @@ const getPlayerStats = async (req, res) => {
   }
 };
 
+// Get leaderboard for a league by category
+const getLeagueLeaderboard = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { category = 'overall', user_id } = req.query;
+
+    // Get league name
+    const { data: league, error: leagueError } = await supabase
+      .from('leagues')
+      .select('name')
+      .eq('id', id)
+      .single();
+
+    if (leagueError) throw leagueError;
+
+    let players = [];
+    let minGames = 0;
+
+    if (category === 'games') {
+      players = await computeGamesBoardLeaderboard(id);
+    } else if (category === 'avg_score') {
+      minGames = 5;
+      players = await computeAvgScoreLeaderboard(id);
+    } else if (category === 'win_streak') {
+      players = await computeWinStreakLeaderboard(id);
+    } else if (category === 'attendance') {
+      players = await computeAttendanceLeaderboard(id);
+    } else {
+      // overall (default)
+      minGames = 5;
+      players = await computeOverallLeaderboard(id);
+    }
+
+    // Find current user's position and full data
+    let currentUser = null;
+    if (user_id) {
+      const userIndex = players.findIndex(p => p.userId === user_id);
+      if (userIndex !== -1) {
+        currentUser = {
+          ...players[userIndex],
+          rank: userIndex + 1,
+          gamesNeeded: 0
+        };
+      } else {
+        // User not on board — check if they need more games
+        const { data: userStats } = await supabase
+          .from('player_stats')
+          .select('*, profiles (first_name, last_name)')
+          .eq('user_id', user_id)
+          .eq('league_id', id)
+          .single();
+
+        const gamesPlayed = userStats?.games_played || 0;
+        currentUser = {
+          rank: null,
+          userId: user_id,
+          name: userStats?.profiles ? `${userStats.profiles.first_name} ${userStats.profiles.last_name}` : 'Unknown',
+          value: 0,
+          displayValue: '0',
+          gamesPlayed: gamesPlayed,
+          winRate: gamesPlayed > 0 ? Math.round((userStats.games_won / gamesPlayed) * 1000) / 10 : 0,
+          avgPoints: parseFloat(userStats?.average_points) || 0,
+          gamesNeeded: minGames > 0 ? Math.max(0, minGames - gamesPlayed) : 0
+        };
+      }
+    }
+
+    res.json({
+      success: true,
+      data: {
+        category,
+        leagueId: parseInt(id),
+        leagueName: league.name,
+        minGames,
+        totalQualified: players.length,
+        players: players.slice(0, 50),
+        currentUser
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch leaderboard'
+    });
+  }
+};
+
+// --- Leaderboard computation helpers ---
+
+async function computeGamesBoardLeaderboard(leagueId) {
+  const { data: stats, error } = await supabase
+    .from('player_stats')
+    .select('*, profiles (first_name, last_name)')
+    .eq('league_id', leagueId)
+    .gt('games_played', 0)
+    .order('games_played', { ascending: false });
+
+  if (error) throw error;
+
+  return stats.map((s, i) => ({
+    rank: i + 1,
+    userId: s.user_id,
+    name: `${s.profiles.first_name} ${s.profiles.last_name}`,
+    value: s.games_played,
+    displayValue: `${s.games_played}`,
+    gamesPlayed: s.games_played,
+    winRate: s.games_played > 0 ? Math.round((s.games_won / s.games_played) * 1000) / 10 : 0,
+    avgPoints: parseFloat(s.average_points) || 0
+  }));
+}
+
+async function computeAvgScoreLeaderboard(leagueId) {
+  const { data: stats, error } = await supabase
+    .from('player_stats')
+    .select('*, profiles (first_name, last_name)')
+    .eq('league_id', leagueId)
+    .gte('games_played', 5)
+    .order('average_points', { ascending: false });
+
+  if (error) throw error;
+
+  return stats.map((s, i) => ({
+    rank: i + 1,
+    userId: s.user_id,
+    name: `${s.profiles.first_name} ${s.profiles.last_name}`,
+    value: parseFloat(s.average_points) || 0,
+    displayValue: `${parseFloat(s.average_points).toFixed(1)}`,
+    gamesPlayed: s.games_played,
+    winRate: s.games_played > 0 ? Math.round((s.games_won / s.games_played) * 1000) / 10 : 0,
+    avgPoints: parseFloat(s.average_points) || 0
+  }));
+}
+
+async function computeOverallLeaderboard(leagueId) {
+  const { data: stats, error } = await supabase
+    .from('player_stats')
+    .select('*, profiles (first_name, last_name)')
+    .eq('league_id', leagueId)
+    .gte('games_played', 5);
+
+  if (error) throw error;
+  if (!stats.length) return [];
+
+  // Compute win rates and find max values for normalization
+  const enriched = stats.map(s => ({
+    ...s,
+    winRate: s.games_played > 0 ? (s.games_won / s.games_played) * 100 : 0,
+    avgPts: parseFloat(s.average_points) || 0
+  }));
+
+  const maxGames = Math.max(...enriched.map(s => s.games_played));
+  const maxWinRate = Math.max(...enriched.map(s => s.winRate));
+  const maxAvgPts = Math.max(...enriched.map(s => s.avgPts));
+
+  // Composite score: 40% win rate + 30% avg points + 30% games played
+  const scored = enriched.map(s => ({
+    ...s,
+    composite: (
+      0.4 * (maxWinRate > 0 ? s.winRate / maxWinRate : 0) +
+      0.3 * (maxAvgPts > 0 ? s.avgPts / maxAvgPts : 0) +
+      0.3 * (maxGames > 0 ? s.games_played / maxGames : 0)
+    ) * 100
+  }));
+
+  scored.sort((a, b) => b.composite - a.composite);
+
+  return scored.map((s, i) => ({
+    rank: i + 1,
+    userId: s.user_id,
+    name: `${s.profiles.first_name} ${s.profiles.last_name}`,
+    value: Math.round(s.composite * 10) / 10,
+    displayValue: `${(Math.round(s.composite * 10) / 10).toFixed(1)}`,
+    gamesPlayed: s.games_played,
+    winRate: Math.round(s.winRate * 10) / 10,
+    avgPoints: s.avgPts
+  }));
+}
+
+async function computeWinStreakLeaderboard(leagueId) {
+  // Fetch all completed matches for this league
+  const { data: matches, error: matchError } = await supabase
+    .from('matches')
+    .select(`
+      id, team1_score, team2_score, completed_at,
+      partnership1:confirmed_partnerships!matches_partnership1_id_fkey (player1_id, player2_id),
+      partnership2:confirmed_partnerships!matches_partnership2_id_fkey (player1_id, player2_id),
+      league_night_instances!inner (league_id)
+    `)
+    .eq('status', 'completed')
+    .eq('league_night_instances.league_id', leagueId)
+    .order('completed_at', { ascending: true });
+
+  if (matchError) throw matchError;
+
+  // Build per-user chronological results
+  const userResults = {};
+
+  for (const match of matches) {
+    if (!match.partnership1 || !match.partnership2) continue;
+    const team1Won = match.team1_score > match.team2_score;
+    const team1Players = [match.partnership1.player1_id, match.partnership1.player2_id];
+    const team2Players = [match.partnership2.player1_id, match.partnership2.player2_id];
+
+    for (const uid of team1Players) {
+      if (!uid) continue;
+      if (!userResults[uid]) userResults[uid] = [];
+      userResults[uid].push(team1Won ? 'W' : 'L');
+    }
+    for (const uid of team2Players) {
+      if (!uid) continue;
+      if (!userResults[uid]) userResults[uid] = [];
+      userResults[uid].push(team1Won ? 'L' : 'W');
+    }
+  }
+
+  // Compute best streak per user
+  const streaks = [];
+  for (const [userId, results] of Object.entries(userResults)) {
+    let bestStreak = 0;
+    let current = 0;
+    for (const r of results) {
+      if (r === 'W') {
+        current++;
+        if (current > bestStreak) bestStreak = current;
+      } else {
+        current = 0;
+      }
+    }
+    if (bestStreak > 0) {
+      streaks.push({ userId, bestStreak, gamesPlayed: results.length });
+    }
+  }
+
+  streaks.sort((a, b) => b.bestStreak - a.bestStreak || b.gamesPlayed - a.gamesPlayed);
+
+  // Fetch profile names for top results
+  const topUserIds = streaks.slice(0, 50).map(s => s.userId);
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, first_name, last_name')
+    .in('id', topUserIds);
+
+  const profileMap = {};
+  for (const p of (profiles || [])) {
+    profileMap[p.id] = `${p.first_name} ${p.last_name}`;
+  }
+
+  // Get player_stats for win rate / avg points context
+  const { data: allStats } = await supabase
+    .from('player_stats')
+    .select('user_id, games_played, games_won, average_points')
+    .eq('league_id', leagueId)
+    .in('user_id', topUserIds);
+
+  const statsMap = {};
+  for (const s of (allStats || [])) {
+    statsMap[s.user_id] = s;
+  }
+
+  return streaks.slice(0, 50).map((s, i) => {
+    const stat = statsMap[s.userId] || {};
+    return {
+      rank: i + 1,
+      userId: s.userId,
+      name: profileMap[s.userId] || 'Unknown',
+      value: s.bestStreak,
+      displayValue: `${s.bestStreak}`,
+      gamesPlayed: stat.games_played || s.gamesPlayed,
+      winRate: stat.games_played > 0 ? Math.round((stat.games_won / stat.games_played) * 1000) / 10 : 0,
+      avgPoints: parseFloat(stat.average_points) || 0
+    };
+  });
+}
+
+async function computeAttendanceLeaderboard(leagueId) {
+  // Fetch all checkins for this league with night dates
+  const { data: checkins, error } = await supabase
+    .from('league_night_checkins')
+    .select(`
+      user_id,
+      league_night_instances!inner (league_id, date)
+    `)
+    .eq('league_night_instances.league_id', leagueId);
+
+  if (error) throw error;
+
+  // Group by user → set of ISO week strings
+  const userWeeks = {};
+  for (const c of checkins) {
+    const uid = c.user_id;
+    const date = new Date(c.league_night_instances.date);
+    // Get ISO week: year-week format
+    const jan1 = new Date(date.getFullYear(), 0, 1);
+    const weekNum = Math.ceil(((date - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+    const weekKey = `${date.getFullYear()}-W${weekNum}`;
+
+    if (!userWeeks[uid]) userWeeks[uid] = new Set();
+    userWeeks[uid].add(weekKey);
+  }
+
+  // Compute longest consecutive week streak per user
+  const streaks = [];
+  for (const [userId, weekSet] of Object.entries(userWeeks)) {
+    const weeks = Array.from(weekSet).sort();
+    let bestStreak = 1;
+    let current = 1;
+
+    for (let i = 1; i < weeks.length; i++) {
+      const [prevYear, prevW] = weeks[i - 1].split('-W').map(Number);
+      const [curYear, curW] = weeks[i].split('-W').map(Number);
+
+      // Check if consecutive week (handle year boundary)
+      const isConsecutive =
+        (curYear === prevYear && curW === prevW + 1) ||
+        (curYear === prevYear + 1 && prevW >= 52 && curW === 1);
+
+      if (isConsecutive) {
+        current++;
+        if (current > bestStreak) bestStreak = current;
+      } else {
+        current = 1;
+      }
+    }
+
+    streaks.push({ userId, bestStreak, totalWeeks: weeks.length });
+  }
+
+  streaks.sort((a, b) => b.bestStreak - a.bestStreak || b.totalWeeks - a.totalWeeks);
+
+  // Fetch profile names
+  const topUserIds = streaks.slice(0, 50).map(s => s.userId);
+  const { data: profiles } = await supabase
+    .from('profiles')
+    .select('id, first_name, last_name')
+    .in('id', topUserIds);
+
+  const profileMap = {};
+  for (const p of (profiles || [])) {
+    profileMap[p.id] = `${p.first_name} ${p.last_name}`;
+  }
+
+  // Get player_stats for context
+  const { data: allStats } = await supabase
+    .from('player_stats')
+    .select('user_id, games_played, games_won, average_points')
+    .eq('league_id', leagueId)
+    .in('user_id', topUserIds);
+
+  const statsMap = {};
+  for (const s of (allStats || [])) {
+    statsMap[s.user_id] = s;
+  }
+
+  return streaks.slice(0, 50).map((s, i) => {
+    const stat = statsMap[s.userId] || {};
+    return {
+      rank: i + 1,
+      userId: s.userId,
+      name: profileMap[s.userId] || 'Unknown',
+      value: s.bestStreak,
+      displayValue: `${s.bestStreak} wk${s.bestStreak !== 1 ? 's' : ''}`,
+      gamesPlayed: stat.games_played || 0,
+      winRate: stat.games_played > 0 ? Math.round((stat.games_won / stat.games_played) * 1000) / 10 : 0,
+      avgPoints: parseFloat(stat.average_points) || 0
+    };
+  });
+}
+
 module.exports = {
   getAllLeagues,
   getLeagueById,
   getLeagueTopPlayers,
+  getLeagueLeaderboard,
   checkMembership,
   joinLeague,
   getLeagueMembers,

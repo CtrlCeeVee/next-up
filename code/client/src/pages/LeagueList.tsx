@@ -32,9 +32,9 @@ const LEAGUES = [
 
 // Stats - update these manually based on your actual numbers
 const STATS = {
-  activePlayers: 200,  // Total unique players across all leagues
+  activePlayers: 300,  // Total unique players across all leagues
   totalLeagues: 2,     // Number of active leagues
-  matchesPlayed: 600   // Total matches played to date
+  matchesPlayed: 1000  // Total matches played to date
 };
 
 // Skeleton component for loading league cards (kept for potential future use)

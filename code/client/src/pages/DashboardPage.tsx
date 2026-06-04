@@ -173,7 +173,7 @@ export default function DashboardPage() {
 
             {/* Stats */}
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate('/profile?tab=stats')}
               className="flex flex-col items-center gap-1.5 min-[375px]:gap-2 group"
             >
               <div className="w-14 h-14 min-[375px]:w-16 min-[375px]:h-16 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 dark:from-orange-400 dark:to-orange-500 flex items-center justify-center shadow-xl group-hover:scale-110 group-active:scale-95 transition-all duration-300">
