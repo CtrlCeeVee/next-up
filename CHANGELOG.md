@@ -1,5 +1,15 @@
 # 📝 Next-Up Changelog
 
+## Billing System v1 (July 10, 2026)
+
+Deterministic invoicing built into the production Supabase database (new
+service-role-only `billing` schema; no changes to app tables). Date-versioned
+commercial terms, per-night statements, monthly draft invoices via pg_cron on
+the 1st, manual issue/pay/void with immutable issued snapshots, night
+write-offs and once-off credits/debits. First invoice NE-2026-06 (Northcliff
+Eagles, June 2026) issued. See `Docs/BILLING.md` for rules and runbook;
+migrations mirrored in `supabase/migrations/`.
+
 ## Version 1.3.0 - PWA + Push Notifications (December 13, 2025)
 
 ### 🎉 Progressive Web App (PWA)
