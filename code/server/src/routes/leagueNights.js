@@ -23,7 +23,9 @@ const {
   adminCreatePartnership,
   adminRemovePartnership,
   getAllPartnerships,
-  adminCreateTempAccount
+  adminCreateTempAccount,
+  redeemVoucher,
+  adminMarkPaid
 } = require('../controllers/leagueNightController');const {
   getMatches,
   createMatches,
@@ -124,6 +126,12 @@ router.post('/:leagueId/nights/:nightId/admin/remove-partnership', adminRemovePa
 
 // POST /api/leagues/:leagueId/nights/:nightId/admin/create-temp-account - Admin create temporary account
 router.post('/:leagueId/nights/:nightId/admin/create-temp-account', adminCreateTempAccount);
+
+// POST /api/leagues/:leagueId/nights/:nightId/redeem-voucher - Redeem voucher code for payment
+router.post('/:leagueId/nights/:nightId/redeem-voucher', redeemVoucher);
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/mark-paid - Admin mark player as paid
+router.post('/:leagueId/nights/:nightId/admin/mark-paid', adminMarkPaid);
 
 // DELETE /api/leagues/:leagueId/nights/:nightId/checkin - Uncheck player
 router.delete('/:leagueId/nights/:nightId/checkin', uncheckPlayer);

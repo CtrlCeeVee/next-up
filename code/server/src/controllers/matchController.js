@@ -139,9 +139,36 @@ const tryAutoAssignMatches = async (instanceId) => {
       }
     });
 
-    // Filter out partnerships currently playing and enhance with game counts
-    const availablePartnerships = partnerships.filter(p => !currentlyPlaying.has(p.id));
-    
+    // Filter out partnerships currently playing
+    let availablePartnerships = partnerships.filter(p => !currentlyPlaying.has(p.id));
+
+    // Payment gate: if league requires vouchers, filter out unpaid partnerships
+    const { data: leagueConfig } = await supabase
+      .from('leagues')
+      .select('requires_voucher')
+      .eq('id', leagueId)
+      .single();
+
+    if (leagueConfig?.requires_voucher) {
+      const allPlayerIds = availablePartnerships.flatMap(p => [p.player1_id, p.player2_id]);
+
+      const { data: checkins } = await supabase
+        .from('league_night_checkins')
+        .select('user_id, has_paid')
+        .eq('league_night_instance_id', instanceId)
+        .eq('is_active', true)
+        .in('user_id', allPlayerIds);
+
+      const paidPlayers = new Set((checkins || []).filter(c => c.has_paid).map(c => c.user_id));
+      const beforeCount = availablePartnerships.length;
+      availablePartnerships = availablePartnerships.filter(p =>
+        paidPlayers.has(p.player1_id) && paidPlayers.has(p.player2_id)
+      );
+      if (availablePartnerships.length < beforeCount) {
+        console.log(`Payment gate: ${beforeCount - availablePartnerships.length} partnerships filtered (unpaid players)`);
+      }
+    }
+
     if (availablePartnerships.length < 2) {
       console.log(`Not enough available partnerships (${availablePartnerships.length} free, ${currentlyPlaying.size} playing)`);
       return { success: true, message: 'Not enough available partnerships', matches: [] };
