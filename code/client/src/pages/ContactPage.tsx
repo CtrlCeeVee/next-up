@@ -1,37 +1,50 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
-import { ArrowLeft, Moon, Sun, Mail, Phone, MapPin, Send, MessageSquare, Clock } from 'lucide-react';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTheme } from "../contexts/ThemeContext";
+import {
+  ArrowLeft,
+  Moon,
+  Sun,
+  Mail,
+  Phone,
+  MapPin,
+  Send,
+  MessageSquare,
+  Clock,
+  Trash,
+} from "lucide-react";
 
 const ContactPage = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  
+
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
+    name: "",
+    email: "",
+    subject: "",
+    message: "",
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     // TODO: Implement actual form submission
     setTimeout(() => {
       setIsSubmitting(false);
-      alert('Thank you for your message! We\'ll get back to you soon.');
-      setFormData({ name: '', email: '', subject: '', message: '' });
+      alert("Thank you for your message! We'll get back to you soon.");
+      setFormData({ name: "", email: "", subject: "", message: "" });
     }, 1000);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -43,18 +56,20 @@ const ContactPage = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => navigate('/')}
+                onClick={() => navigate("/")}
                 className="p-2 rounded-full bg-gray-100/80 dark:bg-slate-800/80 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-300"
               >
                 <ArrowLeft className="h-5 w-5 text-gray-600 dark:text-gray-300" />
               </button>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Contact Us</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Contact Us
+              </h1>
             </div>
             <button
               onClick={toggleTheme}
               className="p-2 rounded-full bg-gray-100/80 dark:bg-slate-800/80 hover:bg-gray-200 dark:hover:bg-slate-700 transition-all duration-300"
             >
-              {theme === 'light' ? (
+              {theme === "light" ? (
                 <Moon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
               ) : (
                 <Sun className="h-5 w-5 text-yellow-500" />
@@ -71,7 +86,8 @@ const ContactPage = () => {
             Get in Touch
           </h2>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Have questions about Next-Up? Need help with your league? We'd love to hear from you!
+            Have questions about Next-Up? Need help with your league? We'd love
+            to hear from you!
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             Nextup Sport (PTY) LTD — Johannesburg, South Africa
@@ -85,9 +101,11 @@ const ContactPage = () => {
               <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl mr-4">
                 <MessageSquare className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Send us a Message</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Send us a Message
+              </h3>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -173,16 +191,22 @@ const ContactPage = () => {
           <div className="space-y-8">
             {/* Contact Details */}
             <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-8 border border-white/20 dark:border-slate-700/50 shadow-xl">
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Contact Information</h3>
-              
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                Contact Information
+              </h3>
+
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
                   <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
                     <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white">Email</p>
-                    <p className="text-gray-600 dark:text-gray-300">luke.renton@next-up.co.za</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      Email
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      luke.renton@next-up.co.za
+                    </p>
                   </div>
                 </div>
 
@@ -191,8 +215,12 @@ const ContactPage = () => {
                     <Phone className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white">Phone</p>
-                    <p className="text-gray-600 dark:text-gray-300">+27 60 728 9497</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      Phone
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      +27 60 728 9497
+                    </p>
                   </div>
                 </div>
 
@@ -201,8 +229,12 @@ const ContactPage = () => {
                     <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white">Location</p>
-                    <p className="text-gray-600 dark:text-gray-300">Johannesburg, South Africa</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      Location
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-300">
+                      Johannesburg, South Africa
+                    </p>
                   </div>
                 </div>
               </div>
@@ -214,28 +246,72 @@ const ContactPage = () => {
                 <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl mr-4">
                   <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Support Hours</h3>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Support Hours
+                </h3>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-300">Monday - Friday</span>
-                  <span className="font-medium text-gray-900 dark:text-white">8:00 AM - 6:00 PM</span>
+                  <span className="text-gray-600 dark:text-gray-300">
+                    Monday - Friday
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    8:00 AM - 6:00 PM
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-300">Saturday</span>
-                  <span className="font-medium text-gray-900 dark:text-white">9:00 AM - 2:00 PM</span>
+                  <span className="text-gray-600 dark:text-gray-300">
+                    Saturday
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    9:00 AM - 2:00 PM
+                  </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600 dark:text-gray-300">Sunday</span>
-                  <span className="font-medium text-gray-900 dark:text-white">Closed</span>
+                  <span className="text-gray-600 dark:text-gray-300">
+                    Sunday
+                  </span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    Closed
+                  </span>
                 </div>
               </div>
-              
+
               <div className="mt-4 p-4 bg-green-50/50 dark:bg-green-900/20 rounded-xl">
                 <p className="text-sm text-green-700 dark:text-green-300">
-                  💡 <strong>Quick Tip:</strong> For urgent league night support, 
-                  include your league name and the issue you're experiencing for faster assistance.
+                  💡 <strong>Quick Tip:</strong> For urgent league night
+                  support, include your league name and the issue you're
+                  experiencing for faster assistance.
+                </p>
+              </div>
+            </div>
+
+            {/* Support Hours */}
+            <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-8 border border-white/20 dark:border-slate-700/50 shadow-xl">
+              <div className="flex flex-col mb-4">
+                <div className="flex items-center">
+                  <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-xl mr-4">
+                    <Trash className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Account Deletion
+                  </h3>
+                </div>
+                <span className="font-medium text-gray-900 dark:text-white mt-2">
+                  To permanently delete your account, please email us at
+                  luke.renton@next-up.co.za
+                </span>
+              </div>
+
+              <div className="space-y-2"></div>
+
+              <div className="mt-4 p-4 bg-blue-50/50 dark:bg-blue-900/20 rounded-xl">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>Remaining data after account deletion: </strong> we
+                  store no personal information related to you once your account
+                  has been deleted. Previous matches you have played will be
+                  available under an "unknown" username.
                 </p>
               </div>
             </div>
@@ -246,8 +322,8 @@ const ContactPage = () => {
               <p className="text-green-100 mb-4">
                 Check out our frequently asked questions for instant help.
               </p>
-              <button 
-                onClick={() => navigate('/faq')}
+              <button
+                onClick={() => navigate("/faq")}
                 className="bg-white text-green-600 px-6 py-2 rounded-xl font-semibold hover:bg-gray-100 transition-colors"
               >
                 View FAQ

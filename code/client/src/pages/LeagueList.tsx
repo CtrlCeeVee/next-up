@@ -2,8 +2,9 @@ import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../contexts/ThemeContext'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getCurrentUserProfileUrl } from '../utils/profileUtils'
-import { Moon, Sun, Zap, Trophy, Users, MapPin, Calendar, Star, ArrowRight, Play, User } from 'lucide-react'
+import { Moon, Sun, Zap, Trophy, Users, MapPin, Calendar, Star, ArrowRight, Smartphone, User } from 'lucide-react'
 import { useMemo } from 'react'
+import { StoreButtons } from '../components/AppDownload'
 
 // Hardcoded leagues data - update manually when leagues change
 const LEAGUES = [
@@ -328,8 +329,8 @@ function LeagueList() {
                   onClick={() => navigate('/auth')}
                   className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center space-x-2"
                 >
-                  <span>Sign In</span>
-                  <ArrowRight className="h-4 w-4" />
+                  <Smartphone className="h-4 w-4" />
+                  <span>Get the App</span>
                 </button>
               )}
             </div>
@@ -355,27 +356,18 @@ function LeagueList() {
               </span>
             </h1>
             <p className="text-base sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-6 sm:mb-8 px-4 sm:px-0">
-              Join dynamic leagues, track your progress, and become part of South Africa's fastest-growing pickleball community. 
+              Join dynamic leagues, track your progress, and become part of South Africa's fastest-growing pickleball community.
               <span className="font-semibold text-green-600 dark:text-green-400">
-                {!user && ' Sign in to unlock your potential!'}
+                {' '}Download the app to get started!
               </span>
             </p>
-            
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-              {!user && (
-                <button 
-                  onClick={() => navigate('/auth')}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 rounded-2xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl flex items-center justify-center space-x-3"
-                >
-                  <Play className="h-5 w-5" />
-                  <span>Get Started Now</span>
-                </button>
-              )}
-              <button className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-gray-900 dark:text-white px-8 py-4 rounded-2xl font-semibold text-lg border border-gray-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3">
-                <Trophy className="h-5 w-5 text-green-600 dark:text-green-400" />
-                <span>View Leaderboards</span>
-              </button>
+
+            {/* Download CTA */}
+            <div className="flex flex-col items-center gap-4 mb-12">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Download the free app to check in, play and track your stats
+              </p>
+              <StoreButtons />
             </div>
 
             {/* Stats */}
@@ -505,7 +497,7 @@ function LeagueList() {
                     }`}
                     disabled={!league.isActive}
                   >
-                    <span>{league.isActive ? (user ? 'View League' : 'Join League') : 'Currently Inactive'}</span>
+                    <span>{league.isActive ? 'Get the App' : 'Currently Inactive'}</span>
                     {league.isActive && <ArrowRight className="h-4 w-4" />}
                   </button>
                 </div>
