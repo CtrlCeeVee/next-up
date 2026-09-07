@@ -6,6 +6,9 @@ export const SITE_NAME = 'Next-Up'
 export const LEGAL_NAME = 'Nextup Sport (Pty) Ltd'
 export const APP_NAME = 'NextUp Sport'
 export const CONTACT_EMAIL = 'luke.renton@next-up.co.za'
+// Sender for mail the site sends (contact form). The domain is verified in
+// Resend, so no mailbox has to exist behind this address.
+export const CONTACT_FROM = 'Next-Up website <website@next-up.co.za>'
 
 export const APP_STORE_ID = '6766297118'
 export const APP_STORE_URL = `https://apps.apple.com/za/app/nextup-sport/id${APP_STORE_ID}`

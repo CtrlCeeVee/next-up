@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Clock, Mail, MapPin, MessageSquare, Phone, Trash2 } from 'lucide-react'
+import { ContactForm } from '@/components/ContactForm'
 import { PageIntro } from '@/components/PageIntro'
 import { card, ctaPanel, ctaPrimary } from '@/components/ui'
 import { CONTACT_EMAIL, LEGAL_NAME } from '@/lib/site'
@@ -32,15 +33,51 @@ export default function ContactPage() {
       <PageIntro icon={MessageSquare} badge="We reply to every message" title="Contact Next-Up">
         <p className="mx-auto max-w-2xl text-xl text-gray-600 dark:text-gray-300">
           Questions about a league, help on a league night, or want Next-Up at
-          your club? Email or call and we will get back to you.
+          your club? Send us a message, email or call and we will get back to you.
         </p>
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           {LEGAL_NAME}, Johannesburg, South Africa
         </p>
       </PageIntro>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="space-y-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
+        <div className="space-y-8 lg:col-span-3">
+          <div className={card}>
+            <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
+              Send us a message
+            </h2>
+            <ContactForm />
+          </div>
+
+          <div className={card}>
+            <div className="mb-4 flex items-center">
+              <div className="mr-4 rounded-xl bg-red-100 p-3 dark:bg-red-900/30">
+                <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" aria-hidden="true" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Account deletion</h2>
+            </div>
+            <p className="font-medium text-gray-900 dark:text-white">
+              To permanently delete your Next-Up account, email{' '}
+              <a
+                href={`mailto:${CONTACT_EMAIL}?subject=Delete%20my%20Next-Up%20account`}
+                className="text-green-600 underline-offset-2 hover:underline dark:text-green-400"
+              >
+                {CONTACT_EMAIL}
+              </a>{' '}
+              from the address on your account.
+            </p>
+            <div className="mt-4 rounded-xl bg-blue-50/50 p-4 dark:bg-blue-900/20">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                <strong>What remains after deletion:</strong> we store no
+                personal information about you once your account is deleted.
+                Matches you played stay in league records under an
+                &ldquo;unknown&rdquo; player name.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-8 lg:col-span-2">
           <div className={card}>
             <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
               Contact details
@@ -50,11 +87,11 @@ export default function ContactPage() {
                 <div className="rounded-xl bg-blue-100 p-3 dark:bg-blue-900/30">
                   <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="font-medium text-gray-900 dark:text-white">Email</p>
                   <a
                     href={`mailto:${CONTACT_EMAIL}`}
-                    className="text-gray-600 transition-colors hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400"
+                    className="break-all text-gray-600 transition-colors hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400"
                   >
                     {CONTACT_EMAIL}
                   </a>
@@ -105,35 +142,6 @@ export default function ContactPage() {
               <p className="text-sm text-green-700 dark:text-green-300">
                 <strong>League night support:</strong> include your league name
                 and what is happening on court so we can help faster.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-8">
-          <div className={card}>
-            <div className="mb-4 flex items-center">
-              <div className="mr-4 rounded-xl bg-red-100 p-3 dark:bg-red-900/30">
-                <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" aria-hidden="true" />
-              </div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Account deletion</h2>
-            </div>
-            <p className="font-medium text-gray-900 dark:text-white">
-              To permanently delete your Next-Up account, email{' '}
-              <a
-                href={`mailto:${CONTACT_EMAIL}?subject=Delete%20my%20Next-Up%20account`}
-                className="text-green-600 underline-offset-2 hover:underline dark:text-green-400"
-              >
-                {CONTACT_EMAIL}
-              </a>{' '}
-              from the address on your account.
-            </p>
-            <div className="mt-4 rounded-xl bg-blue-50/50 p-4 dark:bg-blue-900/20">
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                <strong>What remains after deletion:</strong> we store no
-                personal information about you once your account is deleted.
-                Matches you played stay in league records under an
-                &ldquo;unknown&rdquo; player name.
               </p>
             </div>
           </div>
