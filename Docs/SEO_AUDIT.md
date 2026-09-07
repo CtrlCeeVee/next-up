@@ -126,16 +126,18 @@ Done, in `code/web` (Next.js 16 App Router, Tailwind v4, not yet deployed):
 - One `Organization` (brand Next-Up, legal name Nextup Sport (Pty) Ltd, alternate NextUp Sport) with `sameAs` to both stores; `MobileApplication` with a valid ZAR offer. Finding 8 closed except social profile URLs.
 - Inter self-hosted through `next/font`, logo served as WebP at rendered size with dimensions, gtag loaded after hydration, no service worker, pinch zoom allowed, theme toggle has an accessible name. Lighthouse items addressed; re-measure after deploy.
 - `/for-clubs` targets "pickleball league management software for clubs" for organisers: how a night runs, what organisers get, proof from the real clubs, contact CTA. Linked from the header, footer, the homepage download footnote and the Johannesburg page.
-- Homepage keeps the original copy at brand level. `/leagues/johannesburg` carries the city and club terms: both real clubs with venue, address and league night, `ItemList` of `SportsActivityLocation` schema, linked from the header, the homepage and About. `/leagues` 308s to it. Findings 4 and 10 partly addressed; club pages still to come.
+- Homepage keeps the original copy at brand level. `/leagues/johannesburg` carries the city and club terms: both real clubs with venue, address and league night, `ItemList` of `SportsActivityLocation` schema, linked from the header, the homepage and About. `/leagues` 308s to it.
+- Club pages `/clubs/<slug>` (2026-09-07, T-004): one static page per club in `clubs.ts` with venue, directions, league night, how to join, `SportsActivityLocation` and `BreadcrumbList` schema; `/league/2` and `/league/3` 308 to them; linked from the home cards, the city page, About and For clubs; in the sitemap. Findings 4 and 10 addressed.
+- Contact form via Resend (T-005) and a mobile menu (T-006), same day. Owner reviewed all three on localhost and approved.
 
 Still open:
 
-1. Club pages `/clubs/<slug>` from the manual club data, and `/league/:id` redirects pointed at them (step 3). A `/leagues` index page once a second city exists.
-2. Owner review on localhost (`npm run dev:web`). No preview deployments.
+1. A `/leagues` index page once a second city exists.
+2. Design pass (T-007), FAQ only if it targets real queries (T-008).
 3. Switchover, only on owner approval: change the existing Vercel project's root directory from `code/client` to `code/web` and framework to Next.js, set the apex redirect to 308, then submit the sitemap in GSC, request indexing on the five URLs by hand, and re-run Lighthouse (steps 6 and 10).
 4. Resolved 2026-09-07: password reset is handled entirely in the app, so `/reset-password` now 308s to `/`. No Instagram or Facebook profiles to add to `sameAs`.
 
-The remaining work is tracked in `todo.md` (T-004 to T-012). Order agreed 2026-09-07: contact form via Resend, mobile menu, club pages, design pass, FAQ if it earns its place, then go-live last.
+The remaining work is tracked in `todo.md` (T-007 to T-012; T-004 to T-006 are in `DONE.md`). Order agreed 2026-09-07: design pass, FAQ if it earns its place, then go-live last.
 
 ## Proposed Phase 2 order
 
