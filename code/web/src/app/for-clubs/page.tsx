@@ -13,7 +13,7 @@ import {
 import { PageIntro } from '@/components/PageIntro'
 import { StoreButtons } from '@/components/StoreButtons'
 import { card, ctaPanel, ctaPrimary } from '@/components/ui'
-import { ACTIVE_CLUBS, REGIONS } from '@/lib/clubs'
+import { ACTIVE_CLUBS, clubPath, REGIONS } from '@/lib/clubs'
 import { STATS } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -87,8 +87,25 @@ const ORGANISERS_GET = [
   },
 ] as const
 
-function clubList(): string {
-  return ACTIVE_CLUBS.map((club) => `${club.name} at ${club.venue}`).join(' and ')
+// "Northcliff Eagles at Northcliff Country Club and GPC Pickleball at ..."
+// with each club name linking to its page.
+function ClubList() {
+  return (
+    <>
+      {ACTIVE_CLUBS.map((club, index) => (
+        <span key={club.id}>
+          {index > 0 && (index === ACTIVE_CLUBS.length - 1 ? ' and ' : ', ')}
+          <Link
+            href={clubPath(club)}
+            className="font-medium text-green-600 underline-offset-2 hover:underline dark:text-green-400"
+          >
+            {club.name}
+          </Link>{' '}
+          at {club.venue}
+        </span>
+      ))}
+    </>
+  )
 }
 
 export default function ForClubsPage() {
@@ -186,7 +203,7 @@ export default function ForClubsPage() {
             Proven on real league nights
           </h2>
           <p className="mx-auto mb-8 max-w-3xl text-lg text-gray-600 dark:text-gray-300">
-            Next-Up runs {clubList()} in{' '}
+            Next-Up runs <ClubList /> in{' '}
             <Link
               href={`/leagues/${REGIONS.johannesburg.slug}`}
               className="font-medium text-green-600 underline-offset-2 hover:underline dark:text-green-400"

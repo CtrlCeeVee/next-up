@@ -6,7 +6,7 @@ import { HowItWorks } from '@/components/HowItWorks'
 import { PageIntro } from '@/components/PageIntro'
 import { StoreButtons } from '@/components/StoreButtons'
 import { ctaPanel, ctaPrimary } from '@/components/ui'
-import { clubsInRegion, formatSchedule, fullAddress, REGIONS } from '@/lib/clubs'
+import { clubPath, clubsInRegion, formatSchedule, fullAddress, REGIONS } from '@/lib/clubs'
 import { ORGANIZATION_ID, SITE_URL } from '@/lib/site'
 
 const region = REGIONS.johannesburg
@@ -40,7 +40,7 @@ const jsonLd = {
       name: club.name,
       description: club.description,
       sport: 'Pickleball',
-      url: `${SITE_URL}${path}#${club.slug}`,
+      url: `${SITE_URL}${clubPath(club)}`,
       address: {
         '@type': 'PostalAddress',
         streetAddress: club.street,
@@ -99,6 +99,12 @@ export default function JohannesburgPage() {
                 <p className="mt-2 font-medium text-gray-900 dark:text-white">
                   League night: {formatSchedule(club)}
                 </p>
+                <Link
+                  href={clubPath(club)}
+                  className="mt-3 inline-block font-medium text-green-600 transition-colors hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                >
+                  About {club.name}
+                </Link>
               </dd>
             </div>
           ))}

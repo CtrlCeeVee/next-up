@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, Calendar, MapPin, Users } from 'lucide-react'
-import { formatSchedule, type Club } from '@/lib/clubs'
+import { clubPath, formatSchedule, type Club } from '@/lib/clubs'
 
 export function ClubCard({ club }: { club: Club }) {
   return (
@@ -33,7 +33,7 @@ export function ClubCard({ club }: { club: Club }) {
       <div className="relative flex flex-1 flex-col p-4 sm:p-6 md:p-8">
         <div className="mb-4 flex flex-1 flex-col sm:mb-6">
           <h3 className="mb-2 pr-16 text-xl font-bold text-gray-900 transition-colors duration-300 group-hover:text-green-600 sm:mb-3 sm:text-2xl dark:text-white dark:group-hover:text-green-400">
-            {club.name}
+            <Link href={clubPath(club)}>{club.name}</Link>
           </h3>
 
           <p className="mb-4 flex-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300">
@@ -65,10 +65,16 @@ export function ClubCard({ club }: { club: Club }) {
           </ul>
         </div>
 
-        <div className="border-t border-gray-200/50 pt-6 dark:border-slate-600/50">
+        <div className="flex flex-col gap-3 border-t border-gray-200/50 pt-6 sm:flex-row dark:border-slate-600/50">
+          <Link
+            href={clubPath(club)}
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-slate-100 px-6 py-3 font-semibold text-gray-700 transition-all duration-300 hover:bg-slate-200 dark:bg-slate-700 dark:text-gray-200 dark:hover:bg-slate-600"
+          >
+            League details
+          </Link>
           <Link
             href="/#download"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-green-700 hover:to-emerald-700 hover:shadow-xl"
+            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-green-700 hover:to-emerald-700 hover:shadow-xl"
           >
             <span>Get the App</span>
             <ArrowRight className="h-4 w-4" aria-hidden="true" />

@@ -15,7 +15,7 @@ import {
 } from 'lucide-react'
 import { PageIntro } from '@/components/PageIntro'
 import { card, ctaPanel, ctaPrimary } from '@/components/ui'
-import { ACTIVE_CLUBS, formatSchedule, REGIONS } from '@/lib/clubs'
+import { ACTIVE_CLUBS, clubPath, formatSchedule, REGIONS } from '@/lib/clubs'
 import { LEGAL_NAME } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -207,7 +207,12 @@ export default function AboutPage() {
           {ACTIVE_CLUBS.map((club) => (
             <li key={club.id} className={card}>
               <h3 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">
-                {club.name}
+                <Link
+                  href={clubPath(club)}
+                  className="transition-colors hover:text-green-600 dark:hover:text-green-400"
+                >
+                  {club.name}
+                </Link>
               </h3>
               <p className="mb-1 flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
                 <MapPin

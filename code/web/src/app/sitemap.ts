@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { ACTIVE_CLUBS, clubPath } from '@/lib/clubs'
 import { SITE_URL } from '@/lib/site'
 
 // lastModified is the date the page content last changed, not the build
@@ -7,6 +8,8 @@ import { SITE_URL } from '@/lib/site'
 const PAGES: Array<{ path: string; lastModified: string }> = [
   { path: '/', lastModified: '2026-09-07' },
   { path: '/leagues/johannesburg', lastModified: '2026-09-07' },
+  // Club pages render from clubs.ts; bump the date when a club's details change.
+  ...ACTIVE_CLUBS.map((club) => ({ path: clubPath(club), lastModified: '2026-09-07' })),
   { path: '/for-clubs', lastModified: '2026-09-07' },
   { path: '/about', lastModified: '2026-09-07' },
   { path: '/contact', lastModified: '2026-09-07' },

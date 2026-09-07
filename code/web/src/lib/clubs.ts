@@ -81,8 +81,28 @@ export function clubsInRegion(region: Region): Club[] {
   return ACTIVE_CLUBS.filter((club) => club.region.slug === region.slug)
 }
 
+export function clubBySlug(slug: string): Club | undefined {
+  return ACTIVE_CLUBS.find((club) => club.slug === slug)
+}
+
+export function clubPath(club: Club): string {
+  return `/clubs/${club.slug}`
+}
+
+/** "GPC Pickleball League", "Northcliff Eagles Pickleball League". */
+export function leagueTitle(club: Club): string {
+  return /pickleball/i.test(club.name)
+    ? `${club.name} League`
+    : `${club.name} Pickleball League`
+}
+
 export function fullAddress(club: Club): string {
   return `${club.street}, ${club.suburb}, ${club.city}, ${club.postalCode}`
+}
+
+export function mapsUrl(club: Club): string {
+  const query = `${club.venue}, ${fullAddress(club)}`
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
 }
 
 const DAY_NAMES = [
