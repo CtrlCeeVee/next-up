@@ -7,9 +7,15 @@
     "dev": "concurrently -n client,server -c cyan,green \"npm run dev:client\" \"npm run dev:server\"",
     "dev:client": "cd code/client && npm run dev",
     "dev:server": "cd code/server && npm run dev",
-    "install:all": "cd code/client && npm install && cd ../server && npm install",
+    "dev:billing": "cd code/billing-console && npm run dev",
+    "dev:web": "cd code/web && npm run dev",
+    "install:all": "cd code/client && npm install && cd ../server && npm install && cd ../billing-console && npm install && cd ../web && npm install",
     "build": "cd code/client && npm run build",
-    "lint": "cd code/client && npm run lint"
+    "build:billing": "cd code/billing-console && npm run build",
+    "build:web": "cd code/web && npm run build",
+    "lint": "cd code/client && npm run lint",
+    "lint:billing": "cd code/billing-console && npm run lint",
+    "lint:web": "cd code/web && npm run lint"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

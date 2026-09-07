@@ -1,0 +1,154 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { Clock, Mail, MapPin, MessageSquare, Phone, Trash2 } from 'lucide-react'
+import { PageIntro } from '@/components/PageIntro'
+import { card, ctaPanel, ctaPrimary } from '@/components/ui'
+import { CONTACT_EMAIL, LEGAL_NAME } from '@/lib/site'
+
+export const metadata: Metadata = {
+  title: { absolute: 'Contact Next-Up | Pickleball League Support' },
+  description:
+    'Get in touch with Next-Up about pickleball leagues, league night support, running a league at your club, or deleting your account.',
+  alternates: { canonical: '/contact' },
+  openGraph: {
+    url: '/contact',
+    title: 'Contact Next-Up',
+    description: 'Questions about a league, league night support, or your account.',
+  },
+}
+
+const PHONE_DISPLAY = '+27 60 728 9497'
+const PHONE_TEL = '+27607289497'
+
+const HOURS = [
+  { day: 'Monday to Friday', time: '8:00 to 18:00' },
+  { day: 'Saturday', time: '9:00 to 14:00' },
+  { day: 'Sunday', time: 'Closed' },
+] as const
+
+export default function ContactPage() {
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-12">
+      <PageIntro icon={MessageSquare} badge="We reply to every message" title="Contact Next-Up">
+        <p className="mx-auto max-w-2xl text-xl text-gray-600 dark:text-gray-300">
+          Questions about a league, help on a league night, or want Next-Up at
+          your club? Email or call and we will get back to you.
+        </p>
+        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          {LEGAL_NAME}, Johannesburg, South Africa
+        </p>
+      </PageIntro>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <div className="space-y-8">
+          <div className={card}>
+            <h2 className="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
+              Contact details
+            </h2>
+            <ul className="space-y-4">
+              <li className="flex items-center gap-4">
+                <div className="rounded-xl bg-blue-100 p-3 dark:bg-blue-900/30">
+                  <Mail className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">Email</p>
+                  <a
+                    href={`mailto:${CONTACT_EMAIL}`}
+                    className="text-gray-600 transition-colors hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400"
+                  >
+                    {CONTACT_EMAIL}
+                  </a>
+                </div>
+              </li>
+              <li className="flex items-center gap-4">
+                <div className="rounded-xl bg-green-100 p-3 dark:bg-green-900/30">
+                  <Phone className="h-5 w-5 text-green-600 dark:text-green-400" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">Phone</p>
+                  <a
+                    href={`tel:${PHONE_TEL}`}
+                    className="text-gray-600 transition-colors hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400"
+                  >
+                    {PHONE_DISPLAY}
+                  </a>
+                </div>
+              </li>
+              <li className="flex items-center gap-4">
+                <div className="rounded-xl bg-purple-100 p-3 dark:bg-purple-900/30">
+                  <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-400" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">Location</p>
+                  <p className="text-gray-600 dark:text-gray-300">Johannesburg, South Africa</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <div className={card}>
+            <div className="mb-4 flex items-center">
+              <div className="mr-4 rounded-xl bg-orange-100 p-3 dark:bg-orange-900/30">
+                <Clock className="h-5 w-5 text-orange-600 dark:text-orange-400" aria-hidden="true" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Support hours</h2>
+            </div>
+            <dl className="space-y-2">
+              {HOURS.map((row) => (
+                <div key={row.day} className="flex justify-between gap-4">
+                  <dt className="text-gray-600 dark:text-gray-300">{row.day}</dt>
+                  <dd className="font-medium text-gray-900 dark:text-white">{row.time}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className="mt-4 rounded-xl bg-green-50/50 p-4 dark:bg-green-900/20">
+              <p className="text-sm text-green-700 dark:text-green-300">
+                <strong>League night support:</strong> include your league name
+                and what is happening on court so we can help faster.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+          <div className={card}>
+            <div className="mb-4 flex items-center">
+              <div className="mr-4 rounded-xl bg-red-100 p-3 dark:bg-red-900/30">
+                <Trash2 className="h-5 w-5 text-red-600 dark:text-red-400" aria-hidden="true" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Account deletion</h2>
+            </div>
+            <p className="font-medium text-gray-900 dark:text-white">
+              To permanently delete your Next-Up account, email{' '}
+              <a
+                href={`mailto:${CONTACT_EMAIL}?subject=Delete%20my%20Next-Up%20account`}
+                className="text-green-600 underline-offset-2 hover:underline dark:text-green-400"
+              >
+                {CONTACT_EMAIL}
+              </a>{' '}
+              from the address on your account.
+            </p>
+            <div className="mt-4 rounded-xl bg-blue-50/50 p-4 dark:bg-blue-900/20">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                <strong>What remains after deletion:</strong> we store no
+                personal information about you once your account is deleted.
+                Matches you played stay in league records under an
+                &ldquo;unknown&rdquo; player name.
+              </p>
+            </div>
+          </div>
+
+          <div className={ctaPanel}>
+            <h2 className="mb-2 text-xl font-bold">Looking for a league?</h2>
+            <p className="mb-4 text-green-100">
+              See the clubs Next-Up runs league nights at across Johannesburg.
+            </p>
+            <Link href="/#clubs" className={ctaPrimary}>
+              View leagues
+            </Link>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
