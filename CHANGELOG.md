@@ -1,5 +1,18 @@
 # 📝 Next-Up Changelog
 
+## Billing Console (July 10, 2026)
+
+Web console for the billing system (phase 2, `Docs/Billing/PHASE2.md`). New
+SPA in `code/billing-console/` (Vite + React + Tailwind) backed by a single
+Supabase Edge Function `billing-api` that holds the service role and verifies
+callers against an owner allowlist; the `billing` schema stays out of the
+public API. Features: invoice list/detail with issue, mark-paid, void, delete
+and regenerate actions (confirm dialogs on all transitions), arbitrary-range
+statements with per-night write-offs, once-off credits/debits, formal invoice
+document rendering with print-to-PDF (from the canonical template, em-dash
+guard on all values), and monthly cron health. Run with `npm run dev:billing`;
+deploys to Vercel rooted at `code/billing-console/`.
+
 ## Billing System v1 (July 10, 2026)
 
 Deterministic invoicing built into the production Supabase database (new

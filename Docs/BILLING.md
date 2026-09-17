@@ -10,7 +10,9 @@ schema). This repo is the billing home:
 | `Docs/Billing/agreements/` | Signed club agreements (source of the terms) |
 | `Docs/Billing/invoice-template.html` | Invoice document template |
 | `Docs/Billing/invoices/` | Issued invoice documents (`NE-2026-06.html/.pdf`) |
-| `Docs/Billing/PHASE2.md` | Billing console spec (not yet built; todo T-002) |
+| `Docs/Billing/PHASE2.md` | Billing console: architecture, security model, deployment |
+| `code/billing-console/` | The console SPA (`npm run dev:billing`) |
+| `supabase/functions/billing-api/` | Edge function backing the console (service role, owner allowlist) |
 | `supabase/migrations/` | Mirror of the applied DB migration history |
 
 The `billing` schema is **not** exposed through the Supabase API (PostgREST
@@ -78,7 +80,10 @@ index) — corrections require void, then reissue as `NE-YYYY-MM-R1`, `-R2`, …
 ## Monthly runbook
 
 The pg_cron job `billing-generate-monthly-drafts` (`0 4 1 * *` UTC = 06:00
-SAST on the 1st) drafts the previous month. Then, manually:
+SAST on the 1st) drafts the previous month. Then review and issue — normally
+via the **billing console** (`Docs/Billing/PHASE2.md`): open the draft,
+check the lines, Issue, Print/PDF, send, Mark paid on EFT. The SQL
+equivalents below remain the fallback:
 
 1. **Review the draft** (compare against the club's own numbers):
    ```sql

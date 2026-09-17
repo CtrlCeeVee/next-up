@@ -1,52 +1,84 @@
-# Billing Console — Phase 2 Spec
+# Billing Console — Phase 2
 
-Status: not started (todo T-002). Depends on billing v1 (live since 2026-07-10).
+Status: **built 2026-07-10** (todo T-002, awaiting owner verification).
+Remaining: Vercel project + `billing.next-up.co.za` DNS (see Deployment below).
 
-## Goal
+## What it is
 
 A private web console for the owner to review statements, manage write-offs,
 and issue/track invoices without writing SQL. It is a window onto the
 `billing` schema; all billing logic stays in the database functions
 (`Docs/BILLING.md`).
 
-## Constraints (non-negotiable)
+- **Frontend**: Vite + React + Tailwind SPA in `code/billing-console/`
+  (`npm run dev:billing` → http://localhost:5174). Sign in with the owner's
+  app account (Supabase Auth email/password).
+- **Backend**: one Supabase Edge Function, `billing-api` (source in
+  `supabase/functions/billing-api/index.ts`). It connects to Postgres
+  directly (postgres.js over the platform-provided `SUPABASE_DB_URL`), which
+  is how it reaches the `billing` schema without exposing it through
+  PostgREST.
+
+## Security model (unchanged constraints)
 
 - The `billing` schema stays out of PostgREST's exposed schemas; the service
-  role key never reaches the browser. All reads/writes go through Supabase
-  Edge Functions that hold the service role server-side.
-- Auth: Supabase Auth session, verified in the edge function, checked against
-  an owner allowlist (env var `BILLING_ADMIN_USER_IDS`). Everyone else gets 403.
-- Console actions call the existing DB functions (`generate_invoice`,
-  `issue_invoice`, `mark_invoice_paid`, `void_invoice`) and insert into
-  `adjustments`. No SQL logic duplicated in TypeScript.
-- Read-only against `public` tables; the console must never write to app data.
+  role key and DB URL never reach the browser. All reads/writes go through
+  the edge function.
+- Auth: the SPA sends the user's Supabase session JWT; the function resolves
+  it with `auth.getUser()` and rejects (403) any user id not in the
+  `BILLING_ADMIN_USER_IDS` env var (comma-separated). If the env var is
+  unset, it fails closed to the owner's id, which is baked into the source.
+  Platform `verify_jwt` is ON as defense in depth, but the in-code check is
+  the real gate (the bare anon key passes platform verification and is
+  rejected in code).
+- The function holds no business logic: writes delegate to the existing
+  `billing.*` DB functions or a plain INSERT into `billing.adjustments`; the
+  schema's guard triggers and CHECK constraints are the validation layer.
+- Read-only against `public` tables (only via `billing.statement()`).
 
-## Architecture
+## API routes (billing-api)
 
-- **Frontend**: Vite + React + Tailwind SPA in `code/billing-console/`,
-  deployed to Vercel at `billing.next-up.co.za`. Design system per CLAUDE.md
-  (emerald glass morphism).
-- **Backend**: one Supabase Edge Function (`billing-api`) with routes:
-  - `GET  /statement?client&from&to` — arbitrary-range per-night report
-  - `GET  /invoices` / `GET /invoices/:id` (header + lines)
-  - `POST /invoices/generate` `{client_id, period_start, period_end}`
-  - `POST /invoices/:id/issue` | `/mark-paid` | `/void {reason}`
-  - `POST /adjustments` `{type, league_night_instance_id?, amount?, effective_date, reason}`
-  - `GET  /clients`, `GET /cron-health` (last runs of the monthly job)
+| Route | Backs |
+|---|---|
+| `GET /clients` | client list |
+| `GET /statement?client_id&from&to` | `billing.statement()` |
+| `GET /invoices`, `GET /invoices/:id` | lists, detail (header + lines + terms date) |
+| `POST /invoices/generate` | `billing.generate_invoice()` (NULL = nothing to bill, informational) |
+| `POST /invoices/:id/issue` / `mark-paid` / `void {reason}` | status transitions |
+| `DELETE /invoices/:id` | draft deletion (guard trigger blocks non-drafts) |
+| `GET /adjustments`, `POST /adjustments` | write-offs and once-off credits/debits |
+| `GET /cron-health` | last runs of `billing-generate-monthly-drafts` |
 
-## Milestones
+## Console features
 
-1. **Read-only**: clients, monthly statement view, custom date range,
-   invoice list with status badges, line drill-down.
-2. **Actions**: write-off button on a night row, regenerate draft, issue,
-   mark paid, void with reason. Confirm dialogs on all state transitions.
-3. **Documents**: render the invoice from `invoice-template.html` in-browser,
-   download as PDF (print stylesheet). Formal-document rules apply: no
-   em-dashes, terms as the single reference line.
-4. **Deploy**: Vercel project + `billing.next-up.co.za` DNS, edge function
-   deployed with `BILLING_ADMIN_USER_IDS` set.
+- **Invoices**: list with status badges; generate a month's draft; detail
+  view with lines; actions legal for the status (draft: issue / regenerate /
+  delete; issued: mark paid / void with reason), all behind confirm dialogs.
+- **Statement**: any client + date range; per-night numbers; write-off button
+  per night (reason required, appears verbatim on the invoice), then offers
+  to regenerate a covering draft.
+- **Adjustments**: list + once-off credit/debit entry.
+- **Documents**: renders the formal invoice in-browser from the canonical
+  template (`Docs/Billing/invoice-template.html`, imported at build time —
+  single source of truth) with View and Print/PDF buttons. Formal-document
+  rules are enforced in code: every interpolated value is sanitized so no
+  em-dash can reach a document; drafts are watermarked "(DRAFT)".
+- **System**: last five runs of the monthly pg_cron job.
 
-## Non-goals (phase 2)
+## Deployment
 
-Email delivery, client self-service portal, payment collection, multi-user
-roles, Xero sync (pending decision T-003).
+- **Edge function**: deployed via Supabase MCP / CLI. Optional secret:
+  `BILLING_ADMIN_USER_IDS` (defaults to the owner id if unset).
+- **Frontend (pending)**: Vercel project with Root Directory
+  `code/billing-console` (framework Vite; the repo's client project on
+  Vercel is separate). Env vars: `VITE_SUPABASE_URL`,
+  `VITE_SUPABASE_ANON_KEY`. Requires "Include source files outside of the
+  Root Directory" (default on) because the invoice template is imported from
+  `Docs/Billing/`. Then add `billing.next-up.co.za` as a custom domain (one
+  CNAME record).
+
+## Non-goals (still)
+
+Email delivery (Resend deferred by owner 2026-07-10; `clients.billing_email`
+must be set before wiring it), client self-service portal, payment
+collection, multi-user roles, Xero sync (pending decision T-003).
