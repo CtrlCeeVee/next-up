@@ -133,7 +133,7 @@ Done, in `code/web` (Next.js 16 App Router, Tailwind v4, not yet deployed):
 Still open:
 
 1. A `/leagues` index page once a second city exists.
-2. Design pass (T-007), FAQ only if it targets real queries (T-008).
+2. Design pass (T-007): implemented 2026-09-07 (navy chrome, phone-frame screenshots, `code/web/src/components/ui/` design system, scroll jank removed), awaiting owner review on localhost before commit; see `Docs/HANDOFF.md`. FAQ only if it targets real queries (T-008).
 3. Switchover, only on owner approval: change the existing Vercel project's root directory from `code/client` to `code/web` and framework to Next.js, set the apex redirect to 308, then submit the sitemap in GSC, request indexing on the five URLs by hand, and re-run Lighthouse (steps 6 and 10).
 4. Resolved 2026-09-07: password reset is handled entirely in the app, so `/reset-password` now 308s to `/`. No Instagram or Facebook profiles to add to `sameAs`.
 

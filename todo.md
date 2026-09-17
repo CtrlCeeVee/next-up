@@ -1,6 +1,6 @@
 <!-- [ ] todo · [~] done, awaiting verification · [x] verified · [-] cancelled · [!] blocked
      Tags: BUG FEAT SEC CHORE DECISION · Sev: CRIT HIGH MED LOW
-     Next ID: T-013 · Spec: /todo-add
+     Next ID: T-017 · Spec: /todo-add
      [x] + [-] (except DECISIONs) → DONE.md · resolved decisions stay below -->
 
 # Todo — Next-Up
@@ -14,13 +14,17 @@
 - [~] T-002 FEAT MED — build phase-2 billing console: SPA on Vercel (billing.next-up.co.za) + Supabase Edge Functions (service role), owner-allowlisted auth _(src: chat 07-10)_
       scope: statement view, date-range reports, write-off button, generate/issue/mark-paid, invoice HTML/PDF download. Spec: Docs/Billing/PHASE2.md
       built 07-10: code/billing-console + billing-api edge function (deployed). Remaining human steps: log in to verify, connect Vercel project, DNS.
-- [ ] T-007 FEAT MED — design pass on code/web (Phase 3): agree one visual direction first, then header/footer structure (players, clubs, company), hero imagery, section rhythm, card styling, page by page _(src: chat 09-07)_
+- [~] T-007 FEAT MED — design pass on code/web (Phase 3): agree one visual direction first, then header/footer structure (players, clubs, company), hero imagery, section rhythm, card styling, page by page _(src: chat 09-07)_
 - [ ] T-008 FEAT LOW — FAQ page on code/web (players and clubs sections) only if it targets real queries; check demand before writing _(src: chat 09-07)_
+- [ ] T-013 BUG LOW — code/web/src/app/icon.png and apple-icon.png are 119x124 (non-square); supply a 180x180 apple-touch icon and a square favicon source _(src: T-007 design pass)_
+- [ ] T-016 FEAT LOW — club logos and league-night photos on club cards and club pages, replacing the initials monograms; needs assets from the clubs _(src: T-007 design pass)_
 - [ ] T-010 CHORE — after go-live: delete code/client, update CLAUDE.md, Docs/DEVELOPMENT.md and root package.json scripts _(src: chat 09-07)_
       needs: T-009 verified stable
 - [ ] T-011 CHORE — remove stale Docs/SEO_GUIDE.md and Docs/SEO_DEPLOYMENT_CHECKLIST.md; fast-forward local master to origin/master _(src: audit 09-06)_
 - [ ] T-012 CHORE — authority: ask each club to link to its Next-Up page from its site and socials; list Next-Up on pickleballsa.com, Pickleheads and Global Pickleball Network _(src: Docs/SEO_AUDIT.md)_
       needs: T-004 live
+- [ ] T-014 CHORE — re-encode code/web/public/og-image.png (736 KB) to roughly 150 KB at the same 2094x630 _(src: T-007 design pass)_
+- [ ] T-015 CHORE — move the contact phone number from code/web/src/app/contact/page.tsx into code/web/src/lib/site.ts beside CONTACT_EMAIL _(src: T-007 design pass)_
 
 ## Decisions
 
