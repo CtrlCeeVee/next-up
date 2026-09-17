@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { DM_Sans, Inter } from 'next/font/google'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { HeaderScrollSentinel } from '@/components/ui/HeaderScrollSentinel'
 import {
   APP_STORE_ID,
   APP_STORE_URL,
@@ -20,6 +21,13 @@ const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-inter',
+})
+
+// Display face for headings and stat numbers; body text stays in Inter.
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-sans',
 })
 
 export const metadata: Metadata = {
@@ -48,13 +56,16 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#10b981',
+  // Matches the navy header so the browser chrome blends into it.
+  themeColor: '#0b1220',
 }
 
 // Runs during HTML parsing, before first paint: applies the saved theme (same
 // localStorage key as the old site) and stamps the platform for the store
-// badges. Wrapped in try/catch for browsers that block storage.
-const bootScript = `(function(){try{var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(t==="dark"){document.documentElement.classList.add("dark")}var u=navigator.userAgent||"";var p=(/iPad|iPhone|iPod/.test(u)||(/Macintosh/.test(u)&&"ontouchend" in document))?"ios":(/Android/i.test(u)?"android":"desktop");document.documentElement.setAttribute("data-platform",p)}catch(e){}})()`
+// badges. Wrapped in try/catch for browsers that block storage. (The html.js
+// flag for reveal-on-scroll is set by Reveal after hydration on purpose, so
+// the first paint is never delayed.)
+const bootScript = `(function(){try{var d=document.documentElement;var t=localStorage.getItem("theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}if(t==="dark"){d.classList.add("dark")}var u=navigator.userAgent||"";var p=(/iPad|iPhone|iPod/.test(u)||(/Macintosh/.test(u)&&"ontouchend" in document))?"ios":(/Android/i.test(u)?"android":"desktop");d.setAttribute("data-platform",p)}catch(e){}})()`
 
 const organizationJsonLd = {
   '@context': 'https://schema.org',
@@ -81,7 +92,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en-ZA" className={inter.variable} suppressHydrationWarning>
+    <html
+      lang="en-ZA"
+      className={`${inter.variable} ${dmSans.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
         <script
@@ -92,22 +107,11 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-emerald-50 text-gray-900 antialiased transition-colors duration-500 dark:from-slate-900 dark:via-slate-800 dark:to-emerald-900 dark:text-white">
-        <div
-          className="pointer-events-none fixed inset-0 overflow-hidden"
-          aria-hidden="true"
-        >
-          <div className="absolute top-10 left-10 h-72 w-72 animate-float rounded-full bg-green-300/10 blur-3xl dark:bg-green-500/5" />
-          <div
-            className="absolute top-32 right-10 h-96 w-96 animate-float rounded-full bg-emerald-300/10 blur-3xl dark:bg-emerald-500/5"
-            style={{ animationDelay: '2s' }}
-          />
-          <div
-            className="absolute bottom-10 left-1/3 h-80 w-80 animate-float rounded-full bg-teal-300/10 blur-3xl dark:bg-teal-500/5"
-            style={{ animationDelay: '4s' }}
-          />
-        </div>
+        {/* Static glow; see .page-glow in globals.css. */}
+        <div className="page-glow pointer-events-none fixed inset-0" aria-hidden="true" />
 
         <div className="relative flex min-h-screen flex-col">
+          <HeaderScrollSentinel />
           <Header />
           <div className="flex-1">{children}</div>
           <Footer />

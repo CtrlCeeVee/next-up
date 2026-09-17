@@ -7,19 +7,20 @@ import { sendGAEvent } from '@next/third-parties/google'
 import { sendContactMessage, type ContactState } from '@/app/contact/actions'
 import { TOPICS } from '@/lib/contact'
 import { CONTACT_EMAIL } from '@/lib/site'
+import { Button } from './ui/Button'
 
 const inputClass =
-  'w-full rounded-xl border border-gray-300 bg-white/80 px-4 py-3 text-gray-900 placeholder-gray-400 transition-colors focus:border-green-500 focus:ring-2 focus:ring-green-500/30 focus:outline-none dark:border-slate-600 dark:bg-slate-900/60 dark:text-white dark:placeholder-gray-500'
+  'w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition-[border-color,box-shadow] duration-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:placeholder-gray-500'
 
 const labelClass = 'mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-200'
 
 function SubmitButton() {
   const { pending } = useFormStatus()
   return (
-    <button
+    <Button
       type="submit"
       disabled={pending}
-      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:from-green-700 hover:to-emerald-700 hover:shadow-xl active:scale-95 disabled:cursor-wait disabled:opacity-70 sm:w-auto"
+      className="w-full disabled:cursor-wait disabled:opacity-70 sm:w-auto"
     >
       {pending ? (
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -27,7 +28,7 @@ function SubmitButton() {
         <Send className="h-4 w-4" aria-hidden="true" />
       )}
       <span>{pending ? 'Sending' : 'Send message'}</span>
-    </button>
+    </Button>
   )
 }
 

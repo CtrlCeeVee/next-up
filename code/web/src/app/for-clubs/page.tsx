@@ -12,8 +12,18 @@ import {
 } from 'lucide-react'
 import { PageIntro } from '@/components/PageIntro'
 import { StoreButtons } from '@/components/StoreButtons'
-import { card, ctaPanel, ctaPrimary } from '@/components/ui'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { IconTile, type IconTone } from '@/components/ui/IconTile'
+import { Panel } from '@/components/ui/Panel'
+import { PhoneFrame } from '@/components/ui/PhoneFrame'
+import { Reveal } from '@/components/ui/Reveal'
+import { Section } from '@/components/ui/Section'
+import { SectionHeading } from '@/components/ui/SectionHeading'
+import { Stat } from '@/components/ui/Stat'
 import { ACTIVE_CLUBS, clubPath, REGIONS } from '@/lib/clubs'
+import { cn } from '@/lib/cn'
+import { SCREENS } from '@/lib/screens'
 import { STATS } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -48,44 +58,49 @@ const HOW_IT_RUNS = [
   },
 ] as const
 
-const ORGANISERS_GET = [
+const ORGANISERS_GET: {
+  icon: typeof ClipboardCheck
+  tone: IconTone
+  title: string
+  text: string
+}[] = [
   {
     icon: ClipboardCheck,
-    tone: 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400',
+    tone: 'emerald',
     title: 'Digital check-in',
     text: 'Live attendance for the night, synced to every phone in real time.',
   },
   {
     icon: Shuffle,
-    tone: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
+    tone: 'blue',
     title: 'Fair auto-matching',
     text: 'Teams with fewer games go first, repeat pairings are avoided and new teams join at the current minimum so nobody waits all night.',
   },
   {
     icon: LayoutGrid,
-    tone: 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400',
+    tone: 'purple',
     title: 'Real-time court board',
     text: 'Every player sees which court they are on and who is up next. Nothing to announce over the noise.',
   },
   {
     icon: ShieldCheck,
-    tone: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400',
+    tone: 'yellow',
     title: 'Validated scoring',
     text: 'Scores are checked as they are entered: first to 15, win by two, no ties.',
   },
   {
     icon: BarChart3,
-    tone: 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400',
+    tone: 'orange',
     title: 'Standings and stats',
     text: 'Wins, losses, points and averages update the moment a score is submitted, per league and per player.',
   },
   {
     icon: Settings,
-    tone: 'bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400',
+    tone: 'pink',
     title: 'Organiser controls',
     text: 'Set league days, court counts and labels, start and end nights, and manage memberships from the app.',
   },
-] as const
+]
 
 // "Northcliff Eagles at Northcliff Country Club and GPC Pickleball at ..."
 // with each club name linking to its page.
@@ -112,151 +127,157 @@ export default function ForClubsPage() {
   return (
     <>
       {/* Hero */}
-      <section className="mx-auto max-w-4xl px-4 pt-12 pb-8">
-        <PageIntro
-          icon={Building2}
-          badge="Built for league organisers"
-          title="Pickleball league management software for clubs"
-        >
-          <p className="mx-auto max-w-3xl text-xl leading-relaxed text-gray-600 dark:text-gray-300">
-            Next-Up runs your league night for you. Players check in on their
-            phones, the app pairs partners, assigns courts the moment one frees
-            up and posts scores to live standings. No spreadsheets, no
-            whiteboard, no waiting around.
-          </p>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link
-              href="/contact"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-green-700 hover:to-emerald-700 hover:shadow-xl"
-            >
-              Set up your league
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-            <a
-              href="#how-it-works"
-              className="inline-flex items-center justify-center rounded-2xl bg-slate-100 px-6 py-3 font-semibold text-gray-900 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
-            >
-              See how a night runs
-            </a>
+      <Section tone="navy" size="md" width="wide" className="overflow-hidden">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-8">
+          <PageIntro
+            icon={Building2}
+            badge="Built for league organisers"
+            title="Pickleball league management software for clubs"
+            align="responsive"
+          >
+            <p className="mx-auto max-w-2xl text-lg leading-relaxed text-white/80 sm:text-xl lg:mx-0">
+              Next-Up runs your league night for you. Players check in on their
+              phones, the app pairs partners, assigns courts the moment one frees
+              up and posts scores to live standings. No spreadsheets, no
+              whiteboard, no waiting around.
+            </p>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
+              <Button href="/contact">
+                Set up your league
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
+              <Button href="#how-it-works" variant="on-dark">
+                See how a night runs
+              </Button>
+            </div>
+          </PageIntro>
+
+          <div className="relative mx-auto w-full max-w-[16rem] animate-rise [animation-delay:150ms] sm:max-w-[18rem] lg:max-w-[20rem]">
+            <div
+              className="absolute inset-x-0 top-1/2 aspect-square -translate-y-1/2 scale-150 rounded-full bg-[radial-gradient(closest-side,rgba(16,185,129,0.3),transparent)]"
+              aria-hidden="true"
+            />
+            <div className="relative max-h-[26rem] overflow-hidden [mask-image:linear-gradient(to_bottom,black_75%,transparent)] lg:max-h-none lg:[mask-image:none]">
+              <PhoneFrame
+                src={SCREENS.event.src}
+                alt={SCREENS.event.alt}
+                size="lg"
+                preload
+                sizes="(min-width: 1024px) 320px, 288px"
+              />
+            </div>
           </div>
-        </PageIntro>
-      </section>
-
-      {/* How a league night runs */}
-      <section id="how-it-works" className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-16">
-        <div className="mb-10 text-center">
-          <h2 className="mb-3 text-3xl font-bold text-gray-900 dark:text-white">
-            How a league night runs on Next-Up
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            Everyone-vs-everyone doubles, from the first check-in to the final score.
-          </p>
         </div>
-        <ol className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {HOW_IT_RUNS.map((step, index) => (
-            <li key={step.title} className={card}>
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-green-600 to-emerald-600 text-lg font-bold text-white">
-                {index + 1}
-              </div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-                {step.title}
-              </h3>
-              <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-                {step.text}
+      </Section>
+
+      <Section size="md" width="default">
+        <div className="space-y-16 sm:space-y-20">
+          {/* How a league night runs */}
+          <div id="how-it-works" className="scroll-mt-20">
+            <SectionHeading
+              title="How a league night runs on Next-Up"
+              lede="Everyone-vs-everyone doubles, from the first check-in to the final score."
+            />
+            <ol className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+              {HOW_IT_RUNS.map((step, index) => (
+                <Reveal as="li" key={step.title} delay={index * 90} className="relative h-full">
+                  <Card
+                    className={cn(
+                      'h-full',
+                      index < HOW_IT_RUNS.length - 1 &&
+                        'xl:after:absolute xl:after:top-11 xl:after:left-full xl:after:h-px xl:after:w-6 xl:after:bg-emerald-300 dark:xl:after:bg-emerald-700',
+                    )}
+                  >
+                    <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-green-600 to-emerald-600 font-display text-lg font-bold text-white">
+                      {index + 1}
+                    </div>
+                    <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+                      {step.title}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                      {step.text}
+                    </p>
+                  </Card>
+                </Reveal>
+              ))}
+            </ol>
+          </div>
+
+          {/* What organisers get */}
+          <div>
+            <SectionHeading
+              title="What organisers get"
+              lede="The tools that replace the whiteboard, the clipboard and the spreadsheet."
+            />
+            <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {ORGANISERS_GET.map((item, index) => (
+                <Reveal key={item.title} delay={(index % 3) * 90} className="h-full">
+                  <Card className="h-full">
+                    <IconTile icon={item.icon} tone={item.tone} className="mb-4" />
+                    <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
+                      {item.text}
+                    </p>
+                  </Card>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+
+          {/* Proof */}
+          <Reveal>
+            <Card className="text-center">
+              <h2 className="font-display text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                Proven on real league nights
+              </h2>
+              <p className="mx-auto mt-3 mb-8 max-w-3xl text-lg text-gray-600 dark:text-gray-300">
+                Next-Up runs <ClubList /> in{' '}
+                <Link
+                  href={`/leagues/${REGIONS.johannesburg.slug}`}
+                  className="font-medium text-green-600 underline-offset-2 hover:underline dark:text-green-400"
+                >
+                  {REGIONS.johannesburg.name}
+                </Link>
+                , South Africa.
               </p>
-            </li>
-          ))}
-        </ol>
-      </section>
+              <dl className="mx-auto grid max-w-3xl grid-cols-1 gap-8 sm:grid-cols-3">
+                <Stat value={`${STATS.activePlayers}+`} label="Active players" />
+                <Stat value={`${STATS.matchesPlayed}+`} label="Matches played" />
+                <Stat
+                  value={ACTIVE_CLUBS.length}
+                  label={`${ACTIVE_CLUBS.length === 1 ? 'League' : 'Leagues'} in ${REGIONS.johannesburg.name}`}
+                />
+              </dl>
+            </Card>
+          </Reveal>
 
-      {/* What organisers get */}
-      <section className="mx-auto max-w-6xl px-4 pb-16">
-        <div className="mb-10 text-center">
-          <h2 className="mb-3 text-3xl font-bold text-gray-900 dark:text-white">
-            What organisers get
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            The tools that replace the whiteboard, the clipboard and the spreadsheet.
-          </p>
-        </div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {ORGANISERS_GET.map((item) => (
-            <div key={item.title} className={card}>
-              <div className={`mb-4 w-fit rounded-xl p-3 ${item.tone}`}>
-                <item.icon className="h-6 w-6" aria-hidden="true" />
-              </div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-                {item.title}
-              </h3>
-              <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">
-                {item.text}
+          {/* Closing CTA */}
+          <div>
+            <Reveal>
+              <Panel tone="brand" className="text-center">
+                <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                  Ready to run your next league night?
+                </h2>
+                <p className="mx-auto mt-3 mb-6 max-w-2xl text-green-100">
+                  Tell us about your club, courts and league days and we will get you
+                  set up. Your players only need the free app.
+                </p>
+                <Button href="/contact" variant="on-brand">
+                  Contact us
+                </Button>
+              </Panel>
+            </Reveal>
+            <div className="mt-10 flex flex-col items-center gap-4 text-center">
+              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                Players download the free app
               </p>
+              <StoreButtons />
             </div>
-          ))}
+          </div>
         </div>
-      </section>
-
-      {/* Proof */}
-      <section className="mx-auto max-w-6xl px-4 pb-16">
-        <div className={`${card} text-center`}>
-          <h2 className="mb-3 text-3xl font-bold text-gray-900 dark:text-white">
-            Proven on real league nights
-          </h2>
-          <p className="mx-auto mb-8 max-w-3xl text-lg text-gray-600 dark:text-gray-300">
-            Next-Up runs <ClubList /> in{' '}
-            <Link
-              href={`/leagues/${REGIONS.johannesburg.slug}`}
-              className="font-medium text-green-600 underline-offset-2 hover:underline dark:text-green-400"
-            >
-              {REGIONS.johannesburg.name}
-            </Link>
-            , South Africa.
-          </p>
-          <dl className="mx-auto grid max-w-3xl grid-cols-1 gap-8 sm:grid-cols-3">
-            <div>
-              <dd className="mb-1 text-3xl font-bold text-green-600 dark:text-green-400">
-                {STATS.activePlayers}+
-              </dd>
-              <dt className="text-gray-600 dark:text-gray-300">Active players</dt>
-            </div>
-            <div>
-              <dd className="mb-1 text-3xl font-bold text-green-600 dark:text-green-400">
-                {STATS.matchesPlayed}+
-              </dd>
-              <dt className="text-gray-600 dark:text-gray-300">Matches played</dt>
-            </div>
-            <div>
-              <dd className="mb-1 text-3xl font-bold text-green-600 dark:text-green-400">
-                {ACTIVE_CLUBS.length}
-              </dd>
-              <dt className="text-gray-600 dark:text-gray-300">
-                {ACTIVE_CLUBS.length === 1 ? 'League' : 'Leagues'} in{' '}
-                {REGIONS.johannesburg.name}
-              </dt>
-            </div>
-          </dl>
-        </div>
-      </section>
-
-      {/* Closing CTA */}
-      <section className="mx-auto max-w-6xl px-4 pb-16">
-        <div className={ctaPanel}>
-          <h2 className="mb-2 text-2xl font-bold">Ready to run your next league night?</h2>
-          <p className="mx-auto mb-6 max-w-2xl text-green-100">
-            Tell us about your club, courts and league days and we will get you
-            set up. Your players only need the free app.
-          </p>
-          <Link href="/contact" className={ctaPrimary}>
-            Contact us
-          </Link>
-        </div>
-        <div className="mt-10 flex flex-col items-center gap-4 text-center">
-          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-            Players download the free app
-          </p>
-          <StoreButtons />
-        </div>
-      </section>
+      </Section>
     </>
   )
 }

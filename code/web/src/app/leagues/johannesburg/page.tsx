@@ -1,12 +1,25 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { MapPin } from 'lucide-react'
+import { ArrowRight, MapPin } from 'lucide-react'
 import { ClubCard } from '@/components/ClubCard'
 import { HowItWorks } from '@/components/HowItWorks'
 import { PageIntro } from '@/components/PageIntro'
 import { StoreButtons } from '@/components/StoreButtons'
-import { ctaPanel, ctaPrimary } from '@/components/ui'
-import { clubPath, clubsInRegion, formatSchedule, fullAddress, REGIONS } from '@/lib/clubs'
+import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
+import { Monogram } from '@/components/ui/Monogram'
+import { Panel } from '@/components/ui/Panel'
+import { Reveal } from '@/components/ui/Reveal'
+import { Section } from '@/components/ui/Section'
+import {
+  clubPath,
+  clubsInRegion,
+  formatSchedule,
+  fullAddress,
+  REGIONS,
+  type Club,
+} from '@/lib/clubs'
+import { cn } from '@/lib/cn'
 import { ORGANIZATION_ID, SITE_URL } from '@/lib/site'
 
 const region = REGIONS.johannesburg
@@ -55,9 +68,24 @@ const jsonLd = {
   })),
 }
 
+// Monday first; `days` in clubs.ts uses 0 = Sunday.
+const WEEK = [
+  { day: 1, short: 'Mon', long: 'Monday' },
+  { day: 2, short: 'Tue', long: 'Tuesday' },
+  { day: 3, short: 'Wed', long: 'Wednesday' },
+  { day: 4, short: 'Thu', long: 'Thursday' },
+  { day: 5, short: 'Fri', long: 'Friday' },
+  { day: 6, short: 'Sat', long: 'Saturday' },
+  { day: 0, short: 'Sun', long: 'Sunday' },
+]
+
+function timeRange(club: Club): string {
+  return club.endTime ? `${club.startTime} to ${club.endTime}` : club.startTime
+}
+
 export default function JohannesburgPage() {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12">
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -65,75 +93,134 @@ export default function JohannesburgPage() {
         }}
       />
 
-      <PageIntro icon={MapPin} badge={region.name} title={`Pickleball Leagues in ${region.name}`}>
-        <p className="mx-auto max-w-3xl text-xl leading-relaxed text-gray-600 dark:text-gray-300">
-          Next-Up runs weekly competitive social pickleball leagues at clubs
-          across Johannesburg, from Randburg to Sandton. Turn up on league
-          night, check in on the app, and get matched into games all evening.
-          Players of every level are welcome.
-        </p>
-      </PageIntro>
+      <Section tone="navy" size="sm" width="wide">
+        <PageIntro icon={MapPin} badge={region.name} title={`Pickleball Leagues in ${region.name}`}>
+          <p className="mx-auto max-w-3xl text-lg leading-relaxed text-white/80 sm:text-xl">
+            Next-Up runs weekly competitive social pickleball leagues at clubs
+            across Johannesburg, from Randburg to Sandton. Turn up on league
+            night, check in on the app, and get matched into games all evening.
+            Players of every level are welcome.
+          </p>
+        </PageIntro>
+      </Section>
 
-      <div className="mb-16 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 md:gap-8">
-        {clubs.map((club) => (
-          <div key={club.id} id={club.slug} className="h-full scroll-mt-24">
-            <ClubCard club={club} />
+      <Section size="md" width="wide">
+        <div className="space-y-16 sm:space-y-20">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+            {clubs.map((club, index) => (
+              <div key={club.id} id={club.slug} className="h-full scroll-mt-20">
+                <Reveal delay={index * 90} className="h-full">
+                  <ClubCard club={club} />
+                </Reveal>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className="mb-16">
-        <h2 className="mb-6 text-center text-3xl font-bold text-gray-900 dark:text-white">
-          Venues and league nights
-        </h2>
-        <dl className="mx-auto grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-2">
-          {clubs.map((club) => (
-            <div
-              key={club.id}
-              className="rounded-2xl border border-white/20 bg-white/60 p-6 shadow-xl backdrop-blur-xl dark:border-slate-700/50 dark:bg-slate-800/60"
-            >
-              <dt className="mb-2 text-lg font-bold text-gray-900 dark:text-white">{club.name}</dt>
-              <dd className="text-sm text-gray-600 dark:text-gray-300">
-                <p>{club.venue}</p>
-                <p>{fullAddress(club)}</p>
-                <p className="mt-2 font-medium text-gray-900 dark:text-white">
-                  League night: {formatSchedule(club)}
-                </p>
-                <Link
-                  href={clubPath(club)}
-                  className="mt-3 inline-block font-medium text-green-600 transition-colors hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
-                >
-                  About {club.name}
-                </Link>
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </div>
+          <div>
+            <h2 className="text-center font-display text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl dark:text-white">
+              Venues and league nights
+            </h2>
 
-      <div className="mb-16">
-        <HowItWorks />
-      </div>
+            {/* The week at a glance: which club plays on which day. */}
+            <Reveal>
+              <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+                {WEEK.map(({ day, short, long }) => {
+                  const nights = clubs.filter((club) => club.days.includes(day))
+                  return (
+                    <li
+                      key={day}
+                      className={cn(
+                        'rounded-2xl border p-3 text-center',
+                        nights.length > 0
+                          ? 'border-emerald-200/80 bg-white/75 shadow-card dark:border-emerald-800/50 dark:bg-slate-800/75'
+                          : 'border-dashed border-slate-300/80 text-gray-400 dark:border-slate-700 dark:text-gray-500',
+                      )}
+                    >
+                      <p className="text-xs font-semibold tracking-wide uppercase">
+                        <span className="lg:hidden">{short}</span>
+                        <span className="hidden lg:inline">{long}</span>
+                      </p>
+                      {nights.length > 0 ? (
+                        nights.map((club) => (
+                          <Link
+                            key={club.id}
+                            href={clubPath(club)}
+                            className="mt-2 block rounded-xl bg-emerald-50 px-2 py-2 transition-colors hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40"
+                          >
+                            <span className="block text-sm font-semibold text-gray-900 dark:text-white">
+                              {club.name}
+                            </span>
+                            <span className="block text-xs text-gray-600 dark:text-gray-300">
+                              {timeRange(club)}
+                            </span>
+                          </Link>
+                        ))
+                      ) : (
+                        <p className="mt-2 text-xs">No league night</p>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </Reveal>
 
-      <div className="mb-16 flex flex-col items-center gap-4 text-center">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Join a league</h2>
-        <p className="max-w-2xl text-lg text-gray-600 dark:text-gray-300">
-          Download the free app, pick your club and check in on your first
-          league night. That is the whole sign-up.
-        </p>
-        <StoreButtons />
-      </div>
+            <dl className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-2">
+              {clubs.map((club, index) => (
+                <Reveal key={club.id} delay={index * 90} className="h-full">
+                  <Card className="h-full">
+                    <dt className="flex items-center gap-3 font-display text-lg font-bold text-gray-900 dark:text-white">
+                      <Monogram name={club.name} size="sm" />
+                      {club.name}
+                    </dt>
+                    <dd className="mt-3 text-sm text-gray-600 dark:text-gray-300">
+                      <p>{club.venue}</p>
+                      <p>{fullAddress(club)}</p>
+                      <p className="mt-2 font-medium text-gray-900 dark:text-white">
+                        League night: {formatSchedule(club)}
+                      </p>
+                      <Link
+                        href={clubPath(club)}
+                        className="mt-3 inline-flex items-center gap-1.5 font-medium text-green-600 transition-colors hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                      >
+                        About {club.name}
+                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      </Link>
+                    </dd>
+                  </Card>
+                </Reveal>
+              ))}
+            </dl>
+          </div>
 
-      <div className={ctaPanel}>
-        <h2 className="mb-2 text-2xl font-bold">Want Next-Up at your club?</h2>
-        <p className="mx-auto mb-6 max-w-2xl text-green-100">
-          We set up and run league nights for clubs across South Africa. See
-          what your club gets and how to get started.
-        </p>
-        <Link href="/for-clubs" className={ctaPrimary}>
-          Next-Up for clubs
-        </Link>
-      </div>
-    </section>
+          <HowItWorks />
+
+          <Reveal className="flex flex-col items-center gap-4 text-center">
+            <h2 className="font-display text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+              Join a league
+            </h2>
+            <p className="max-w-2xl text-lg text-gray-600 dark:text-gray-300">
+              Download the free app, pick your club and check in on your first
+              league night. That is the whole sign-up.
+            </p>
+            <StoreButtons />
+          </Reveal>
+
+          <Reveal>
+            <Panel tone="brand" className="text-center">
+              <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                Want Next-Up at your club?
+              </h2>
+              <p className="mx-auto mt-3 mb-6 max-w-2xl text-green-100">
+                We set up and run league nights for clubs across South Africa. See
+                what your club gets and how to get started.
+              </p>
+              <Button href="/for-clubs" variant="on-brand">
+                Next-Up for clubs
+              </Button>
+            </Panel>
+          </Reveal>
+        </div>
+      </Section>
+    </>
   )
 }

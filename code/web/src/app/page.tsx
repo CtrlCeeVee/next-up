@@ -1,10 +1,19 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { ArrowRight, Zap } from 'lucide-react'
+import { ArrowRight, Building2, Smartphone, Zap } from 'lucide-react'
 import { ClubCard } from '@/components/ClubCard'
 import { HowItWorks } from '@/components/HowItWorks'
 import { StoreButtons } from '@/components/StoreButtons'
+import { Button } from '@/components/ui/Button'
+import { Eyebrow } from '@/components/ui/Eyebrow'
+import { Panel } from '@/components/ui/Panel'
+import { PhoneFrame } from '@/components/ui/PhoneFrame'
+import { Reveal } from '@/components/ui/Reveal'
+import { Section } from '@/components/ui/Section'
+import { SectionHeading } from '@/components/ui/SectionHeading'
+import { Stat } from '@/components/ui/Stat'
 import { ACTIVE_CLUBS, REGIONS } from '@/lib/clubs'
+import { SCREENS } from '@/lib/screens'
 import {
   APP_NAME,
   APP_STORE_URL,
@@ -57,86 +66,107 @@ export default function HomePage() {
         }}
       />
 
-      {/* Hero */}
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:py-16">
-        <div className="mb-8 text-center sm:mb-16">
-          <p className="mb-6 inline-flex items-center gap-2 rounded-full bg-green-100/80 px-4 py-2 text-sm font-medium text-green-800 backdrop-blur-sm dark:bg-green-900/30 dark:text-green-300">
-            <Zap className="h-4 w-4" aria-hidden="true" />
-            <span>South Africa&apos;s Premier Pickleball Platform</span>
-          </p>
-          <h1 className="mb-4 text-3xl font-bold sm:mb-6 sm:text-5xl md:text-7xl">
-            <span className="bg-gradient-to-r from-slate-900 via-green-600 to-emerald-600 bg-clip-text text-transparent dark:from-white dark:via-green-400 dark:to-emerald-400">
-              Discover Amazing
-            </span>{' '}
-            <br />
-            <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent dark:from-green-400 dark:to-emerald-400">
-              Pickleball Leagues
-            </span>
-          </h1>
-          <p className="mx-auto mb-6 max-w-3xl px-4 text-base text-gray-600 sm:mb-8 sm:px-0 sm:text-xl dark:text-gray-300">
-            Join dynamic leagues, track your progress, and become part of South
-            Africa&apos;s fastest-growing pickleball community.
-            <span className="font-semibold text-green-600 dark:text-green-400">
-              {' '}
-              Download the app to get started!
-            </span>
-          </p>
+      {/* Hero: navy band in both modes, phones on the right. */}
+      <Section tone="navy" size="md" width="wide" className="overflow-hidden">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
+          <div className="animate-rise text-center lg:text-left">
+            <Eyebrow icon={Zap} tone="on-dark">
+              South Africa&apos;s Premier Pickleball Platform
+            </Eyebrow>
+            <h1 className="mt-6 font-display text-4xl font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl">
+              <span className="text-white">Discover Amazing</span>
+              <br />
+              <span className="bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">
+                Pickleball Leagues
+              </span>
+            </h1>
+            <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-white/80 sm:text-xl lg:mx-0">
+              Join dynamic leagues, track your progress, and become part of South
+              Africa&apos;s fastest-growing pickleball community.
+              <span className="font-semibold text-emerald-300">
+                {' '}
+                Download the app to get started!
+              </span>
+            </p>
 
-          <div id="download" className="mb-12 flex scroll-mt-24 flex-col items-center gap-4">
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              Download the free app to check in, play and track your stats
-            </p>
-            <StoreButtons />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Run a club or league?{' '}
-              <Link
-                href="/for-clubs"
-                className="font-medium text-green-600 underline-offset-2 hover:underline dark:text-green-400"
-              >
-                See Next-Up for clubs
-              </Link>
-            </p>
+            <div
+              id="download"
+              className="mt-8 flex scroll-mt-20 flex-col items-center gap-4 lg:items-start"
+            >
+              <p className="text-sm font-medium text-white/70">
+                Download the free app to check in, play and track your stats
+              </p>
+              <StoreButtons align="start" />
+              <p className="text-xs text-white/60">
+                Run a club or league?{' '}
+                <Link
+                  href="/for-clubs"
+                  className="font-medium text-emerald-300 underline-offset-2 hover:underline"
+                >
+                  See Next-Up for clubs
+                </Link>
+              </p>
+            </div>
           </div>
 
-          <dl className="mx-auto grid max-w-4xl grid-cols-1 gap-8 md:grid-cols-3">
-            <div className="text-center">
-              <dd className="mb-2 text-3xl font-bold text-green-600 dark:text-green-400">
-                {STATS.activePlayers}+
-              </dd>
-              <dt className="text-gray-600 dark:text-gray-300">Active Players</dt>
+          {/* Two app screens. Clipped on small screens so the hero does not
+              become a full phone tall; full height from lg up. */}
+          <div className="relative mx-auto w-full max-w-sm animate-rise [animation-delay:100ms] lg:max-w-none">
+            <div
+              className="absolute inset-x-0 top-1/2 -z-0 aspect-square -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(16,185,129,0.35),transparent)]"
+              aria-hidden="true"
+            />
+            <div className="relative max-h-[30rem] overflow-hidden [mask-image:linear-gradient(to_bottom,black_75%,transparent)] lg:max-h-none lg:[mask-image:none]">
+              <div className="relative mx-auto flex max-w-[26rem] items-start justify-center px-4 pt-6">
+                <PhoneFrame
+                  src={SCREENS.event.src}
+                  alt={SCREENS.event.alt}
+                  tilt="left"
+                  size="md"
+                  sizes="(min-width: 1024px) 200px, 38vw"
+                  className="hidden w-[42%] translate-y-10 sm:block"
+                />
+                <PhoneFrame
+                  src={SCREENS.home.src}
+                  alt={SCREENS.home.alt}
+                  tilt="right"
+                  size="lg"
+                  preload
+                  sizes="(min-width: 1024px) 260px, (min-width: 640px) 48vw, 70vw"
+                  className="w-[68%] sm:-ml-6 sm:w-[52%]"
+                />
+              </div>
             </div>
-            <div className="text-center">
-              <dd className="mb-2 text-3xl font-bold text-green-600 dark:text-green-400">
-                {ACTIVE_CLUBS.length}
-              </dd>
-              <dt className="text-gray-600 dark:text-gray-300">
-                {ACTIVE_CLUBS.length === 1 ? 'League' : 'Leagues'}
-              </dt>
-            </div>
-            <div className="text-center">
-              <dd className="mb-2 text-3xl font-bold text-green-600 dark:text-green-400">
-                {STATS.matchesPlayed}+
-              </dd>
-              <dt className="text-gray-600 dark:text-gray-300">Matches Played</dt>
-            </div>
-          </dl>
+          </div>
         </div>
-      </section>
+
+        <dl className="mt-14 grid grid-cols-3 gap-4 border-t border-white/10 pt-8 sm:mt-20">
+          <Stat tone="on-dark" value={`${STATS.activePlayers}+`} label="Active Players" />
+          <Stat
+            tone="on-dark"
+            value={ACTIVE_CLUBS.length}
+            label={ACTIVE_CLUBS.length === 1 ? 'League' : 'Leagues'}
+          />
+          <Stat tone="on-dark" value={`${STATS.matchesPlayed}+`} label="Matches Played" />
+        </dl>
+      </Section>
 
       {/* Leagues */}
-      <section id="clubs" className="mx-auto max-w-7xl scroll-mt-24 px-4 pb-16">
-        <div className="mb-12 text-center">
-          <h2 className="mb-4 text-4xl font-bold text-gray-900 dark:text-white">
-            Active <span className="text-green-600 dark:text-green-400">Leagues</span>
-          </h2>
-          <p className="mx-auto max-w-2xl text-lg text-gray-600 dark:text-gray-300">
-            Browse leagues in your area and find the perfect fit for your skill level
-          </p>
-        </div>
+      <Section id="clubs" size="md" width="wide" className="scroll-mt-20">
+        <SectionHeading
+          title={
+            <>
+              Active <span className="text-green-600 dark:text-green-400">Leagues</span>
+            </>
+          }
+          lede="Browse leagues in your area and find the perfect fit for your skill level"
+        />
 
-        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 md:gap-8">
-          {ACTIVE_CLUBS.map((club) => (
-            <ClubCard key={club.id} club={club} />
+        <div className="mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+          {ACTIVE_CLUBS.map((club, index) => (
+            <Reveal key={club.id} delay={index * 90} className="h-full">
+              <ClubCard club={club} />
+            </Reveal>
           ))}
         </div>
 
@@ -149,12 +179,52 @@ export default function HomePage() {
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
         </p>
-      </section>
+      </Section>
 
       {/* How it works */}
-      <section className="mx-auto max-w-7xl px-4 pb-8 sm:pb-16">
+      <Section size="sm" width="wide">
         <HowItWorks />
-      </section>
+      </Section>
+
+      {/* Clubs and download */}
+      <Section size="md" width="wide" className="pt-0 sm:pt-0">
+        <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+          <Reveal className="h-full">
+            <Panel tone="navy" className="flex h-full flex-col items-start text-left">
+              <Eyebrow icon={Building2} tone="on-dark">
+                Built for league organisers
+              </Eyebrow>
+              <h2 className="mt-5 font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                Run a club or league?
+              </h2>
+              <p className="mt-3 leading-relaxed text-white/80">
+                Next-Up runs your league night for you. Players check in on their
+                phones, the app pairs partners, assigns courts the moment one frees
+                up and posts scores to live standings. No spreadsheets, no
+                whiteboard, no waiting around.
+              </p>
+              <Button href="/for-clubs" variant="on-dark" className="mt-6">
+                See Next-Up for clubs
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Button>
+            </Panel>
+          </Reveal>
+          <Reveal delay={90} className="h-full">
+            <Panel tone="brand" className="flex h-full flex-col items-center text-center">
+              <Eyebrow icon={Smartphone} tone="on-dark">
+                Free on iOS and Android
+              </Eyebrow>
+              <h2 className="mt-5 font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                Download the app to get started!
+              </h2>
+              <p className="mt-3 text-green-100">
+                Download the free app to check in, play and track your stats
+              </p>
+              <StoreButtons className="mt-6" />
+            </Panel>
+          </Reveal>
+        </div>
+      </Section>
     </>
   )
 }

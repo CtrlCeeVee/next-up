@@ -89,6 +89,16 @@ See `Docs/DEVELOPMENT.md` for setup, debugging, deployment, and common tasks.
 
 ## Design System
 
+Two sites, two systems. The marketing site in `code/web` uses the tokens and components below; the glass-morphism rules under "Legacy app" describe `code/client` only. Do not bring blur, animated blobs or `transition-all` into `code/web`.
+
+### Marketing site (`code/web`)
+- Tokens live in `code/web/src/app/globals.css` (`@theme`): `court-950/900/800` navy for the header, hero, footer and navy panels (identical in light and dark mode), `ball` yellow for highlights, `logo-blue`/`logo-teal` for monograms. Emerald/green stays the only action colour; blue, purple, orange, pink, yellow and red are icon-tile tones through `IconTile`.
+- Components in `code/web/src/components/ui/`: `Section`, `Panel`, `Card`, `Button`, `Eyebrow`, `SectionHeading`, `IconTile`, `Stat`, `Monogram`, `PhoneFrame`, `Reveal`, `HeaderScrollSentinel`. Pages are a stack of `Section`s; CTAs are `Panel tone="brand"` (green gradient) or `tone="navy"`.
+- Fonts: DM Sans for headings (`font-display`), Inter for body, both via `next/font`. Radii: `rounded-3xl` cards and panels, `rounded-2xl` buttons and tiles, `rounded-full` pills.
+- Motion: property-specific transitions of 200 to 300 ms, card hover is lift plus shadow, reveal-on-scroll through `Reveal` only below the fold, all of it off under `prefers-reduced-motion`.
+
+### Legacy app (`code/client`)
+
 ### Core Visual Language
 - **Glass morphism**: `bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg`
 - **Borders**: `border-slate-200/50 dark:border-slate-700/50`
@@ -168,6 +178,7 @@ Validate in `validatePickleballScore()`: first to 15, win by 2 minimum, no ties.
 
 ## Documentation
 
+- `Docs/HANDOFF.md` — read first on a fresh machine or session: current state of every workstream, what is uncommitted or unpushed, machine setup (env files, MCP servers, plugins), owner rules and the next step
 - `Docs/ARCHITECTURE.md` — system design, database schema, real-time architecture, auto-assignment algorithm
 - `Docs/DEVELOPMENT.md` — full setup guide, code conventions, debugging, deployment, common tasks
 - `Docs/PRODUCT.md` — product overview and user flows

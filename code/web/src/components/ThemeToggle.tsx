@@ -39,10 +39,10 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label="Toggle dark mode"
-      className="group rounded-full bg-gray-100/80 p-2 transition-all duration-300 hover:bg-gray-200 dark:bg-slate-800/80 dark:hover:bg-slate-700"
+      className="group rounded-full p-2 text-white/80 transition-colors duration-200 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
     >
-      <Moon className="h-5 w-5 text-gray-600 transition-transform duration-300 group-hover:rotate-12 dark:hidden" />
-      <Sun className="hidden h-5 w-5 text-yellow-500 transition-transform duration-300 group-hover:rotate-12 dark:block" />
+      <Moon className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12 dark:hidden" />
+      <Sun className="hidden h-5 w-5 text-ball transition-transform duration-300 group-hover:rotate-12 dark:block" />
     </button>
   )
 }

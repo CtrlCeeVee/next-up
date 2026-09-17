@@ -1,31 +1,37 @@
 import type { LucideIcon } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { cn } from '@/lib/cn'
+import { Eyebrow } from './ui/Eyebrow'
+
+const ALIGN = {
+  center: 'text-center',
+  left: 'text-left',
+  // Centred on small screens, left-aligned beside an image from lg up.
+  responsive: 'text-center lg:text-left',
+} as const
 
 type Props = {
   icon: LucideIcon
   badge: string
-  title: React.ReactNode
-  children?: React.ReactNode
-  tone?: 'green' | 'blue'
+  title: ReactNode
+  /** Lede and any extra lines; style them for the navy band (text-white/80). */
+  children?: ReactNode
+  align?: keyof typeof ALIGN
+  className?: string
 }
 
-export function PageIntro({ icon: Icon, badge, title, children, tone = 'green' }: Props) {
-  const badgeTone =
-    tone === 'blue'
-      ? 'bg-blue-100/80 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-      : 'bg-green-100/80 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-
+// Page header for inner pages. Rendered inside <Section tone="navy">, so the
+// eyebrow, title and lede are always on the navy band.
+export function PageIntro({ icon, badge, title, children, align = 'center', className }: Props) {
   return (
-    <div className="mb-12 text-center">
-      <p
-        className={`mb-6 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium backdrop-blur-sm ${badgeTone}`}
-      >
-        <Icon className="h-4 w-4" aria-hidden="true" />
-        <span>{badge}</span>
-      </p>
-      <h1 className="mb-4 text-4xl font-bold text-gray-900 sm:text-5xl dark:text-white">
+    <div className={cn('animate-rise', ALIGN[align], className)}>
+      <Eyebrow icon={icon} tone="on-dark">
+        {badge}
+      </Eyebrow>
+      <h1 className="mt-5 font-display text-4xl font-bold tracking-tight text-balance text-white sm:text-5xl">
         {title}
       </h1>
-      {children}
+      {children && <div className="mt-4">{children}</div>}
     </div>
   )
 }
