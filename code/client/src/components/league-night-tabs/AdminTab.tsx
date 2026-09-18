@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Settings, Play, StopCircle, Edit, Users, BarChart, Plus, X, Trophy, AlertTriangle, ChevronDown, ChevronUp, Search, UserPlus } from 'lucide-react';
+import { Settings, Play, StopCircle, Edit, Users, BarChart, Plus, X, Trophy, AlertTriangle, ChevronDown, ChevronUp, Search, UserPlus, Ticket, CheckCircle } from 'lucide-react';
 import TestingPanel from '../admin/TestingPanel';
 import { leagueNightService } from '../../services/api/leagueNights';
 
@@ -22,6 +22,7 @@ interface AdminTabProps {
   onEndLeague: () => void;
   onRestartLeague: () => void;
   onRefresh: () => void;
+  requiresVoucher?: boolean;
 }
 
 const AdminTab: React.FC<AdminTabProps> = ({
@@ -35,7 +36,8 @@ const AdminTab: React.FC<AdminTabProps> = ({
   onStartLeague,
   onEndLeague,
   onRestartLeague,
-  onRefresh
+  onRefresh,
+  requiresVoucher = false
 }) => {
   const isActive = leagueNight.backendStatus === 'active' || leagueNight.status === 'active';
   const isScheduled = leagueNight.backendStatus === 'scheduled' || leagueNight.status === 'scheduled';
@@ -111,6 +113,24 @@ const AdminTab: React.FC<AdminTabProps> = ({
   const [creatingTempAccount, setCreatingTempAccount] = useState(false);
   const [tempAccountError, setTempAccountError] = useState<string | null>(null);
   const [tempAccountSuccess, setTempAccountSuccess] = useState<{ name: string; email: string; password: string } | null>(null);
+
+  // Payment management state
+  const [markingPaid, setMarkingPaid] = useState<string | null>(null);
+
+  const handleMarkPaid = async (targetUserId: string) => {
+    if (!userId || markingPaid) return;
+    setMarkingPaid(targetUserId);
+    try {
+      await leagueNightService.adminMarkPaid(leagueId, nightId, userId, targetUserId);
+      // Refresh to show updated payment status
+      const players = await leagueNightService.getCheckedInPlayers(leagueId, nightId);
+      setCheckedInPlayers(players);
+    } catch (error) {
+      console.error('Error marking player as paid:', error);
+    } finally {
+      setMarkingPaid(null);
+    }
+  };
 
   const handleAddCourt = () => {
     if (!newCourtName.trim()) {
@@ -1337,6 +1357,50 @@ const AdminTab: React.FC<AdminTabProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Payment Management - only for voucher-required leagues */}
+      {requiresVoucher && (
+        <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <Ticket className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            Payment Management
+          </h3>
+          <div className="space-y-2">
+            {checkedInPlayers.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">No players checked in yet.</p>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {checkedInPlayers.filter(p => p.hasPaid).length}/{checkedInPlayers.length} paid
+                  </p>
+                </div>
+                {checkedInPlayers.map(player => (
+                  <div key={player.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-50 dark:bg-slate-700/50">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {player.hasPaid ? (
+                        <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      ) : (
+                        <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                      )}
+                      <span className="text-sm text-slate-700 dark:text-slate-200 truncate">{player.name}</span>
+                    </div>
+                    {!player.hasPaid && (
+                      <button
+                        onClick={() => handleMarkPaid(player.id)}
+                        disabled={markingPaid === player.id}
+                        className="flex-shrink-0 px-3 py-1 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-lg hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors disabled:opacity-50"
+                      >
+                        {markingPaid === player.id ? '...' : 'Mark Paid'}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Partnership Management */}
       <div className="bg-white/60 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 border border-white/20 dark:border-slate-700/50 shadow-lg overflow-visible">

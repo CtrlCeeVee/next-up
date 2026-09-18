@@ -10,6 +10,7 @@ export interface LeagueNightInstance {
   courtsAvailable: number;
   courtLabels?: string[];
   autoAssignmentEnabled?: boolean;
+  requiresVoucher?: boolean;
   checkedInCount: number;
   partnershipsCount: number;
   possibleGames: number;
@@ -23,6 +24,7 @@ export interface CheckedInPlayer {
   checkedInAt: string;
   hasPartner: boolean;
   partnerId?: string;
+  hasPaid?: boolean;
 }
 
 export interface Partnership {
@@ -405,6 +407,33 @@ class LeagueNightService {
 
     const result = await response.json();
     return result.data;
+  }
+  // Redeem a voucher code for payment
+  async redeemVoucher(leagueId: number, nightId: string, userId: string, voucherCode: string) {
+    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/redeem-voucher`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, voucher_code: voucherCode }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to redeem voucher');
+    }
+    return response.json();
+  }
+
+  // Admin mark a player as paid
+  async adminMarkPaid(leagueId: number, nightId: string, userId: string, targetUserId: string) {
+    const response = await fetch(`${API_BASE_URL}/api/leagues/${leagueId}/nights/${nightId}/admin/mark-paid`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, target_user_id: targetUserId }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to mark player as paid');
+    }
+    return response.json();
   }
 }
 

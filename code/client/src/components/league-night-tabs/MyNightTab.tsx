@@ -1,17 +1,19 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { 
-  UserCheck, 
-  UserPlus, 
-  Heart, 
-  UserMinus, 
-  CheckCircle, 
+import {
+  UserCheck,
+  UserPlus,
+  Heart,
+  UserMinus,
+  CheckCircle,
   Clock,
   Trophy,
   Target,
   Send,
   Check,
   X,
-  Search
+  Search,
+  Ticket,
+  AlertCircle
 } from 'lucide-react';
 import ScoreSubmission from '../ScoreSubmission';
 import ScoreConfirmation from '../ScoreConfirmation';
@@ -73,6 +75,13 @@ interface MyNightTabProps {
   onRejectPartnershipRequest: (requestId: number) => void;
   onRemovePartnership: () => void;
   onScoreSubmitted: () => void;
+  requiresVoucher?: boolean;
+  hasPaid?: boolean;
+  voucherCode: string;
+  redeemingVoucher: boolean;
+  voucherError: string | null;
+  onVoucherCodeChange: (code: string) => void;
+  onRedeemVoucher: () => void;
 }
 
 const MyNightTab: React.FC<MyNightTabProps> = ({
@@ -97,7 +106,14 @@ const MyNightTab: React.FC<MyNightTabProps> = ({
   onAcceptPartnershipRequest,
   onRejectPartnershipRequest,
   onRemovePartnership,
-  onScoreSubmitted
+  onScoreSubmitted,
+  requiresVoucher = false,
+  hasPaid = false,
+  voucherCode,
+  redeemingVoucher,
+  voucherError,
+  onVoucherCodeChange,
+  onRedeemVoucher
 }) => {
   const [partnerSearch, setPartnerSearch] = useState('');
   const [tonightStats, setTonightStats] = useState<TonightStats | null>(null);
@@ -182,8 +198,59 @@ const MyNightTab: React.FC<MyNightTabProps> = ({
               <span className="font-semibold">You're checked in!</span>
             </div>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              {currentPartner ? "Great! You're all set for tonight." : "Find a partner below to get started!"}
+              {requiresVoucher && !hasPaid
+                ? "Enter your payment code to get started!"
+                : currentPartner ? "Great! You're all set for tonight." : "Find a partner below to get started!"}
             </p>
+
+            {/* Payment card for voucher-required leagues */}
+            {requiresVoucher && (
+              <div className={`rounded-xl border p-3 ${hasPaid
+                ? 'bg-emerald-50/80 dark:bg-emerald-900/20 border-emerald-200/50 dark:border-emerald-700/50'
+                : 'bg-amber-50/80 dark:bg-amber-900/20 border-amber-200/50 dark:border-amber-700/50'
+              }`}>
+                {hasPaid ? (
+                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle className="w-5 h-5" />
+                    <span className="font-semibold text-sm">Payment confirmed</span>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+                      <Ticket className="w-5 h-5" />
+                      <span className="font-semibold text-sm">Payment required</span>
+                    </div>
+                    <p className="text-xs text-amber-600/70 dark:text-amber-400/70">
+                      Enter the code from your receipt to unlock match play
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={voucherCode}
+                        onChange={(e) => onVoucherCodeChange(e.target.value.toUpperCase())}
+                        placeholder="e.g. YTU4-U2IF"
+                        maxLength={9}
+                        className="flex-1 min-w-0 px-3 py-2 text-sm rounded-lg border border-amber-200 dark:border-amber-700/50 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono tracking-wider"
+                      />
+                      <button
+                        onClick={onRedeemVoucher}
+                        disabled={redeemingVoucher || !voucherCode.trim()}
+                        className="flex-shrink-0 px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg text-sm font-medium hover:from-emerald-600 hover:to-green-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {redeemingVoucher ? '...' : 'Redeem'}
+                      </button>
+                    </div>
+                    {voucherError && (
+                      <div className="flex items-center gap-1 text-red-500 dark:text-red-400 text-xs">
+                        <AlertCircle className="w-3 h-3" />
+                        <span>{voucherError}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               onClick={onUncheck}
               disabled={unchecking}

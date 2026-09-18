@@ -40,6 +40,7 @@ interface LeagueNight {
   courtsAvailable: number
   courtLabels?: string[]
   autoAssignmentEnabled?: boolean
+  requiresVoucher?: boolean
   checkedInCount: number
   partnershipsCount: number
   possibleGames: number
@@ -79,6 +80,12 @@ const LeagueNightPage = () => {
   const [endingLeague, setEndingLeague] = useState(false);
   const [restartingLeague, setRestartingLeague] = useState(false);
 
+  // Voucher/payment state
+  const [hasPaid, setHasPaid] = useState(false);
+  const [voucherCode, setVoucherCode] = useState('');
+  const [redeemingVoucher, setRedeemingVoucher] = useState(false);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+
   // Tab state
   const [activeTab, setActiveTab] = useState('my-night');
 
@@ -111,6 +118,7 @@ const LeagueNightPage = () => {
         courtsAvailable: nightData.courtsAvailable,
         courtLabels: nightData.courtLabels || [],
         autoAssignmentEnabled: nightData.autoAssignmentEnabled,
+        requiresVoucher: nightData.requiresVoucher || false,
         checkedInCount: nightData.checkedInCount,
         partnershipsCount: nightData.partnershipsCount,
         possibleGames: nightData.possibleGames
@@ -315,19 +323,37 @@ const LeagueNightPage = () => {
     }
   };
 
+  // Voucher redemption handler
+  const handleRedeemVoucher = async () => {
+    if (!user || !leagueId || !nightId || !voucherCode.trim() || redeemingVoucher) return;
+    setRedeemingVoucher(true);
+    setVoucherError(null);
+    try {
+      await leagueNightService.redeemVoucher(parseInt(leagueId), nightId, user.id, voucherCode.trim());
+      setHasPaid(true);
+      setVoucherCode('');
+      await refreshCheckedInPlayers();
+    } catch (error) {
+      setVoucherError(error instanceof Error ? error.message : 'Failed to redeem voucher');
+    } finally {
+      setRedeemingVoucher(false);
+    }
+  };
+
   // Helper functions for refreshing data
   const refreshCheckedInPlayers = useCallback(async () => {
     if (!leagueId || !nightId) return;
-    
+
     try {
       const players = await leagueNightService.getCheckedInPlayers(parseInt(leagueId), nightId);
       setCheckedInPlayers(players);
-      
+
       // Check if current user is checked in and has partner
       if (user) {
         const userCheckedIn = players.find(p => p.id === user.id);
         setIsCheckedIn(!!userCheckedIn);
-        
+        setHasPaid(userCheckedIn?.hasPaid || false);
+
         if (userCheckedIn && userCheckedIn.hasPartner) {
           setSelectedPartner(userCheckedIn.partnerId || null);
         } else {
@@ -621,6 +647,13 @@ const LeagueNightPage = () => {
             acceptingRequest={acceptingRequest}
             rejectingRequest={rejectingRequest}
             removingPartnership={removingPartnership}
+            requiresVoucher={leagueNight?.requiresVoucher || false}
+            hasPaid={hasPaid}
+            voucherCode={voucherCode}
+            redeemingVoucher={redeemingVoucher}
+            voucherError={voucherError}
+            onVoucherCodeChange={setVoucherCode}
+            onRedeemVoucher={handleRedeemVoucher}
             onCheckIn={handleCheckIn}
             onUncheck={handleUncheck}
             onSendPartnershipRequest={handleSendPartnershipRequest}
@@ -662,6 +695,7 @@ const LeagueNightPage = () => {
             startingLeague={startingLeague}
             endingLeague={endingLeague}
             restartingLeague={restartingLeague}
+            requiresVoucher={leagueNight?.requiresVoucher || false}
             onStartLeague={handleStartLeague}
             onEndLeague={handleEndLeague}
             onRestartLeague={handleRestartLeague}

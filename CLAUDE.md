@@ -4,7 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Next-Up: real-time pickleball league management platform for South African communities. Two independent apps in one repo (no npm workspaces).
+Next-Up: real-time pickleball league management platform for South African communities. The product now lives in the NextUp Sport mobile app (separate repo). This repo holds independent apps with no npm workspaces:
+
+- `code/web` — the marketing site for www.next-up.co.za (Next.js App Router, Tailwind v4). Static, SEO-first, never runs app functionality. See `code/web/README.md` and `Docs/SEO_AUDIT.md`.
+- `code/client` — the legacy Vite SPA still deployed at www.next-up.co.za until `code/web` replaces it.
+- `code/server` — Express backend (legacy).
+- `code/billing-console` — internal billing tooling.
 
 **Stack**: React 19 + TypeScript + Tailwind CSS (Vite) | Express.js 5 | Supabase (PostgreSQL + Auth + Real-time)
 **Deployment**: Vercel (frontend at next-up.co.za) + Render (backend) + Supabase Cloud
@@ -83,6 +88,16 @@ See `Docs/DEVELOPMENT.md` for setup, debugging, deployment, and common tasks.
 - RLS policies: keep simple, avoid self-referential JOINs
 
 ## Design System
+
+Two sites, two systems. The marketing site in `code/web` uses the tokens and components below; the glass-morphism rules under "Legacy app" describe `code/client` only. Do not bring blur, animated blobs or `transition-all` into `code/web`.
+
+### Marketing site (`code/web`)
+- Tokens live in `code/web/src/app/globals.css` (`@theme`): `court-950/900/800` navy for the header, hero, footer and navy panels (identical in light and dark mode), `ball` yellow for highlights, `logo-blue`/`logo-teal` for monograms. Emerald/green stays the only action colour. `Panel tone="brand"` is the deep green surface (`bg-brand-deep`), used only where the action is a conversion (download the app, contact us about a league); soft closers are a plain `Card`. `IconTile` tones carry meaning: `emerald` playing, `blue` the system at work, `yellow` results and notices, `navy` organisers, clubs and venues, `red` warnings only.
+- Components in `code/web/src/components/ui/`: `Section`, `Panel`, `Card`, `Button`, `Eyebrow`, `SectionHeading`, `IconTile`, `Stat`, `Monogram`, `PhoneFrame`, `Reveal`, `HeaderScrollSentinel`. Pages are a stack of `Section`s; CTAs are `Panel tone="brand"` (green gradient) or `tone="navy"`.
+- Fonts: DM Sans for headings (`font-display`), Inter for body, both via `next/font`. Radii: `rounded-3xl` cards and panels, `rounded-2xl` buttons and tiles, `rounded-full` pills.
+- Motion: property-specific transitions of 200 to 300 ms, card hover is lift plus shadow, reveal-on-scroll through `Reveal` only below the fold, all of it off under `prefers-reduced-motion`.
+
+### Legacy app (`code/client`)
 
 ### Core Visual Language
 - **Glass morphism**: `bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg`
@@ -163,8 +178,11 @@ Validate in `validatePickleballScore()`: first to 15, win by 2 minimum, no ties.
 
 ## Documentation
 
+- `Docs/HANDOFF.md` — read first on a fresh machine or session: current state of every workstream, what is uncommitted or unpushed, machine setup (env files, MCP servers, plugins), owner rules and the next step
 - `Docs/ARCHITECTURE.md` — system design, database schema, real-time architecture, auto-assignment algorithm
 - `Docs/DEVELOPMENT.md` — full setup guide, code conventions, debugging, deployment, common tasks
 - `Docs/PRODUCT.md` — product overview and user flows
+- `Docs/BILLING.md` + `Docs/Billing/` — invoicing system: rules, runbook, agreements, issued invoices. DB logic lives in the Supabase `billing` schema; migrations mirrored in `supabase/migrations/`. Invoices and other client-facing documents are formal: never use em-dashes
 - `CHANGELOG.md` — version history (update for significant changes)
-- `Docs/TODO.txt`, `Docs/known_mini_bugs.txt` — active tracking
+- `todo.md` — tracked work items (canonical; managed via /todo-add and /todo-do)
+- `Docs/TODO.txt`, `Docs/known_mini_bugs.txt` — legacy tracking

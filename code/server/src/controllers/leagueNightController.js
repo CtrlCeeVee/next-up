@@ -117,6 +117,13 @@ const getLeagueNight = async (req, res) => {
 
     if (partnershipsError) throw partnershipsError;
 
+    // Check if league requires vouchers
+    const { data: leagueConfig } = await supabase
+      .from('leagues')
+      .select('requires_voucher')
+      .eq('id', leagueId)
+      .single();
+
     // Format response
     const response = {
       id: instance.id,
@@ -127,6 +134,7 @@ const getLeagueNight = async (req, res) => {
       courtsAvailable: instance.courts_available,
       courtLabels: instance.court_labels || [],
       autoAssignmentEnabled: instance.auto_assignment_enabled !== false,
+      requiresVoucher: leagueConfig?.requires_voucher || false,
       checkedInCount: checkins.length,
       partnershipsCount: partnerships.length,
       possibleGames: Math.floor(partnerships.length / 2) * 2 // Each partnership can play against another
@@ -194,7 +202,8 @@ const getCheckedInPlayers = async (req, res) => {
       skillLevel: checkin.profiles.skill_level || 'Intermediate',
       checkedInAt: checkin.checked_in_at,
       hasPartner: partnershipMap.has(checkin.profiles.id),
-      partnerId: partnershipMap.get(checkin.profiles.id) || null
+      partnerId: partnershipMap.get(checkin.profiles.id) || null,
+      hasPaid: checkin.has_paid || false
     }));
 
     res.json({
@@ -253,12 +262,13 @@ const checkInPlayer = async (req, res) => {
 
     let checkin;
     if (!inactiveError && inactiveCheckin) {
-      // Reactivate existing checkin
+      // Reactivate existing checkin (reset payment for new session)
       const { data: reactivatedCheckin, error: reactivateError } = await supabase
         .from('league_night_checkins')
-        .update({ 
+        .update({
           is_active: true,
-          checked_in_at: new Date().toISOString()
+          checked_in_at: new Date().toISOString(),
+          has_paid: false
         })
         .eq('id', inactiveCheckin.id)
         .select()
@@ -1731,6 +1741,141 @@ const adminCreateTempAccount = async (req, res) => {
   }
 };
 
+// POST /api/leagues/:leagueId/nights/:nightId/redeem-voucher
+const redeemVoucher = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { user_id, voucher_code } = req.body;
+
+    if (!user_id || !voucher_code) {
+      return res.status(400).json({ success: false, error: 'User ID and voucher code are required' });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Verify league requires vouchers
+    const { data: league } = await supabase
+      .from('leagues')
+      .select('requires_voucher')
+      .eq('id', leagueId)
+      .single();
+
+    if (!league?.requires_voucher) {
+      return res.status(400).json({ success: false, error: 'This league does not require voucher codes' });
+    }
+
+    // Verify user is checked in
+    const { data: checkin } = await supabase
+      .from('league_night_checkins')
+      .select('id, has_paid')
+      .eq('league_night_instance_id', instance.id)
+      .eq('user_id', user_id)
+      .eq('is_active', true)
+      .single();
+
+    if (!checkin) {
+      return res.status(400).json({ success: false, error: 'You must be checked in first' });
+    }
+
+    if (checkin.has_paid) {
+      return res.json({ success: true, data: { message: 'Already paid' } });
+    }
+
+    // Normalize code
+    const normalizedCode = voucher_code.trim().toUpperCase();
+
+    // Look up and claim the code atomically
+    const { data: code, error: codeError } = await supabase
+      .from('voucher_codes')
+      .update({
+        is_used: true,
+        used_by: user_id,
+        used_at: new Date().toISOString(),
+        league_night_instance_id: instance.id
+      })
+      .eq('code', normalizedCode)
+      .eq('league_id', parseInt(leagueId))
+      .eq('is_used', false)
+      .select()
+      .single();
+
+    if (codeError || !code) {
+      return res.status(400).json({ success: false, error: 'Invalid or already used voucher code' });
+    }
+
+    // Mark checkin as paid
+    await supabase
+      .from('league_night_checkins')
+      .update({ has_paid: true })
+      .eq('id', checkin.id);
+
+    // Payment may unlock a partnership for auto-assignment
+    await tryAutoAssignMatches(instance.id);
+
+    res.json({ success: true, data: { message: 'Voucher redeemed successfully' } });
+
+  } catch (error) {
+    console.error('Error redeeming voucher:', error);
+    res.status(500).json({ success: false, error: 'Failed to redeem voucher' });
+  }
+};
+
+// POST /api/leagues/:leagueId/nights/:nightId/admin/mark-paid
+const adminMarkPaid = async (req, res) => {
+  try {
+    const { leagueId, nightId } = req.params;
+    const { user_id, target_user_id } = req.body;
+
+    if (!user_id || !target_user_id) {
+      return res.status(400).json({ success: false, error: 'User ID and target user ID are required' });
+    }
+
+    // Admin role check
+    const { data: membership } = await supabase
+      .from('league_memberships')
+      .select('role')
+      .eq('league_id', leagueId)
+      .eq('user_id', user_id)
+      .eq('is_active', true)
+      .single();
+
+    const { data: leagueData } = await supabase
+      .from('leagues')
+      .select('owner_id')
+      .eq('id', leagueId)
+      .single();
+
+    if (membership?.role !== 'admin' && leagueData?.owner_id !== user_id) {
+      return res.status(403).json({ success: false, error: 'Admin access required' });
+    }
+
+    const instance = await getOrCreateLeagueNightInstance(leagueId, nightId);
+
+    // Mark target player as paid
+    const { data: updated, error: updateError } = await supabase
+      .from('league_night_checkins')
+      .update({ has_paid: true })
+      .eq('league_night_instance_id', instance.id)
+      .eq('user_id', target_user_id)
+      .eq('is_active', true)
+      .select()
+      .single();
+
+    if (updateError || !updated) {
+      return res.status(404).json({ success: false, error: 'Player is not checked in' });
+    }
+
+    // Payment may unlock a partnership for auto-assignment
+    await tryAutoAssignMatches(instance.id);
+
+    res.json({ success: true, data: { message: 'Player marked as paid' } });
+
+  } catch (error) {
+    console.error('Error marking player as paid:', error);
+    res.status(500).json({ success: false, error: 'Failed to mark player as paid' });
+  }
+};
+
 module.exports = {
   getLeagueNight,
   getCheckedInPlayers,
@@ -1751,5 +1896,7 @@ module.exports = {
   adminCreatePartnership,
   adminRemovePartnership,
   getAllPartnerships,
-  adminCreateTempAccount
+  adminCreateTempAccount,
+  redeemVoucher,
+  adminMarkPaid
 };

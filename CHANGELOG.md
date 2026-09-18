@@ -1,5 +1,28 @@
 # 📝 Next-Up Changelog
 
+## Billing Console (July 10, 2026)
+
+Web console for the billing system (phase 2, `Docs/Billing/PHASE2.md`). New
+SPA in `code/billing-console/` (Vite + React + Tailwind) backed by a single
+Supabase Edge Function `billing-api` that holds the service role and verifies
+callers against an owner allowlist; the `billing` schema stays out of the
+public API. Features: invoice list/detail with issue, mark-paid, void, delete
+and regenerate actions (confirm dialogs on all transitions), arbitrary-range
+statements with per-night write-offs, once-off credits/debits, formal invoice
+document rendering with print-to-PDF (from the canonical template, em-dash
+guard on all values), and monthly cron health. Run with `npm run dev:billing`;
+deploys to Vercel rooted at `code/billing-console/`.
+
+## Billing System v1 (July 10, 2026)
+
+Deterministic invoicing built into the production Supabase database (new
+service-role-only `billing` schema; no changes to app tables). Date-versioned
+commercial terms, per-night statements, monthly draft invoices via pg_cron on
+the 1st, manual issue/pay/void with immutable issued snapshots, night
+write-offs and once-off credits/debits. First invoice NE-2026-06 (Northcliff
+Eagles, June 2026) issued. See `Docs/BILLING.md` for rules and runbook;
+migrations mirrored in `supabase/migrations/`.
+
 ## Version 1.3.0 - PWA + Push Notifications (December 13, 2025)
 
 ### 🎉 Progressive Web App (PWA)
