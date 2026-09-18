@@ -4,12 +4,12 @@ Updated 2026-09-17. Read this first on a new machine or in a fresh Claude sessio
 
 ## 1. State of each workstream
 
-Branch: `dev/general-updates`. `master` is what Vercel deploys (the legacy Vite site). On 2026-09-17 the branch was 14 commits ahead of `origin` and had a large uncommitted set (section 5).
+Branch: `dev/general-updates`. `master` is what Vercel deploys: since 2026-09-18 that is the Next.js site in `code/web` (PR #23, d17b0ea). Everything described here is pushed and merged; `code/client` is no longer deployed and its removal is T-010.
 
 | Workstream | State | Tracked in |
 |---|---|---|
-| Marketing site rebuild (`code/web`) | Phase 1 SEO audit done. Phase 2 done and committed: site foundation, club pages (T-004), Resend contact form (T-005), mobile menu (T-006). Phase 3 design pass (T-007) implemented on 2026-09-07, uncommitted, waiting for the owner's localhost review (section 2). | `Docs/SEO_AUDIT.md`, `todo.md`, `DONE.md` |
-| Go-live of the new site (T-009) | Not started. Owner runs the switch: Vercel project `next-up` root directory to `code/web`, framework Next.js, add `RESEND_API_KEY`, apex redirect 307 to 308, submit sitemap in GSC, request indexing. Nothing on Vercel changes before explicit approval. | `todo.md` |
+| Marketing site rebuild (`code/web`) | Phase 1 SEO audit done. Phase 2 done and committed: site foundation, club pages (T-004), Resend contact form (T-005), mobile menu (T-006). Phase 3 design pass (T-007) verified by the owner on 2026-09-18 after a colour-consolidation review round (26ec17c, aed7df7); archived in `DONE.md`. | `Docs/SEO_AUDIT.md`, `todo.md`, `DONE.md` |
+| Go-live of the new site (T-009) | Done and verified by the owner on 2026-09-18: Vercel project `next-up` root directory `code/web`, Next.js preset, `RESEND_API_KEY` in Production, apex redirect 308, PR #23 merged, sitemap (9 URLs) resubmitted through the GSC API. Live heads, redirects, 404 and bot access verified. Still for the owner: "Request indexing" in the GSC UI on the five key URLs. Post-deploy Lighthouse is in `Docs/SEO_AUDIT.md`. | `todo.md` |
 | Billing console (T-002) | Built 2026-07-10: `code/billing-console/` SPA plus the `billing-api` Supabase edge function (deployed). Files were still uncommitted on 2026-09-17. Remaining human steps: log in to verify, connect the Vercel project, DNS for `billing.next-up.co.za`. | `Docs/BILLING.md`, `Docs/Billing/PHASE2.md`, `todo.md` |
 | RLS on 11 public tables (T-001, CRIT) | Not started. Enabling without policy review breaks the mobile app; coordinate with the app repo. | `todo.md` |
 | Invoicing book of record (T-003) | Open decision: Xero versus the `billing` schema. | `todo.md` Decisions |
@@ -79,7 +79,6 @@ Nothing has been pushed by Claude; the owner pushes.
 
 ## 6. Next steps, in order
 
-1. Push `dev/general-updates` (`git push -u origin dev/general-updates`).
-2. On the other machine: sections 4 then 2. Review T-007 on localhost; on approval move it to `DONE.md` with `26ec17c`, or request changes.
-3. T-008: check GSC for FAQ-style queries before writing anything.
-4. T-009 go-live, run by the owner, then T-010 to T-016 as they earn their place.
+1. Owner: "Request indexing" in the Search Console UI on `/`, `/leagues/johannesburg`, `/clubs/northcliff-eagles`, `/clubs/gpc-pickleball` and `/for-clubs` (no API for this step).
+2. Around 2026-10-15: run the verify-later plan in `Docs/SEO_AUDIT.md` (club-name queries, `inspect_url` on the five URLs, sitemap read date after 2026-09-18).
+3. T-010 (delete code/client) is next; T-011 to T-017 as they earn their place. T-008 stays open by the owner's choice although GSC showed no question-style queries on 2026-09-18.
