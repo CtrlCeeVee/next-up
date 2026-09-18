@@ -74,8 +74,11 @@
 }
 
 @layer base {
+  /* Navy behind the page so iOS Safari paints its bars and the overscroll areas
+     to match the header and footer even when it ignores theme-color. */
   html {
     scroll-behavior: auto;
+    background-color: var(--color-court-950);
   }
   @media (prefers-reduced-motion: no-preference) {
     html {
