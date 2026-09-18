@@ -13,7 +13,6 @@ import { PageIntro } from '@/components/PageIntro'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { IconTile, type IconTone } from '@/components/ui/IconTile'
-import { Panel } from '@/components/ui/Panel'
 import { Reveal } from '@/components/ui/Reveal'
 import { Section } from '@/components/ui/Section'
 
@@ -68,19 +67,19 @@ const TERMINATION = [
 const SUMMARY: { icon: typeof Users; tone: IconTone; title: string; text: string }[] = [
   {
     icon: Users,
-    tone: 'blue',
+    tone: 'emerald',
     title: 'Fair play',
     text: 'Respectful behaviour and honest scoring are required.',
   },
   {
     icon: Shield,
-    tone: 'emerald',
+    tone: 'blue',
     title: 'Your data',
     text: 'We protect your information and never sell it.',
   },
   {
     icon: Gavel,
-    tone: 'purple',
+    tone: 'navy',
     title: 'South African law',
     text: 'Governed by the South African legal framework.',
   },
@@ -172,7 +171,7 @@ export default function TermsPage() {
         <div className="space-y-8">
           <Reveal>
             <Card>
-              <CardHeading icon={Users} tone="blue">
+              <CardHeading icon={Users} tone="emerald">
                 Your account and responsibilities
               </CardHeading>
               <dl className="space-y-4">
@@ -200,7 +199,7 @@ export default function TermsPage() {
 
           <Reveal>
             <Card>
-              <CardHeading icon={Shield} tone="emerald">
+              <CardHeading icon={Shield} tone="navy">
                 Platform use guidelines
               </CardHeading>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -236,7 +235,7 @@ export default function TermsPage() {
 
           <Reveal>
             <Card>
-              <CardHeading icon={Shield} tone="purple">
+              <CardHeading icon={Shield} tone="blue">
                 Data, privacy and termination
               </CardHeading>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -262,7 +261,7 @@ export default function TermsPage() {
 
           <Reveal>
             <Card>
-              <CardHeading icon={Gavel} tone="red">
+              <CardHeading icon={Gavel} tone="navy">
                 Legal framework
               </CardHeading>
               <div className="space-y-4 text-sm text-gray-600 dark:text-gray-300">
@@ -290,20 +289,20 @@ export default function TermsPage() {
         </div>
 
         <Reveal className="mt-12">
-          <Panel tone="brand" className="text-center">
-            <h2 className="font-display text-2xl font-bold tracking-tight">Questions about these Terms?</h2>
-            <p className="mt-3 mb-6 text-green-100">
+          <Card padding="lg" className="text-center">
+            <h2 className="font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+              Questions about these Terms?
+            </h2>
+            <p className="mt-3 mb-6 text-gray-600 dark:text-gray-300">
               We will clarify anything that is unclear or answer your legal questions.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Button href="/contact" variant="on-brand">
-                Contact us
-              </Button>
-              <Button href="/privacy" variant="on-dark">
+              <Button href="/contact">Contact us</Button>
+              <Button href="/privacy" variant="secondary">
                 Privacy policy
               </Button>
             </div>
-          </Panel>
+          </Card>
         </Reveal>
       </Section>
     </>

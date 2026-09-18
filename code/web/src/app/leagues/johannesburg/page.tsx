@@ -8,7 +8,6 @@ import { StoreButtons } from '@/components/StoreButtons'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Monogram } from '@/components/ui/Monogram'
-import { Panel } from '@/components/ui/Panel'
 import { Reveal } from '@/components/ui/Reveal'
 import { Section } from '@/components/ui/Section'
 import {
@@ -206,18 +205,16 @@ export default function JohannesburgPage() {
           </Reveal>
 
           <Reveal>
-            <Panel tone="brand" className="text-center">
-              <h2 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+            <Card padding="lg" className="text-center">
+              <h2 className="font-display text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl dark:text-white">
                 Want Next-Up at your club?
               </h2>
-              <p className="mx-auto mt-3 mb-6 max-w-2xl text-green-100">
+              <p className="mx-auto mt-3 mb-6 max-w-2xl text-gray-600 dark:text-gray-300">
                 We set up and run league nights for clubs across South Africa. See
                 what your club gets and how to get started.
               </p>
-              <Button href="/for-clubs" variant="on-brand">
-                Next-Up for clubs
-              </Button>
-            </Panel>
+              <Button href="/for-clubs">Next-Up for clubs</Button>
+            </Card>
           </Reveal>
         </div>
       </Section>

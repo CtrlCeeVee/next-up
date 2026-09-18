@@ -18,9 +18,9 @@ const VARIANTS: Record<ButtonVariant, string> = {
   // On navy surfaces (header, hero, navy panels).
   'on-dark':
     'bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/15 focus-visible:ring-white focus-visible:ring-offset-court-950',
-  // White button on the green gradient panel.
+  // White button on the deep green panel.
   'on-brand':
-    'bg-white text-green-700 shadow-lg shadow-black/10 hover:bg-green-50 focus-visible:ring-white focus-visible:ring-offset-emerald-600',
+    'bg-white text-green-700 shadow-lg shadow-black/10 hover:bg-green-50 focus-visible:ring-white focus-visible:ring-offset-emerald-800',
 }
 
 const SIZES: Record<ButtonSize, string> = {

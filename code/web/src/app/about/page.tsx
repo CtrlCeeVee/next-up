@@ -54,7 +54,7 @@ const PROBLEMS: { icon: typeof ClipboardList; tone: IconTone; title: string; tex
   },
   {
     icon: CircleHelp,
-    tone: 'purple',
+    tone: 'red',
     title: 'Confusion',
     text: 'Everyone can see their next match, their partner and the league standings.',
   },
@@ -75,25 +75,25 @@ const FEATURES: { icon: typeof Users; tone: IconTone; title: string; text: strin
   },
   {
     icon: Trophy,
-    tone: 'purple',
+    tone: 'emerald',
     title: 'Live scoring',
     text: 'Scores are submitted from the court and standings update instantly.',
   },
   {
     icon: Zap,
-    tone: 'yellow',
+    tone: 'blue',
     title: 'Real-time updates',
     text: 'Everyone stays informed about match assignments and league progress.',
   },
   {
     icon: BarChart3,
-    tone: 'orange',
+    tone: 'yellow',
     title: 'Player analytics',
     text: 'Track personal progress, win rates, streaks and improvement over time.',
   },
   {
     icon: Settings,
-    tone: 'pink',
+    tone: 'navy',
     title: 'League management',
     text: 'Complete tools for organisers to run seasons, league nights and tournaments.',
   },

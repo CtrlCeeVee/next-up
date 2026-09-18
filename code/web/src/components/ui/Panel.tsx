@@ -4,9 +4,10 @@ import { cn } from '@/lib/cn'
 export type PanelTone = 'brand' | 'navy'
 
 const TONES: Record<PanelTone, string> = {
-  // The green gradient CTA block the site already used.
-  brand:
-    'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-card dark:from-green-500 dark:to-emerald-500',
+  // Deep brand green, only where the action is a conversion (download the
+  // app, contact us about a league). One surface in both colour modes, like
+  // the navy. Soft closers ("questions?", cross-links) use a plain Card.
+  brand: 'bg-brand-deep text-white shadow-card ring-1 ring-white/10',
   navy: 'bg-court-950 text-white shadow-card ring-1 ring-white/10',
 }
 

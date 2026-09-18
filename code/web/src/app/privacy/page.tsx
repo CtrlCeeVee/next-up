@@ -4,7 +4,6 @@ import { PageIntro } from '@/components/PageIntro'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { IconTile, type IconTone } from '@/components/ui/IconTile'
-import { Panel } from '@/components/ui/Panel'
 import { Reveal } from '@/components/ui/Reveal'
 import { Section } from '@/components/ui/Section'
 
@@ -60,13 +59,13 @@ const SUMMARY: { icon: typeof Eye; tone: IconTone; title: string; text: string }
   },
   {
     icon: Lock,
-    tone: 'emerald',
+    tone: 'navy',
     title: 'How we protect it',
     text: 'Industry-standard encryption and access controls.',
   },
   {
     icon: Users,
-    tone: 'purple',
+    tone: 'emerald',
     title: 'Your control',
     text: 'Access, update or delete your data at any time.',
   },
@@ -176,7 +175,7 @@ export default function PrivacyPage() {
 
           <Reveal>
             <Card>
-              <CardHeading icon={Lock} tone="purple">
+              <CardHeading icon={Lock} tone="navy">
                 Information sharing
               </CardHeading>
               <div className="mb-4 rounded-xl bg-green-50/70 p-4 dark:bg-green-900/20">
@@ -197,7 +196,7 @@ export default function PrivacyPage() {
 
           <Reveal>
             <Card>
-              <CardHeading icon={Bell} tone="orange">
+              <CardHeading icon={Bell} tone="yellow">
                 Your rights and choices
               </CardHeading>
               <dl className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -213,20 +212,20 @@ export default function PrivacyPage() {
         </div>
 
         <Reveal className="mt-12">
-          <Panel tone="brand" className="text-center">
-            <h2 className="font-display text-2xl font-bold tracking-tight">Questions about privacy?</h2>
-            <p className="mt-3 mb-6 text-green-100">
+          <Card padding="lg" className="text-center">
+            <h2 className="font-display text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+              Questions about privacy?
+            </h2>
+            <p className="mt-3 mb-6 text-gray-600 dark:text-gray-300">
               We are happy to explain how your information is protected.
             </p>
             <div className="flex flex-col justify-center gap-4 sm:flex-row">
-              <Button href="/contact" variant="on-brand">
-                Contact us
-              </Button>
-              <Button href="/terms" variant="on-dark">
+              <Button href="/contact">Contact us</Button>
+              <Button href="/terms" variant="secondary">
                 View terms
               </Button>
             </div>
-          </Panel>
+          </Card>
         </Reveal>
       </Section>
     </>

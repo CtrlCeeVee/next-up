@@ -187,7 +187,7 @@ export default async function ClubPage({ params }: { params: Promise<Params> }) 
             <Reveal className="h-full">
               <Card className="h-full">
                 <div className="mb-4 flex items-center gap-4">
-                  <IconTile icon={MapPin} tone="blue" />
+                  <IconTile icon={MapPin} tone="navy" />
                   <h2 className="font-display text-xl font-bold text-gray-900 dark:text-white">Venue</h2>
                 </div>
                 <p className="font-medium text-gray-900 dark:text-white">{club.venue}</p>
@@ -207,7 +207,7 @@ export default async function ClubPage({ params }: { params: Promise<Params> }) 
             <Reveal delay={90} className="h-full">
               <Card className="h-full">
                 <div className="mb-4 flex items-center gap-4">
-                  <IconTile icon={Calendar} tone="orange" />
+                  <IconTile icon={Calendar} tone="yellow" />
                   <h2 className="font-display text-xl font-bold text-gray-900 dark:text-white">
                     League night
                   </h2>

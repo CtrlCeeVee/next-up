@@ -5,7 +5,6 @@ import { PageIntro } from '@/components/PageIntro'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { IconTile } from '@/components/ui/IconTile'
-import { Panel } from '@/components/ui/Panel'
 import { Section } from '@/components/ui/Section'
 import { CONTACT_EMAIL, LEGAL_NAME } from '@/lib/site'
 
@@ -90,7 +89,7 @@ export default function ContactPage() {
               </h2>
               <ul className="space-y-4">
                 <li className="flex items-center gap-4">
-                  <IconTile icon={Mail} tone="blue" />
+                  <IconTile icon={Mail} tone="emerald" />
                   <div className="min-w-0">
                     <p className="font-medium text-gray-900 dark:text-white">Email</p>
                     <a
@@ -114,7 +113,7 @@ export default function ContactPage() {
                   </div>
                 </li>
                 <li className="flex items-center gap-4">
-                  <IconTile icon={MapPin} tone="purple" />
+                  <IconTile icon={MapPin} tone="navy" />
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">Location</p>
                     <p className="text-gray-600 dark:text-gray-300">Johannesburg, South Africa</p>
@@ -125,7 +124,7 @@ export default function ContactPage() {
 
             <Card>
               <div className="mb-4 flex items-center gap-4">
-                <IconTile icon={Clock} tone="orange" />
+                <IconTile icon={Clock} tone="yellow" />
                 <h2 className="font-display text-xl font-bold text-gray-900 dark:text-white">
                   Support hours
                 </h2>
@@ -146,15 +145,15 @@ export default function ContactPage() {
               </div>
             </Card>
 
-            <Panel tone="brand" className="p-8 text-center sm:p-8">
-              <h2 className="font-display text-xl font-bold">Looking for a league?</h2>
-              <p className="mt-2 mb-5 text-green-100">
+            <Card className="text-center">
+              <h2 className="font-display text-xl font-bold text-gray-900 dark:text-white">
+                Looking for a league?
+              </h2>
+              <p className="mt-2 mb-5 text-gray-600 dark:text-gray-300">
                 See the clubs Next-Up runs league nights at across Johannesburg.
               </p>
-              <Button href="/#clubs" variant="on-brand">
-                View leagues
-              </Button>
-            </Panel>
+              <Button href="/#clubs">View leagues</Button>
+            </Card>
           </div>
         </div>
       </Section>

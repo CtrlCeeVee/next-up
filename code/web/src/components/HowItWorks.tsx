@@ -5,8 +5,9 @@ import { IconTile, type IconTone } from './ui/IconTile'
 import { PhoneFrame } from './ui/PhoneFrame'
 import { Reveal } from './ui/Reveal'
 
-// Colour variety follows the old Quick Actions section: green, blue, purple.
-// Each step shows the matching app screen above its icon.
+// Tones follow the IconTile rule: playing (emerald), the system at work
+// (blue), results (yellow). Each step shows the matching app screen above
+// its icon.
 const STEPS: {
   icon: typeof CheckCircle2
   tone: IconTone
@@ -30,7 +31,7 @@ const STEPS: {
   },
   {
     icon: BarChart3,
-    tone: 'purple',
+    tone: 'yellow',
     title: 'Track your stats',
     text: 'Submit scores from the court. Wins, streaks and rankings update live in the app for every player in the league.',
     screen: SCREENS.ranking,

@@ -144,3 +144,12 @@ Delivery per the /todo-do contract: implement everything, sanity-check, one comp
 - `public/og-image.png` is 736 KB; could be re-encoded to ~150 KB.
 - Contact phone number is hardcoded in `contact/page.tsx` rather than `lib/site.ts`.
 - Club logos and league night photos would replace monograms and add proof; none exist in the repo.
+
+## Review round 1 (2026-09-18)
+
+Luke's localhost review of the pass above: the look was approved, with two refinements requested, both about colour.
+
+1. The green CTA panel was too bright, especially in dark mode (`dark:from-green-500 dark:to-emerald-500`), and it closed every page. Now `Panel tone="brand"` is a deep green surface (`bg-brand-deep` in `globals.css`: emerald-800 to green-900 with a soft top-left highlight), identical in both colour modes like the navy, and it appears only where the action is a conversion: home (download), club pages (download), for-clubs (contact us) and about (join a league). The soft closers on contact, leagues/johannesburg, privacy and terms became a plain `Card` with the standard primary and secondary buttons, so the deep green is the site's one loud moment beside the navy chrome.
+2. The icon tiles used eight tones, and purple, orange and pink were hues found nowhere else on the site. `IconTile` now has four decorative tones drawn from the site's own colours, each with a meaning, plus red for warnings: `emerald` playing (check-in, scoring, fair play, contact actions), `blue` the system at work (matching, court board, live updates, data; the logo blue), `yellow` results and notices (standings, stats, schedules, limitations; the ball yellow), `navy` organisers, clubs, venues and rules (the court navy), `red` warnings only (the problems trio on About, account deletion). The same concept gets the same tone on every page, so a six-item grid shows four hues with considered repeats instead of a rainbow.
+
+Files: `globals.css`, `ui/Panel.tsx`, `ui/IconTile.tsx`, `ui/Button.tsx` (on-brand focus offset), `HowItWorks.tsx`, the about, for-clubs, contact, clubs/[slug], leagues/johannesburg, privacy and terms pages, `code/web/README.md`, root `CLAUDE.md`. No copy changes. The "Colour rules" bullet and the Panel and IconTile rows above describe the original plan and are superseded by this section.
