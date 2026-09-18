@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Next-Up: real-time pickleball league management platform for South African communities. The product now lives in the NextUp Sport mobile app (separate repo). This repo holds independent apps with no npm workspaces:
 
 - `code/web` — the marketing site for www.next-up.co.za (Next.js App Router, Tailwind v4). Static, SEO-first, never runs app functionality. See `code/web/README.md` and `Docs/SEO_AUDIT.md`.
-- `code/client` — the legacy Vite SPA still deployed at www.next-up.co.za until `code/web` replaces it.
+- `code/client` — the legacy Vite SPA, replaced on www.next-up.co.za by `code/web` on 2026-09-18; its removal is tracked as T-010.
 - `code/server` — Express backend (legacy).
 - `code/billing-console` — internal billing tooling.
 
