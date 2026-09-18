@@ -1,5 +1,7 @@
 # Done — Next-Up  (archive; newest first)
 
+- [x] T-009 FEAT HIGH — go live: www.next-up.co.za now serves code/web from Vercel (root directory code/web, Next.js preset, RESEND_API_KEY, apex 308), sitemap resubmitted in GSC — done 2026-09-18, verified ✅
+      PR #23 merged d17b0ea; live heads, canonicals, JSON-LD, 404, 308 redirects and bot access verified; Lighthouse and remaining owner step (Request indexing) in Docs/SEO_AUDIT.md · commits d17b0ea, 47fb4e4
 - [x] T-007 FEAT MED — design pass on code/web (Phase 3): navy court chrome, design system in src/components/ui/, app screens in phone frames, deep green conversion panels, icon tones with meaning — done 2026-09-18, verified ✅
       design pass 26ec17c (2026-09-07) + review round 1 colour consolidation aed7df7 (2026-09-18); record in Docs/WEB_DESIGN_PASS.md · commits 26ec17c, aed7df7
 - [x] T-004 FEAT HIGH — club pages /clubs/<slug> for each club in code/web/src/lib/clubs.ts; /league/2 and /league/3 redirect to them — done 2026-09-07, verified ✅
