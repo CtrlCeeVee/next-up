@@ -46,3 +46,6 @@ coverage/
 .#*
 # Playwright MCP snapshots and screenshots
 .playwright-mcp/
+
+# Client agreements: contain bank and signatory details; keep local (repo is public)
+Docs/Billing/agreements/

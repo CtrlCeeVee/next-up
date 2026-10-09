@@ -79,6 +79,6 @@ Nothing has been pushed by Claude; the owner pushes.
 
 ## 6. Next steps, in order
 
-1. Owner: "Request indexing" in the Search Console UI on `/`, `/leagues/johannesburg`, `/clubs/northcliff-eagles`, `/clubs/gpc-pickleball` and `/for-clubs` (no API for this step).
+1. Done 2026-09-18: owner requested indexing in the Search Console UI on `/`, `/leagues/johannesburg`, `/clubs/northcliff-eagles` and `/for-clubs`. `/clubs/gpc-pickleball` deliberately left out for now (owner's call); request it when ready, no API for this step.
 2. Around 2026-10-15: run the verify-later plan in `Docs/SEO_AUDIT.md` (club-name queries, `inspect_url` on the five URLs, sitemap read date after 2026-09-18).
 3. T-010 (delete code/client) is next; T-011 to T-017 as they earn their place. T-008 stays open by the owner's choice although GSC showed no question-style queries on 2026-09-18.
