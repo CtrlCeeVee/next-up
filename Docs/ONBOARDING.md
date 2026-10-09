@@ -16,12 +16,17 @@ running it, and run the setup as one transaction.
   signature and receipt of the initialisation fee; if setup runs before the
   signed copy arrives, get it signed before the club's first billed night.
 - **Initialisation fee** received (R500 under Schedule 1 v1.0).
+- **Wrangler** logged in to the Cloudflare account that holds the R2 buckets,
+  only if the club supplies images (`npx wrangler login`; `npx wrangler logout`
+  afterwards, since the login grants account-wide write access).
 
 ## Information to collect from the club
 
 | Item | Goes to | Notes |
 |---|---|---|
 | Club / league name | `leagues.name`, `billing.clients.legal_name` | |
+| Banner photo (optional) | R2 `banners`, `leagues.image_url` | Landscape, about 1200x550; see step 5 |
+| Logo (optional) | R2 `logos`, `leagues.logo_url` | Square; see step 5 |
 | One-line description | `leagues.description` | Shown in the app |
 | Venue name | `leagues.location` | Required (NOT NULL) |
 | Street address | `leagues.address`, `billing.clients.address` | |
@@ -131,7 +136,38 @@ charged again on its first invoice. Record receipt in `billing.terms.notes`
 The `debit` procedure in `Docs/BILLING.md` is for a once-off charge that is
 billed on an invoice, not one already paid.
 
-### 5. Verify
+### 5. Banner and logo images (optional)
+
+The app (`next-up-native`, `production` branch) loads league images through
+the backend, which reads them from Cloudflare R2:
+
+| Image | App URL | R2 bucket | Column | Shape | Fallback when NULL |
+|---|---|---|---|---|---|
+| Banner (title image on the league page) | `{API}/images/banners/{image_url}` | `banners` | `leagues.image_url` | Full width x 180 pt, cropped to fill (about 2.2:1). Landscape JPG around 1200x550, subject centred | `banners/default.jpg` (generic image) |
+| Logo (league cards, headers) | `{API}/images/logos/{logo_url}` | `logos` | `leagues.logo_url` | Circle; supply a square image | Initials avatar (ui-avatars.com) |
+
+The columns hold the object key (file name), not a URL. No upload endpoint
+exists in the app or backend; upload with Wrangler:
+
+```bash
+npx wrangler r2 object put "banners/<club-slug>-<YYYY-MM>.jpg" --file "<path to image>" --content-type image/jpeg --remote
+npx wrangler r2 object get "banners/<club-slug>-<YYYY-MM>.jpg" --file check.jpg --remote   # optional: compare to the original
+```
+
+```sql
+UPDATE public.leagues SET image_url = '<club-slug>-<YYYY-MM>.jpg', updated_at = now() WHERE id = <id>;
+```
+
+Logos follow the same pattern with the `logos` bucket and `logo_url`.
+
+- **Always use a new object key** when replacing an image. The backend caches
+  images in memory and on disk by key, so overwriting a key can keep serving
+  the old image.
+- If the app still shows the generic banner after a restart, check that the
+  deployed backend has `ImageStorage:EnableImageFetching` on; when it is off
+  the backend serves the bundled defaults regardless of R2.
+
+### 6. Verify
 
 Read back everything written:
 
@@ -152,15 +188,16 @@ Manual checks:
 2. App: each admin sees admin controls on the league.
 3. First night: players can check in in the expected way (no PIN prompt for
    `NONE`).
-4. Billing console: the client appears. The first draft invoice is created by
+4. App: the banner (and logo, if set) shows on the league page.
+5. Billing console: the client appears. The first draft invoice is created by
    cron on the 1st of the following month.
 
-### 6. Follow-ups
+### 7. Follow-ups
 
 - Marketing site: add the club to `code/web/src/lib/clubs.ts` (club card and
   page). Never list demo leagues.
-- Logo: `leagues.logo_url` is unused so far; image hosting is not settled.
-- Replace the unsigned agreement in the repo with the signed copy.
+- Images supplied after setup: step 5 applies on its own at any time.
+- Replace the unsigned agreement on disk with the signed copy.
 - Commit the doc changes (not the agreement; it stays local).
 
 ## Record
@@ -168,4 +205,4 @@ Manual checks:
 | Club | Date | League id | Client id / code | Terms | Notes |
 |---|---|---|---|---|---|
 | Northcliff Eagles | 2026-06-04 (billing) | 2 | 1 / NE | R50, 10%, from 2026-06-04 | League predates billing; billing seeded by migration `20260710120200`. PIN check-in |
-| Kowie Pickleball | 2026-10-08 | 7 | 2 / KP | R50, 10%, from 2026-10-08 | Tue 17:00, Sat 15:00, 2 courts. Check-in `NONE`. Admins: Luke Renton, Charlie Jacobs. Set up before the signed agreement arrived. Coordinates set after setup (T-018) |
+| Kowie Pickleball | 2026-10-08 | 7 | 2 / KP | R50, 10%, from 2026-10-08 | Tue 17:00, Sat 15:00, 2 courts. Check-in `NONE`. Admins: Luke Renton, Charlie Jacobs. Set up before the signed agreement arrived. Coordinates set after setup (T-018). Banner `kowie-pickleball-2026-10.jpg` added 2026-10-09; no logo yet |
