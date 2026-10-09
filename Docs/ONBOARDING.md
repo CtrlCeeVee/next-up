@@ -194,8 +194,10 @@ Manual checks:
 
 ### 7. Follow-ups
 
-- Marketing site: add the club to `code/web/src/lib/clubs.ts` (club card and
-  page). Never list demo leagues.
+- Marketing site: add the club to `code/web/src/lib/clubs.ts`; a club in a
+  new region also needs a region page (steps in `code/web/README.md`, "Adding a
+  club"). After deploy, request indexing for the new URLs in Search Console.
+  Never list demo leagues.
 - Images supplied after setup: step 5 applies on its own at any time.
 - Replace the unsigned agreement on disk with the signed copy.
 - Commit the doc changes (not the agreement; it stays local).

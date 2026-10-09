@@ -11,7 +11,7 @@ export function ClubCard({ club }: { club: Club }) {
       className={cardClasses({
         padding: 'none',
         interactive: club.isActive,
-        className: `group relative flex h-full flex-col overflow-hidden ${
+        className: `group @container relative flex h-full flex-col overflow-hidden ${
           club.isActive ? '' : 'opacity-75'
         }`,
       })}
@@ -54,13 +54,17 @@ export function ClubCard({ club }: { club: Club }) {
             <Calendar className="h-4 w-4 shrink-0 text-orange-500 dark:text-orange-400" aria-hidden="true" />
             <span>{formatSchedule(club)}</span>
           </li>
-          <li className="flex items-center gap-3">
-            <Users className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" aria-hidden="true" />
-            <span>{club.members} active members</span>
-          </li>
+          {club.members !== undefined && (
+            <li className="flex items-center gap-3">
+              <Users className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" aria-hidden="true" />
+              <span>{club.members} active members</span>
+            </li>
+          )}
         </ul>
 
-        <div className="mt-auto flex flex-col gap-3 border-t border-gray-200/70 pt-6 sm:flex-row dark:border-slate-600/50">
+        {/* Side by side only when the card itself is wide enough (container
+            query), so narrow cards in a three-up grid stack the buttons. */}
+        <div className="mt-auto flex flex-col gap-3 border-t border-gray-200/70 pt-6 @sm:flex-row dark:border-slate-600/50">
           <Button href={clubPath(club)} variant="secondary" className="flex-1">
             League details
           </Button>

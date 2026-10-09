@@ -21,7 +21,7 @@ import { Reveal } from '@/components/ui/Reveal'
 import { Section } from '@/components/ui/Section'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Stat } from '@/components/ui/Stat'
-import { ACTIVE_CLUBS, clubPath, REGIONS } from '@/lib/clubs'
+import { ACTIVE_CLUBS, activeRegions, clubPath, regionPath } from '@/lib/clubs'
 import { cn } from '@/lib/cn'
 import { SCREENS } from '@/lib/screens'
 import { STATS } from '@/lib/site'
@@ -101,6 +101,26 @@ const ORGANISERS_GET: {
     text: 'Set league days, court counts and labels, start and end nights, and manage memberships from the app.',
   },
 ]
+
+// "Johannesburg and Port Alfred", each region linking to its league page.
+function RegionList() {
+  const regions = activeRegions()
+  return (
+    <>
+      {regions.map((region, index) => (
+        <span key={region.slug}>
+          {index > 0 && (index === regions.length - 1 ? ' and ' : ', ')}
+          <Link
+            href={regionPath(region)}
+            className="font-medium text-green-600 underline-offset-2 hover:underline dark:text-green-400"
+          >
+            {region.name}
+          </Link>
+        </span>
+      ))}
+    </>
+  )
+}
 
 // "Northcliff Eagles at Northcliff Country Club and GPC Pickleball at ..."
 // with each club name linking to its page.
@@ -233,21 +253,14 @@ export default function ForClubsPage() {
                 Proven on real league nights
               </h2>
               <p className="mx-auto mt-3 mb-8 max-w-3xl text-lg text-gray-600 dark:text-gray-300">
-                Next-Up runs <ClubList /> in{' '}
-                <Link
-                  href={`/leagues/${REGIONS.johannesburg.slug}`}
-                  className="font-medium text-green-600 underline-offset-2 hover:underline dark:text-green-400"
-                >
-                  {REGIONS.johannesburg.name}
-                </Link>
-                , South Africa.
+                Next-Up runs <ClubList /> in <RegionList />, South Africa.
               </p>
               <dl className="mx-auto grid max-w-3xl grid-cols-1 gap-8 sm:grid-cols-3">
                 <Stat value={`${STATS.activePlayers}+`} label="Active players" />
                 <Stat value={`${STATS.matchesPlayed}+`} label="Matches played" />
                 <Stat
                   value={ACTIVE_CLUBS.length}
-                  label={`${ACTIVE_CLUBS.length === 1 ? 'League' : 'Leagues'} in ${REGIONS.johannesburg.name}`}
+                  label={`${ACTIVE_CLUBS.length === 1 ? 'League' : 'Leagues'} in South Africa`}
                 />
               </dl>
             </Card>

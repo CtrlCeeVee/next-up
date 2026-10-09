@@ -17,7 +17,7 @@
 - [ ] T-008 FEAT LOW — FAQ page on code/web (players and clubs sections) only if it targets real queries; check demand before writing _(src: chat 09-07)_
 - [ ] T-013 BUG LOW — code/web/src/app/icon.png and apple-icon.png are 119x124 (non-square); supply a 180x180 apple-touch icon and a square favicon source _(src: T-007 design pass)_
 - [ ] T-016 FEAT LOW — club logos and league-night photos on club cards and club pages, replacing the initials monograms; needs assets from the clubs _(src: T-007 design pass)_
-- [ ] T-019 FEAT LOW — add Kowie Pickleball (Port Alfred, Titi Jonas Multi-Purpose Community Centre; Tue 17:00, Sat 15:00) to code/web/src/lib/clubs.ts so it gets a club card and page on next-up.co.za _(src: onboarding chat 10-08)_
+- [~] T-019 FEAT LOW — add Kowie Pickleball (Port Alfred, Titi Jonas Multi-Purpose Community Centre; Tue 17:00, Sat 15:00) to code/web/src/lib/clubs.ts so it gets a club card and page on next-up.co.za _(src: onboarding chat 10-08)_
 - [ ] T-010 CHORE — after go-live: delete code/client, update CLAUDE.md, Docs/DEVELOPMENT.md and root package.json scripts _(src: chat 09-07)_
       needs: T-009 verified stable
 - [ ] T-011 CHORE — remove stale Docs/SEO_GUIDE.md and Docs/SEO_DEPLOYMENT_CHECKLIST.md; fast-forward local master to origin/master _(src: audit 09-06)_
