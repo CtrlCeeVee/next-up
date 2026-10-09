@@ -1,6 +1,6 @@
 <!-- [ ] todo · [~] done, awaiting verification · [x] verified · [-] cancelled · [!] blocked
      Tags: BUG FEAT SEC CHORE DECISION · Sev: CRIT HIGH MED LOW
-     Next ID: T-018 · Spec: /todo-add
+     Next ID: T-021 · Spec: /todo-add
      [x] + [-] (except DECISIONs) → DONE.md · resolved decisions stay below -->
 
 # Todo — Next-Up
@@ -12,6 +12,8 @@
 - [~] T-002 FEAT MED — build phase-2 billing console: SPA on Vercel (billing.next-up.co.za) + Supabase Edge Functions (service role), owner-allowlisted auth _(src: chat 07-10)_
       scope: statement view, date-range reports, write-off button, generate/issue/mark-paid, invoice HTML/PDF download. Spec: Docs/Billing/PHASE2.md
       built 07-10: code/billing-console + billing-api edge function (deployed). Remaining human steps: log in to verify, connect Vercel project, DNS.
+- [ ] T-020 FEAT MED — proper client onboarding flow: one guided path (e.g. billing console "New client" form over a validated DB function) that creates league, nights, admins, billing client/terms and uploads banner/logo to R2, replacing hand-written prod SQL and Wrangler uploads _(src: Kowie onboarding chat 10-09)_
+      today's manual procedure: Docs/ONBOARDING.md; staged options (DB function + intake form → console screen → in-app self-serve) discussed in chat 10-09
 - [ ] T-008 FEAT LOW — FAQ page on code/web (players and clubs sections) only if it targets real queries; check demand before writing _(src: chat 09-07)_
 - [ ] T-013 BUG LOW — code/web/src/app/icon.png and apple-icon.png are 119x124 (non-square); supply a 180x180 apple-touch icon and a square favicon source _(src: T-007 design pass)_
 - [ ] T-016 FEAT LOW — club logos and league-night photos on club cards and club pages, replacing the initials monograms; needs assets from the clubs _(src: T-007 design pass)_

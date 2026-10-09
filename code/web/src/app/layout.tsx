@@ -83,6 +83,7 @@ const organizationJsonLd = {
     addressRegion: 'Gauteng',
     addressCountry: 'ZA',
   },
+  areaServed: { '@type': 'Country', name: 'South Africa' },
   sameAs: [APP_STORE_URL, PLAY_STORE_URL],
 }
 

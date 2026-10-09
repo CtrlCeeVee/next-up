@@ -14,11 +14,11 @@ const nextConfig: NextConfig = {
   // Product routes retired when the app moved native (June 2026). /auth was
   // indexed with real clicks, so it and the other old paths 308 to the
   // homepage instead of 404ing. /league/<id> for a listed club goes to that
-  // club's page; any other id falls through to the homepage.
+  // club's page; any other id falls through to the homepage. /leagues is the
+  // leagues hub (it redirected to /leagues/johannesburg until 2026-10-09).
   async redirects() {
     return [
       { source: '/auth', destination: '/', permanent: true },
-      { source: '/leagues', destination: '/leagues/johannesburg', permanent: true },
       ...ACTIVE_CLUBS.map((club) => ({
         source: `/league/${club.id}`,
         destination: clubPath(club),

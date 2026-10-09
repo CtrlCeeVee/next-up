@@ -150,9 +150,9 @@ export default function ContactPage() {
                 Looking for a league?
               </h2>
               <p className="mt-2 mb-5 text-gray-600 dark:text-gray-300">
-                See the clubs Next-Up runs league nights at across Johannesburg.
+                See the clubs Next-Up runs league nights at across South Africa.
               </p>
-              <Button href="/#clubs">View leagues</Button>
+              <Button href="/leagues">View leagues</Button>
             </Card>
           </div>
         </div>

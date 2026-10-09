@@ -1,9 +1,9 @@
-import { ACTIVE_CLUBS, clubPath, REGIONS } from './clubs'
+import { ACTIVE_CLUBS, activeRegions, clubPath, LEAGUES_PATH, regionPath } from './clubs'
 
 // Primary navigation, shared by the desktop header and the mobile menu so
 // the two never drift apart.
 export const NAV_LINKS = [
-  { href: '/leagues/johannesburg', label: 'Leagues' },
+  { href: LEAGUES_PATH, label: 'Leagues' },
   { href: '/for-clubs', label: 'For clubs' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
@@ -17,11 +17,11 @@ export const FOOTER_GROUPS: { title: string; links: NavLink[] }[] = [
   {
     title: 'Players',
     links: [
-      { href: '/#clubs', label: 'Find a league' },
-      {
-        href: `/leagues/${REGIONS.johannesburg.slug}`,
-        label: `Pickleball leagues in ${REGIONS.johannesburg.name}`,
-      },
+      { href: LEAGUES_PATH, label: 'Pickleball leagues in South Africa' },
+      ...activeRegions().map((region) => ({
+        href: regionPath(region),
+        label: `Pickleball leagues in ${region.name}`,
+      })),
       ...ACTIVE_CLUBS.map((club) => ({ href: clubPath(club), label: club.name })),
       { href: '/#download', label: 'Download the app' },
     ],

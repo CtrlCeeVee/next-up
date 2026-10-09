@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Calendar, ChevronRight, ExternalLink, MapPin, Trophy, Users } from 'lucide-react'
+import { Calendar, ExternalLink, MapPin, Trophy, Users } from 'lucide-react'
+import { Breadcrumbs } from '@/components/Breadcrumbs'
 import { HowItWorks } from '@/components/HowItWorks'
 import { StoreButtons } from '@/components/StoreButtons'
 import { Button } from '@/components/ui/Button'
@@ -19,11 +20,13 @@ import {
   clubsInRegion,
   formatSchedule,
   fullAddress,
+  LEAGUES_PATH,
   leagueTitle,
   mapsUrl,
+  regionPath,
   type Club,
 } from '@/lib/clubs'
-import { ORGANIZATION_ID, SITE_URL } from '@/lib/site'
+import { breadcrumbSchema, clubSchema, jsonLdGraph, type Crumb } from '@/lib/schema'
 
 type Params = { slug: string }
 
@@ -38,9 +41,9 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const club = clubBySlug((await params).slug)
   if (!club) return {}
   const path = clubPath(club)
-  const description = `Join the ${club.name} pickleball league at ${club.venue}, ${club.city}. League nights: ${formatSchedule(club)}. Download the free Next-Up app to play.`
+  const description = `Join ${leagueTitle(club)} at ${club.venue}, ${club.city}. League nights: ${formatSchedule(club)}. Download the free Next-Up app to play.`
   return {
-    title: { absolute: `${leagueTitle(club)} | ${club.venue}` },
+    title: { absolute: club.metaTitle ?? `${leagueTitle(club)} | ${club.venue}` },
     description,
     alternates: { canonical: path },
     openGraph: {
@@ -66,46 +69,13 @@ const JOIN_STEPS = (club: Club) => [
   },
 ]
 
-function jsonLd(club: Club) {
-  const url = `${SITE_URL}${clubPath(club)}`
-  const region = club.region
-  return {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'SportsActivityLocation',
-        '@id': `${url}#venue`,
-        name: club.name,
-        description: club.description,
-        sport: 'Pickleball',
-        url,
-        address: {
-          '@type': 'PostalAddress',
-          streetAddress: club.street,
-          addressLocality: club.city,
-          addressRegion: 'Gauteng',
-          postalCode: club.postalCode,
-          addressCountry: 'ZA',
-        },
-        hasMap: mapsUrl(club),
-        containedInPlace: { '@type': 'Place', name: club.venue },
-        memberOf: { '@id': ORGANIZATION_ID },
-      },
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
-          {
-            '@type': 'ListItem',
-            position: 2,
-            name: `Pickleball leagues in ${region.name}`,
-            item: `${SITE_URL}/leagues/${region.slug}`,
-          },
-          { '@type': 'ListItem', position: 3, name: club.name, item: url },
-        ],
-      },
-    ],
-  }
+function crumbsFor(club: Club): Crumb[] {
+  return [
+    { name: 'Home', path: '/' },
+    { name: 'Leagues', path: LEAGUES_PATH },
+    { name: club.region.name, path: regionPath(club.region) },
+    { name: club.name, path: clubPath(club) },
+  ]
 }
 
 const chipClass =
@@ -116,7 +86,7 @@ export default async function ClubPage({ params }: { params: Promise<Params> }) 
   if (!club) notFound()
 
   const region = club.region
-  const regionPath = `/leagues/${region.slug}`
+  const regionHref = regionPath(region)
   const others = clubsInRegion(region).filter((other) => other.id !== club.id)
 
   return (
@@ -124,34 +94,12 @@ export default async function ClubPage({ params }: { params: Promise<Params> }) 
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd(club)).replace(/</g, '\\u003c'),
+          __html: jsonLdGraph(clubSchema(club), breadcrumbSchema(crumbsFor(club))),
         }}
       />
 
       <Section tone="navy" size="sm" width="default">
-        <nav aria-label="Breadcrumb" className="mb-8">
-          <ol className="flex flex-wrap items-center gap-1 text-sm text-white/60">
-            <li>
-              <Link href="/" className="transition-colors hover:text-white">
-                Home
-              </Link>
-            </li>
-            <li aria-hidden="true">
-              <ChevronRight className="h-4 w-4" />
-            </li>
-            <li>
-              <Link href={regionPath} className="transition-colors hover:text-white">
-                Leagues in {region.name}
-              </Link>
-            </li>
-            <li aria-hidden="true">
-              <ChevronRight className="h-4 w-4" />
-            </li>
-            <li aria-current="page" className="font-medium text-white">
-              {club.name}
-            </li>
-          </ol>
-        </nav>
+        <Breadcrumbs crumbs={crumbsFor(club)} />
 
         <div className="animate-rise text-center">
           <Monogram name={club.name} size="lg" className="mx-auto mb-6" />
@@ -173,10 +121,12 @@ export default async function ClubPage({ params }: { params: Promise<Params> }) 
               <Calendar className="h-4 w-4 text-orange-300" aria-hidden="true" />
               {formatSchedule(club)}
             </li>
-            <li className={chipClass}>
-              <Users className="h-4 w-4 text-emerald-300" aria-hidden="true" />
-              {club.members} active members
-            </li>
+            {club.members !== undefined && (
+              <li className={chipClass}>
+                <Users className="h-4 w-4 text-emerald-300" aria-hidden="true" />
+                {club.members} active members
+              </li>
+            )}
           </ul>
         </div>
       </Section>
@@ -213,10 +163,12 @@ export default async function ClubPage({ params }: { params: Promise<Params> }) 
                   </h2>
                 </div>
                 <p className="font-medium text-gray-900 dark:text-white">{formatSchedule(club)}</p>
-                <p className="mt-1 flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                  <Users className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" aria-hidden="true" />
-                  {club.members} active members
-                </p>
+                {club.members !== undefined && (
+                  <p className="mt-1 flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                    <Users className="h-4 w-4 shrink-0 text-emerald-500 dark:text-emerald-400" aria-hidden="true" />
+                    {club.members} active members
+                  </p>
+                )}
                 <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
                   Check in on the app when you arrive and the night runs itself.
                 </p>
@@ -281,7 +233,7 @@ export default async function ClubPage({ params }: { params: Promise<Params> }) 
                   .
                 </p>
               )}
-              <Button href={regionPath} variant="on-dark" className="mt-6">
+              <Button href={regionHref} variant="on-dark" className="mt-6">
                 All leagues in {region.name}
               </Button>
             </Panel>

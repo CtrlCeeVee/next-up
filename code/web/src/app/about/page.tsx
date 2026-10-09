@@ -23,7 +23,8 @@ import { Panel } from '@/components/ui/Panel'
 import { Reveal } from '@/components/ui/Reveal'
 import { Section } from '@/components/ui/Section'
 import { SectionHeading } from '@/components/ui/SectionHeading'
-import { ACTIVE_CLUBS, clubPath, formatSchedule, REGIONS } from '@/lib/clubs'
+import { ACTIVE_CLUBS, activeRegions, clubPath, formatSchedule, regionPath } from '@/lib/clubs'
+import { cn } from '@/lib/cn'
 import { LEGAL_NAME } from '@/lib/site'
 
 export const metadata: Metadata = {
@@ -203,9 +204,19 @@ export default function AboutPage() {
               title="Where we play"
               lede="Next-Up leagues currently run at these clubs, with more cities on the way."
             />
-            <ul className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-2">
+            <ul className="mx-auto mt-10 grid max-w-5xl grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {ACTIVE_CLUBS.map((club, index) => (
-                <Reveal as="li" key={club.id} delay={index * 90} className="h-full">
+                <Reveal
+                  as="li"
+                  key={club.id}
+                  delay={index * 90}
+                  className={cn(
+                    'h-full',
+                    index === ACTIVE_CLUBS.length - 1 &&
+                      ACTIVE_CLUBS.length % 2 === 1 &&
+                      'sm:col-span-2 sm:mx-auto sm:w-[calc(50%-0.5rem)] lg:col-span-1 lg:mx-0 lg:w-auto',
+                  )}
+                >
                   <Card interactive className="h-full">
                     <h3 className="mb-3 flex items-center gap-3 font-display text-lg font-bold text-gray-900 dark:text-white">
                       <Monogram name={club.name} size="sm" />
@@ -236,14 +247,17 @@ export default function AboutPage() {
                 </Reveal>
               ))}
             </ul>
-            <p className="mt-6 text-center">
-              <Link
-                href={`/leagues/${REGIONS.johannesburg.slug}`}
-                className="inline-flex items-center gap-2 font-medium text-green-600 transition-colors hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
-              >
-                Pickleball leagues in {REGIONS.johannesburg.name}
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-              </Link>
+            <p className="mt-6 flex flex-wrap justify-center gap-x-8 gap-y-3 text-center">
+              {activeRegions().map((region) => (
+                <Link
+                  key={region.slug}
+                  href={regionPath(region)}
+                  className="inline-flex items-center gap-2 font-medium text-green-600 transition-colors hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                >
+                  Pickleball leagues in {region.name}
+                  <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </Link>
+              ))}
             </p>
           </div>
 

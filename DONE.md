@@ -1,5 +1,9 @@
 # Done — Next-Up  (archive; newest first)
 
+- [x] T-019 FEAT LOW — Kowie Pickleball on next-up.co.za; site restructured for multiple regions — done 2026-10-09, verified ✅
+      /leagues national hub (header Leagues, 308 removed), /leagues/port-alfred, /clubs/kowie-pickleball; shared schema/breadcrumbs/ClubGrid · commit e6f2286
+- [x] T-018 BUG LOW — Northcliff Eagles (id 2) and Kowie Pickleball (id 7) had latitude/longitude 0/0 in public.leagues; real venue coordinates set — done 2026-10-08, verified ✅
+      NE -26.1344398, 27.9651254 (owner Maps pin); KP -33.5656, 26.8954 (artefacts.co.za building record); direct UPDATE on prod, no commit
 - [x] T-009 FEAT HIGH — go live: www.next-up.co.za now serves code/web from Vercel (root directory code/web, Next.js preset, RESEND_API_KEY, apex 308), sitemap resubmitted in GSC — done 2026-09-18, verified ✅
       PR #23 merged d17b0ea; live heads, canonicals, JSON-LD, 404, 308 redirects and bot access verified; Lighthouse and remaining owner step (Request indexing) in Docs/SEO_AUDIT.md · commits d17b0ea, 47fb4e4
 - [x] T-007 FEAT MED — design pass on code/web (Phase 3): navy court chrome, design system in src/components/ui/, app screens in phone frames, deep green conversion panels, icon tones with meaning — done 2026-09-18, verified ✅

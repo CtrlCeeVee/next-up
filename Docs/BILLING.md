@@ -142,6 +142,8 @@ data/adjustments → `generate_invoice(...)` again (new draft gets `-R1` suffix)
 **Add a client**: insert into `billing.clients` (league_id from
 `public.leagues`, unique short `code`) + a `billing.terms` row effective from
 the contract start date. The next monthly run picks them up automatically.
+For a new club this is one step of the full procedure in `Docs/ONBOARDING.md`
+(app league, nights, admins, billing, initialisation fee).
 
 ## Acceptance record (June 2026, NE-2026-06)
 

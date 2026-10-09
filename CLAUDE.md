@@ -183,6 +183,7 @@ Validate in `validatePickleballScore()`: first to 15, win by 2 minimum, no ties.
 - `Docs/DEVELOPMENT.md` — full setup guide, code conventions, debugging, deployment, common tasks
 - `Docs/PRODUCT.md` — product overview and user flows
 - `Docs/BILLING.md` + `Docs/Billing/` — invoicing system: rules, runbook, agreements, issued invoices. DB logic lives in the Supabase `billing` schema; migrations mirrored in `supabase/migrations/`. Invoices and other client-facing documents are formal: never use em-dashes
+- `Docs/ONBOARDING.md` — onboarding a new paying club end to end: info to collect, app league setup, billing client and terms, initialisation fee, verification
 - `CHANGELOG.md` — version history (update for significant changes)
 - `todo.md` — tracked work items (canonical; managed via /todo-add and /todo-do)
 - `Docs/TODO.txt`, `Docs/known_mini_bugs.txt` — legacy tracking

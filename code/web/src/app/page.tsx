@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, Building2, Smartphone, Zap } from 'lucide-react'
-import { ClubCard } from '@/components/ClubCard'
+import { ClubGrid } from '@/components/ClubGrid'
 import { HowItWorks } from '@/components/HowItWorks'
 import { StoreButtons } from '@/components/StoreButtons'
 import { Button } from '@/components/ui/Button'
@@ -12,7 +12,7 @@ import { Reveal } from '@/components/ui/Reveal'
 import { Section } from '@/components/ui/Section'
 import { SectionHeading } from '@/components/ui/SectionHeading'
 import { Stat } from '@/components/ui/Stat'
-import { ACTIVE_CLUBS, REGIONS } from '@/lib/clubs'
+import { ACTIVE_CLUBS, activeRegions, LEAGUES_PATH, regionPath } from '@/lib/clubs'
 import { SCREENS } from '@/lib/screens'
 import {
   APP_NAME,
@@ -162,22 +162,28 @@ export default function HomePage() {
           lede="Browse leagues in your area and find the perfect fit for your skill level"
         />
 
-        <div className="mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
-          {ACTIVE_CLUBS.map((club, index) => (
-            <Reveal key={club.id} delay={index * 90} className="h-full">
-              <ClubCard club={club} />
-            </Reveal>
-          ))}
+        <div className="mt-12">
+          <ClubGrid clubs={ACTIVE_CLUBS} />
         </div>
 
-        <p className="mt-8 text-center">
+        <p className="mt-8 flex flex-wrap justify-center gap-x-8 gap-y-3 text-center">
           <Link
-            href={`/leagues/${REGIONS.johannesburg.slug}`}
+            href={LEAGUES_PATH}
             className="inline-flex items-center gap-2 font-medium text-green-600 transition-colors hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
           >
-            All pickleball leagues in {REGIONS.johannesburg.name}
+            All pickleball leagues in South Africa
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </Link>
+          {activeRegions().map((region) => (
+            <Link
+              key={region.slug}
+              href={regionPath(region)}
+              className="inline-flex items-center gap-2 font-medium text-green-600 transition-colors hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+            >
+              Leagues in {region.name}
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
+          ))}
         </p>
       </Section>
 
