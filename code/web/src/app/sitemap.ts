@@ -17,8 +17,8 @@ const PAGES: Array<{ path: string; lastModified: string }> = [
   { path: '/for-clubs', lastModified: '2026-10-09' },
   { path: '/about', lastModified: '2026-10-09' },
   { path: '/contact', lastModified: '2026-10-09' },
-  { path: '/privacy', lastModified: '2025-10-01' },
-  { path: '/terms', lastModified: '2025-10-01' },
+  { path: '/privacy', lastModified: '2026-11-04' },
+  { path: '/terms', lastModified: '2026-11-04' },
 ]
 
 export default function sitemap(): MetadataRoute.Sitemap {

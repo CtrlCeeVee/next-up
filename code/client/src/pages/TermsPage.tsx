@@ -48,7 +48,7 @@ const TermsPage = () => {
             Terms of Service
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Last updated: October 1, 2025<br />
+            Last updated: 4 November 2026<br />
             Effective from your first use of Next-Up
           </p>
         </div>
@@ -213,17 +213,17 @@ const TermsPage = () => {
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Your Data Rights</h4>
                 <ul className="space-y-1 text-gray-600 dark:text-gray-300 text-sm">
-                  <li>• Access and download your match history</li>
+                  <li>• Ask for a copy of your information by email. The privacy policy explains this. There is no automatic download</li>
                   <li>• Update your profile information anytime</li>
-                  <li>• Delete your account (some stats may be preserved for league integrity)</li>
-                  <li>• Control notification preferences</li>
+                  <li>• Ask us by email to delete your account. The privacy policy explains what we keep</li>
+                  <li>• Turn match notifications off in your browser, or ask us by email to remove them. The privacy policy explains this</li>
                 </ul>
               </div>
               
               <div>
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Account Termination</h4>
                 <ul className="space-y-1 text-gray-600 dark:text-gray-300 text-sm">
-                  <li>• You can delete your account anytime</li>
+                  <li>• You can ask us by email to delete your account. The privacy policy explains what we keep</li>
                   <li>• We may suspend accounts for Terms violations</li>
                   <li>• Match history may be preserved for league records</li>
                   <li>• 30-day notice for service discontinuation</li>

@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   openGraph: { url: '/terms', title: 'Terms of Service | Next-Up' },
 }
 
-const LAST_UPDATED = '2025-10-01'
+const LAST_UPDATED = '2026-11-04'
 
 const ALLOWED = [
   'Managing your league participation',
@@ -51,14 +51,14 @@ const AVAILABILITY = [
 ]
 
 const DATA_RIGHTS = [
-  'Access and download your match history',
+  'Ask for a copy of your information by email. The privacy policy explains this. There is no automatic download',
   'Update your profile information at any time',
-  'Delete your account (some statistics may be kept for league integrity)',
-  'Control your notification preferences',
+  'Ask us by email to delete your account. The privacy policy explains what we keep',
+  'Turn match notifications off in your browser, or ask us by email to remove them. The privacy policy explains this',
 ]
 
 const TERMINATION = [
-  'You can delete your account at any time',
+  'You can ask us by email to delete your account. The privacy policy explains what we keep',
   'We may suspend accounts for violations of these Terms',
   'Match history may be preserved for league records',
   '30 days notice for service discontinuation',
@@ -129,7 +129,7 @@ export default function TermsPage() {
       <Section tone="navy" size="sm" width="narrow">
         <PageIntro icon={FileText} badge="Legal agreement" title="Terms of Service">
           <p className="text-lg text-white/80">
-            Last updated: <time dateTime={LAST_UPDATED}>1 October 2025</time>
+            Last updated: <time dateTime={LAST_UPDATED}>4 November 2026</time>
             <br />
             Effective from your first use of Next-Up
           </p>
